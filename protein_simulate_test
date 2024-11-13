@@ -445,12 +445,14 @@ production_md() {
     read -p "Enter your choice [1-2]: " simulation_time
         echo -e ${NC}
         case $simulation_time in
-            1) ;;
+            1) md_nsteps=50,00,000
+            sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp 
+            ;;
             2) read -p "Set simulation time: " md_time_ns
             md_time_ps=$(echo "$md_time_ns * 1000" | bc)
             md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
             sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
-            echo -e ${NC} ;;
+            ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0 ;;
         esac
