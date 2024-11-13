@@ -1,0 +1,62 @@
+#!/bin/bash
+#Author: Atharva Tilewale
+
+#check internet connection
+check_internet() {
+    if ping -c 1 -W 1 8.8.8.8 &> /dev/null; then
+        echo -e "Status [${LIGHT_GREEN}Online${NC}]"
+    else
+        echo -e "Status [${LIGHT_RED}Offline${NC}]"
+        echo -e "${LIGHT_RED}It is recommended to connect to the internet while setup is going on."
+        echo -e "Connect to the internet and start the process again."
+        echo -e "Exiting...${NC}"
+        exit 1
+    fi
+}
+
+#Check dependencies
+check_dependencies() {
+    command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. Please install GROMACS and add it to your PATH.${NC}" 
+        sleep 1.0
+        echo "Installing GROMACS..."
+        sudo apt-get install gromacs; exit 1; }
+    command -v wget >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "wget not found. Please install wget to download necessary files.${NC}" 
+        sleep 1.0
+        echo "Installing wget..."
+        sudo apt-get install wget; exit 1; }
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check Python3 and pip3 installation
+if command_exists python3; then
+    if command_exists pip3; then
+        # Check if networkx is installed and its version
+        networkx_version=$(pip3 show networkx 2>/dev/null | grep Version | awk '{print $2}')
+        if [ -n "$networkx_version" ]; then
+            if [ "$networkx_version" != "2.3" ]; then
+                echo "This tool requires networkx v2.3. You are using version $networkx_version"
+                echo "Do you want to continue installing networkx v2.3? (y/n)"
+                read install_choice
+                if [ "$install_choice" == "y" ]; then
+                    pip3 install networkx==2.3
+                fi
+            fi
+        else
+            echo -e ${LIGHT_RED} "networkx is not installed. ${NC}"
+            echo "Installing networkx v2.3"
+            pip3 install networkx==2.3
+        fi
+    else
+        echo -e ${LIGHT_RED} "pip3 is not installed ${NC}"
+        echo "Installing pip3"
+        sudo apt install python3-pip
+    fi
+else
+    echo -e ${LIGHT_RED} "Python3 is not installed ${NC}" 
+    echo "Installing Python3"
+    sudo apt-get install python3
+fi

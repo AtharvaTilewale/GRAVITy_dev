@@ -1,0 +1,7 @@
+log file
+auto protein.pdbqt to protein.pdb
+add cgenff engine to generate .str file
+customizable process - time, steps
+more analysis - radius of gyration
+adding back option in eq and analysis
+light_green for success

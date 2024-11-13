@@ -1,0 +1,399 @@
+#!/bin/bash
+#Author: Atharva Tilewale
+
+# Function to prompt user for input
+prompt_user() {
+    read -p "$1" choice
+    echo "$choice"
+}
+
+# Function to check if a file exists and prompt to overwrite
+check_file_exists() {
+    local file=$1
+    if [ -f "$file" ]; then
+        echo "File '$file' already exists."
+        while true; do
+            echo "Do you want to continue and overwrite the file? (y/n)"
+            read -p "Enter your choice [y/n]: " choice
+            case $choice in
+                [Yy]* ) echo "Proceeding with overwriting the file."; return 0 ;;
+                [Nn]* ) echo "Aborting process."; return 1 ;;
+                * ) echo "Please answer yes or no." ;;
+            esac
+        done
+    fi
+    return 0
+}
+
+# Function to prepare protein topology
+prepare_protein_topology() {
+    echo "Preparing protein topology..."
+    if [ -f "protein.pdb" ]; then
+        check_file_exists "protein.gro" || return
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo "Error: Failed to prepare protein topology."; exit 1; }
+    else
+        echo "protein.pdb file does not exist."
+        exit 1
+    fi
+}
+
+prepare_ligand_topology() {
+    echo "Preparing ligand topology..."
+    while true; do
+        echo "Select actions"
+        echo "1) Fix .mol2 file"
+        echo "2) Prepare ligand parameter file"
+        echo "3) Generate ligand gro file"
+        echo "4) Generate complex.gro file and edit topol.top"
+        read -p "Enter your choice [1-4]: " choice
+
+        case $choice in
+            1)
+                mol_file="lig.mol2"
+                perl_sort_file="sort_mol2_bonds.pl"
+                if [ ! -f "$mol_file" ]; then
+                    echo "$mol_file does not exist."
+                    echo "Download the file?"
+                    while true; do
+                        echo "Select option"
+                        echo "1) YES"
+                        echo "2) NO"
+                        read -p "Enter your choice [1-2]: " choice
+
+                        case $choice in
+                            1)
+                                wget http://www.mdtutorials.com/gmx/complex/Files/sort_mol2_bonds.pl
+                                ;;
+                            2) return ;;
+                        esac
+                    done
+                fi
+                
+                if [ -f "$perl_sort_file" ]; then
+                    check_file_exists "lig_fix.mol2" || return
+                    perl sort_mol2_bonds.pl lig.mol2 lig_fix.mol2
+                else
+                    echo "$perl_sort_file does not exist."
+                    exit 1
+                fi
+                ;;
+            2)
+                if [ ! -f "lig_fix.mol2" ]; then
+                    echo "lig_fix.mol2 does not exist. Please prepare it first."
+                    exit 1
+                fi
+                check_file_exists "lig_fix.prm" || return
+                python3 cgenff_charmm2gmx_py3_nx2.py LIG lig_fix.mol2 lig_fix.str charmm36-jul2022.ff || { echo "Error: Failed to prepare ligand parameter file."; exit 1; }
+                ;;
+            3)
+                if [ ! -f "lig_ini.pdb" ]; then
+                    echo "lig_ini.pdb does not exist."
+                    exit 1
+                fi
+                check_file_exists "lig.gro" || return
+                gmx editconf -f lig_ini.pdb -o lig.gro || { echo "Error: Failed to prepare ligand topology."; exit 1; }
+                ;;
+            4)
+                echo "Generating complex.gro file..."
+                if [ ! -f "protein.gro" ]; then
+                    echo "protein.gro does not exist. Please prepare it first."
+                    exit 1
+                fi
+                if [ ! -f "lig.gro" ]; then
+                    echo "lig.gro does not exist. Please prepare it first."
+                    exit 1
+                fi
+                python3 merge.py || { echo "Error: Failed to generate complex.gro."; exit 1; }
+                echo "complex.gro generated successfully."
+
+                # Integrate program 2 to edit topol.top file
+                echo "Editing topol.top file..."
+                
+                if [ ! -f "topol.top" ]; then
+                    echo "topol.top does not exist."
+                    exit 1
+                fi
+
+                # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
+                sed -i '/#include "posre.itp"/{n;a\
+\
+; Include ligand topology\
+#include "lig.itp"
+}' topol.top
+
+                # Add ligand parameters inclusion
+                sed -i '/; Include forcefield parameters/{n;a\
+\
+; Include ligand parameters\
+#include "lig.prm"
+}' topol.top
+
+                # Add ligand entry at the end
+                echo "LIG                 1" >> topol.top
+
+                echo "topol.top file updated successfully."
+                
+                # Return to main menu after successful processing
+                return
+                ;;
+            *)
+                echo "Invalid option! Please select between 1 and 4."
+                ;;
+        esac
+    done
+}
+
+# Function to define box and solvate the system
+define_box_and_solvate() {
+    echo "Defining box and solvating system..."
+    if [ ! -f "complex.gro" ]; then
+        echo "complex.gro does not exist."
+        exit 1
+    fi
+    check_file_exists "newbox.gro" || return
+    gmx editconf -f complex.gro -o newbox.gro -bt dodecahedron -d 1.0 || { echo "Error: Failed to define the box."; exit 1; }
+    check_file_exists "solv.gro" || return
+    gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro || { echo "Error: Failed to solvate the system."; exit 1; }
+}
+
+# Function to add ions
+add_ions() {
+    echo "Adding ions..."
+    if [ ! -f "solv.gro" ]; then
+        echo "solv.gro does not exist."
+        exit 1
+    fi
+    
+    if [ ! -f "ions.mdp" ]; then
+        echo "ions.mdp does not exist. Downloading..."
+        wget -nc http://www.mdtutorials.com/gmx/complex/Files/ions.mdp
+    fi
+    
+    check_file_exists "ions.tpr" || return
+    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr || { echo "Error: Failed to prepare ions."; exit 1; }
+    check_file_exists "solv_ions.gro" || return
+    gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo "Error: Failed to add ions."; exit 1; }
+}
+
+# Function to run energy minimization
+energy_minimization() {
+    echo "Running energy minimization..."
+    if [ ! -f "solv_ions.gro" ]; then
+        echo "solv_ions.gro does not exist."
+        exit 1
+    fi
+    
+    if [ ! -f "em.mdp" ]; then
+        echo "em.mdp does not exist. Downloading..."
+        wget -nc http://www.mdtutorials.com/gmx/complex/Files/em.mdp
+    fi
+    
+    check_file_exists "em.tpr" || return
+    gmx grompp -f em.mdp -c solv_ions.gro -p topol.top -o em.tpr || { echo "Error: Failed to prepare for energy minimization."; exit 1; }
+    check_file_exists "em.gro" || return
+    gmx mdrun -v -deffnm em || { echo "Error: Energy minimization failed."; exit 1; }
+}
+
+# Function to run equilibrium
+equilibrium() {
+    echo "Running equilibrium..."
+    while true; do
+        echo "---------------------------"
+        echo "   Equilibrium Menu"
+        echo "---------------------------"
+        echo "1) Ligand Restraining"
+        echo "2) Thermostats"
+        echo "3) NVT Equilibration"
+        echo "4) NPT Equilibration"
+        echo "5) Back to Main Menu"
+        read -p "Enter your choice [1-5]: " equil_choice
+
+        case $equil_choice in
+            1)
+                echo "Ligand restraining..."
+                if [ ! -f "lig.gro" ]; then
+                    echo "lig.gro does not exist."
+                    exit 1
+                fi
+                check_file_exists "index_lig.ndx" || return
+                gmx make_ndx -f "lig.gro" -o "index_lig.ndx" || { echo "Error: Failed to create index file."; exit 1; }
+                check_file_exists "posre_lig.itp" || return
+                gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 || { echo "Error: Failed to generate position restraints."; exit 1; }
+                echo "Ligand restraining completed."
+                
+                # Integrate program 2 to edit topol.top file
+                echo "Editing topol.top file..."
+                
+                if [ ! -f "topol.top" ]; then
+                    echo "topol.top does not exist."
+                    exit 1
+                fi
+
+                # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
+                sed -i '/#include "lig.itp"/{n;a\
+; Ligand position restraints\
+#ifdef POSRES_LIG\
+#include "posre_lig.itp"\
+#endif
+}' topol.top
+
+                echo "topol.top file updated successfully."
+                ;;
+
+            2)
+                echo "Setting up thermostats..."
+                if [ ! -f "em.gro" ]; then
+                    echo "em.gro does not exist."
+                    exit 1
+                fi
+                check_file_exists "index.ndx" || return
+                gmx make_ndx -f em.gro -o index.ndx || { echo "Error: Failed to create index file for thermostats."; exit 1; }
+                echo "Thermostats setup completed."
+                ;;
+            3)
+                echo "Running NVT equilibration..."
+                if [ ! -f "em.gro" ]; then
+                    echo "em.gro does not exist."
+                    exit 1
+                fi
+                
+                if [ ! -f "nvt.mdp" ]; then
+                    echo "nvt.mdp does not exist. Downloading..."
+                    wget -nc http://www.mdtutorials.com/gmx/complex/Files/nvt.mdp
+                fi
+                
+                check_file_exists "nvt.tpr" || return
+                gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -n index.ndx -o nvt.tpr || { echo "Error: Failed to prepare NVT equilibration."; exit 1; }
+                check_file_exists "nvt.gro" || return
+                gmx mdrun -deffnm nvt -v || { echo "Error: NVT equilibration failed."; exit 1; }
+                ;;
+            4)
+                echo "Running NPT equilibration..."
+                if [ ! -f "nvt.gro" ]; then
+                    echo "nvt.gro does not exist."
+                    exit 1
+                fi
+                
+                if [ ! -f "npt.mdp" ]; then
+                    echo "npt.mdp does not exist. Downloading..."
+                    wget -nc http://www.mdtutorials.com/gmx/complex/Files/npt.mdp
+                fi
+                
+                check_file_exists "npt.tpr" || return
+                gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -p topol.top -n index.ndx -o npt.tpr || { echo "Error: Failed to prepare NPT equilibration."; exit 1; }
+                check_file_exists "npt.gro" || return
+                gmx mdrun -deffnm npt -v || { echo "Error: NPT equilibration failed."; exit 1; }
+                ;;
+            5)
+                echo "Returning to main menu..."
+                return
+                ;;
+            *)
+                echo "Invalid option! Please select between 1 and 5."
+                ;;
+        esac
+    done
+}
+
+# Function to run production MD
+production_md() {
+    echo "Running production MD..."
+    if [ ! -f "npt.gro" ]; then
+        echo "npt.gro does not exist."
+        exit 1
+    fi
+
+    if [ ! -f "md.mdp" ]; then
+        echo "md.mdp does not exist. Downloading..."
+        wget -nc http://www.mdtutorials.com/gmx/complex/Files/md.mdp
+    fi
+    
+    check_file_exists "md.tpr" || return
+    gmx grompp -f md.mdp -c npt.gro -p topol.top -n index.ndx -o md.tpr || { echo "Error: Failed to prepare production MD."; exit 1; }
+    check_file_exists "md.xtc" || return
+    gmx mdrun -deffnm md -v || { echo "Error: Production MD failed."; exit 1; }
+}
+
+# Function to run analysis
+run_analysis() {
+    echo "Running analysis..."
+    while true; do
+        echo "---------------------------"
+        echo "       Analysis Menu"
+        echo "---------------------------"
+        echo "1) Recentering and Rewrapping Coordinates"
+        echo "2) Find RMSD"
+        echo "3) Protein-Ligand Interaction Energy"
+        echo "4) Back to Main Menu"
+        read -p "Enter your choice [1-4]: " analysis_choice
+
+        case $analysis_choice in
+            1)
+                echo "Recentering and Rewrapping Coordinates..."
+                check_file_exists "md_0_10_center.xtc" || return
+                gmx trjconv -s md.tpr -f md.xtc -o md_center.xtc -center -pbc mol -ur compact || exit 1
+                check_file_exists "start.pdb" || return
+                gmx trjconv -s md.tpr -f md_center.xtc -o start.pdb -dump 0 || exit 1
+                check_file_exists "md_0_10_fit.xtc" || return
+                gmx trjconv -s md.tpr -f md_center.xtc -o md_fit.xtc -fit rot+trans || exit 1
+                ;;
+            2)
+                echo "Finding RMSD..."
+                check_file_exists "rmsd_jz4.xvg" || return
+                gmx rms -s em.tpr -f md_center.xtc -n index.ndx -tu ns -o rmsd_lig.xvg || exit 1
+                ;;
+            3)
+                echo "Calculating Protein-Ligand Interaction Energy..."
+                check_file_exists "interaction_energy.xvg" || return
+                gmx grompp -f ie.mdp -c npt.gro -t npt.cpt -p topol.top -n index.ndx -o ie.tpr || exit 1
+                check_file_exists "ie.edr" || return
+                gmx mdrun -deffnm ie -rerun md.xtc -nb cpu || exit 1
+                check_file_exists "interaction_energy.xvg" || return
+                gmx energy -f ie.edr -o interaction_energy.xvg || exit 1
+                ;;
+            4)
+                echo "Returning to Main Menu..."
+                return
+                ;;
+            *)
+                echo "Invalid option! Please select between 1 and 4."
+                ;;
+        esac
+    done
+}
+
+# Main script loop
+echo "Welcome to the GROMACS simulation"
+echo "Select your actions"
+
+while true; do
+    echo "---------------------------"
+    echo "       Main Menu"
+    echo "---------------------------"
+    echo "1) Prepare Protein Topology"
+    echo "2) Prepare Ligand Topology"
+    echo "3) Define box and solvate the system"
+    echo "4) Add ions"
+    echo "5) Energy minimization"
+    echo "6) Equilibrium"
+    echo "7) Production MD"
+    echo "8) Analysis"
+    echo "9) Exit"
+    echo "---------------------------"
+
+    choice=$(prompt_user "Enter your choice [1-9]: ")
+
+    case $choice in
+        1) prepare_protein_topology ;;
+        2) prepare_ligand_topology ;;
+        3) define_box_and_solvate ;;
+        4) add_ions ;;
+        5) energy_minimization ;;
+        6) equilibrium ;;
+        7) production_md ;;
+        8) run_analysis ;;
+        9) echo "Exiting..."; exit 0 ;;
+        *) echo "Invalid option! Please select between 1 and 9." ;;
+    esac
+done
+

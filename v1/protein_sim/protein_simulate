@@ -1,0 +1,399 @@
+#Author: Atharva Tilewale
+#Protein simulation made easy with this program, just convert your protein into .pdb format and start simulation
+
+# Source the color script
+source ./colors
+
+#check internet connection
+check_internet() {
+    if ping -c 1 -W 1 8.8.8.8 &> /dev/null; then
+        echo -e "Status [${LIGHT_GREEN}Online${NC}]"
+    else
+        echo -e "Status [${LIGHT_RED}Offline${NC}]"
+        echo -e "${LIGHT_RED}It is recommended to connect to the internet while process is going on."
+        echo -e "If any dependencies are missing then you may not able to download.${NC}"
+    fi
+}
+
+#Check dependencies
+check_dependencies() {
+    command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. It is necessary to install GROMACS.${NC}" 
+        sleep 1.0
+        echo "Installing GROMACS..."
+        sudo apt-get install gromacs; exit 1; }
+    command -v wget >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "wget not found. It is necessary to install wget.${NC}" 
+        sleep 1.0
+        echo "Installing wget..."
+        sudo apt-get install wget; exit 1; }
+}
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Check Python3 and pip3 installation
+if command_exists python3; then
+    if command_exists pip3; then
+        # Check if networkx is installed and its version
+        networkx_version=$(pip3 show networkx 2>/dev/null | grep Version | awk '{print $2}')
+        if [ -n "$networkx_version" ]; then
+            if [ "$networkx_version" != "2.3" ]; then
+                echo "This tool requires networkx v2.3. You are using version $networkx_version"
+                echo "Do you want to continue installing networkx v2.3? (y/n)"
+                read install_choice
+                if [ "$install_choice" == "y" ]; then
+                    pip3 install networkx==2.3
+                fi
+            fi
+        else
+            echo -e ${LIGHT_RED} "networkx is not installed. ${NC}"
+            echo "Installing networkx v2.3"
+            pip3 install networkx==2.3
+        fi
+    else
+        echo -e ${LIGHT_RED} "pip3 is not installed ${NC}"
+        echo "Installing pip3"
+        sudo apt install python3-pip
+    fi
+else
+    echo -e ${LIGHT_RED} "Python3 is not installed ${NC}" 
+    echo "Installing Python3"
+    sudo apt-get install python3
+fi
+
+# Function to prompt user for input
+prompt_user() {
+    read -p "$1" choice
+    echo "$choice"
+}
+
+# Function to check if a file exists and prompt to overwrite
+check_file_exists() {
+    local file=$1
+    if [ -f "$file" ]; then
+        echo "File '$file' already exists."
+        while true; do
+            echo "Do you want to continue and overwrite the file? (y/n)"
+            read -p "Enter your choice [y/n]: " choice
+            case $choice in
+                [Yy]* ) echo "Proceeding with overwriting the file."; return 0 ;;
+                [Nn]* ) echo "Aborting process."; return 1 ;;
+                * ) echo "Please answer yes or no." ;;
+            esac
+        done
+    fi
+    return 0
+}
+
+# Function to generate protein topology
+generate_protein_topology() {
+    echo
+    echo "Generating protein topology..."
+    if [ ! -f "protein.pdb" ]; then
+        echo -e ${LIGHT_RED} "protein.pdb file does not exist. ${NC}"
+        read -p "Do you want download the protein structure (y/n): " protein_download
+            if [ "$protein_download" == "y" ]; then
+                read -p "Enter PDB ID: " pdb_id
+                wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb || { echo -e "${LIGHT_RED}Error: Failed to download PDB structure.${NC}"; exit 1; }
+            else
+                echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
+            exit 1
+            fi
+        if grep -q "HETATM" protein.pdb; then
+            # Remove lines containing HETATM and save back to the same file
+            sed -i '/^HETATM/d' protein.pdb
+        fi
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." ${NC}
+        sleep 2.0; exit 1; }
+    else
+        check_file_exists "protein.gro" || return
+        if grep -q "HETATM" protein.pdb; then
+            # Remove lines containing HETATM and save back to the same file
+            sed -i '/^HETATM/d' protein.pdb
+        fi
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." ${NC}
+        sleep 2.0; exit 1; }
+    fi
+}
+
+# Function to define box and solvate the system
+define_box_and_solvate() {
+    echo
+    echo "Defining box and solvating system..."
+    if [ ! -f "protein.gro" ]; then
+        echo -e ${LIGHT_RED} "protein.gro does not exist.${NC}"
+        sleep 2.0 
+        exit 1
+    fi
+    check_file_exists "solv.gro" || return
+    gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+    sleep 2.0; exit 1; }
+    gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+    sleep 2.0; exit 1; }
+}
+
+# Function to add ions
+add_ions() {
+    echo
+    echo "Adding ions..."
+    if [ ! -f "solv.gro" ]; then
+        echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
+        sleep 2.0
+        exit 1
+    fi
+    
+    if [ ! -f "ions.mdp" ]; then
+        echo "ions.mdp does not exist. Downloading..."
+        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp"
+    fi
+    check_file_exists "solv_ions.gro" || return
+    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare ions.${NC}"
+    sleep 2.0; exit 1; }
+    gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo -e ${LIGHT_RED} "Error: Failed to add ions.${NC}"
+    sleep 2.0; exit 1; }
+}
+
+# Function to run energy minimization
+energy_minimization() {
+    echo
+    echo "Running energy minimization..."
+    printf "\n"
+    if [ ! -f "solv_ions.gro" ]; then
+        echo -e ${LIGHT_RED} "solv_ions.gro does not exist." ${NC}
+        sleep 2.0
+        exit 1
+    fi
+    
+    if [ ! -f "minim.mdp" ]; then
+        echo "minim.mdp does not exist. Downloading..."
+        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp"
+    fi
+    check_file_exists "em.gro" || return
+    gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare for energy minimization.${NC}"
+    sleep 2.0; exit 1; }
+    gmx mdrun -v -deffnm em || { echo -e ${LIGHT_RED} "Error: Energy minimization failed.${NC}"
+    sleep 2.0; exit 1; }
+    #generating potential energy xvg file
+    gmx energy -f em.edr -o potential.xvg || { echo -e ${LIGHT_RED} "Error: Failed to generate potential energy file.${NC}" 
+    sleep 2.0; exit 1; } 
+}
+
+# Function to run equilibrium
+equilibrium() {
+    echo
+    echo "Running equilibrium..."
+    while true; do
+        echo "---------------------------"
+        echo "   Equilibrium Menu"
+        echo "---------------------------"
+        echo "1) NVT Equilibration"
+        echo "2) NPT Equilibration"
+        echo "3) Back to Main Menu"
+        read -p "Enter your choice [1-3]: " equil_choice
+
+        case $equil_choice in
+            1)
+                echo
+                echo "Running NVT equilibration..."
+                echo
+                if [ ! -f "em.gro" ]; then
+                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                    sleep 2.0
+                    exit 1
+                fi
+                
+                if [ ! -f "nvt.mdp" ]; then
+                    echo "nvt.mdp does not exist. Downloading..."
+                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp"
+                fi
+                
+                check_file_exists "nvt.gro" || return
+                gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare NVT equilibration. ${NC}"
+                sleep 2.0; exit 1;}
+                gmx mdrun -deffnm nvt -v || { echo -e ${LIGHT_RED} "Error: NVT equilibration failed.${NC}"
+                sleep 2.0; exit 1; }
+                #Analyzing the temperature progression
+                echo "Analyzing the temperature progression..."
+                gmx energy -f nvt.edr -o temperature.xvg #generate temperature.xvg file
+                ;;
+            2)
+                echo
+                echo "Running NPT equilibration..."
+                echo
+                if [ ! -f "nvt.gro" ]; then
+                    echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
+                    exit 1
+                fi
+                
+                if [ ! -f "npt.mdp" ]; then
+                    echo "npt.mdp does not exist. Downloading..."
+                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp"
+                fi
+                
+                check_file_exists "npt.gro" || return
+                gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p topol.top -o npt.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare NPT equilibration. ${NC}"
+                sleep 2.0; exit 1;}
+                gmx mdrun -deffnm npt -v || { echo -e ${LIGHT_RED} "Error: NPT equilibration failed. ${NC}"
+                sleep 2.0; exit 1;}
+                #Analyzing the pressure and density progression
+                echo "Analyzing the pressure and density progression..."
+                gmx energy -f npt.edr -o pressure.xvg
+                gmx energy -f npt.edr -o density.xvg
+                ;;
+            3)
+                echo
+                echo "Returning to main menu..."
+                return
+                ;;
+            *)
+                echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                sleep 1.0
+                ;;
+        esac
+    done
+}
+
+# Function to run production MD
+production_md() {
+    echo
+    echo "Running production MD..."
+    if [ ! -f "npt.gro" ]; then
+        echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
+        sleep 2.0
+        exit 1
+    fi
+
+    if [ ! -f "md.mdp" ]; then
+        echo "md.mdp does not exist. Downloading..."
+        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp"
+    fi
+    
+    check_file_exists "md.xtc" || return
+    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
+    sleep 2.0; exit 1; }
+    # Check for any GPU using lspci
+    gpu_info=$(lspci | grep -i vga)
+
+    if [[ -n "$gpu_info" ]]; then
+        echo "GPU detected:"
+        echo "$gpu_info"
+        
+        # Check if the GPU is an NVIDIA card and if nvidia-smi is available
+        if command -v nvidia-smi &> /dev/null; then
+            echo "NVIDIA GPU detected. Running nvidia-smi for details:"
+            nvidia-smi
+            sleep 3.0
+            echo "Running simulation on GPU..."
+            gmx mdrun -deffnm md -v -nb gpu || { echo -e ${LIGHT_RED}"Error: Production MD on GPU failed.${NC}"; 
+            sleep 2.0; exit 1; }
+        else
+            echo "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU..."
+            sleep 3.0
+            gmx mdrun -deffnm md -v || { echo -e ${LIGHT_RED}"Error: Production MD on CPU failed.${NC}"
+            sleep 2.0; exit 1; }
+        fi
+    else
+        echo "No GPU detected. Running simulation on CPU..."
+        sleep 3.0
+        gmx mdrun -deffnm md -v || { echo -e ${LIGHT_RED}"Error: Production MD on CPU failed.${NC}"
+        sleep 2.0; exit 1; }
+    fi
+}
+
+# Function to run analysis
+run_analysis() {
+    echo
+    echo "Running analysis..."
+    while true; do
+        echo "---------------------------"
+        echo "       Analysis Menu"
+        echo "---------------------------"
+        echo "1) Recentering and Rewrapping Coordinates"
+        echo "2) Find RMSD"
+        echo "3) Back to Main Menu"
+        read -p "Enter your choice [1-3]: " analysis_choice
+
+        case $analysis_choice in
+            1)
+                echo
+                echo "Recentering and Rewrapping Coordinates..."
+                echo
+                if [ ! -f "md.xtc" ]; then
+                    echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}" 
+                    exit 1
+                fi
+                check_file_exists "md_noPBC.xtc" || return
+                gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center || exit 1
+                ;;
+            2)
+                echo
+                echo "Finding RMSD..."
+                echo
+                if [ ! -f "md_noPBC.xtc" ]; then
+                    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}" 
+                    exit 1
+                fi
+                check_file_exists "rmsd.xvg" || return
+                gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd.xvg -tu ns || exit 1
+                ;;
+            3)
+                echo
+                echo "Returning to Main Menu..."
+                return
+                ;;
+            *)
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                sleep 1.0
+                ;;
+        esac
+    done
+}
+
+# Main script loop
+
+clear
+echo
+echo -e "${LIGHT_GREEN}~~~ WELCOME TO THE GROMACS SIMULATION ~~~${NC}"
+echo 
+echo -e "${LIGHT_CYAN}Please keep protein file ready in the working "
+echo -e "directory and rename it as 'protein.pdb'${NC}"
+echo 
+check_internet
+echo
+check_dependencies
+echo "Select your actions"
+
+while true; do
+    echo -e "${YELLOW}---------------------------"
+    echo -e "       Main Menu"
+    echo -e "---------------------------${NC}"
+    echo "1) Generate Protein Topology"
+    echo "2) Define box and solvate the system"
+    echo "3) Add ions"
+    echo "4) Energy minimization"
+    echo "5) Equilibrium"
+    echo "6) Production MD"
+    echo "7) Analysis"
+    echo "8) Exit"
+    echo "---------------------------"
+    echo -e ${LIGHT_YELLOW}
+
+    choice=$(prompt_user "Enter your choice [1-8]: ")
+    echo -e ${NC}
+
+    case $choice in
+        1) generate_protein_topology ;;
+        2) define_box_and_solvate ;;
+        3) add_ions ;;
+        4) energy_minimization ;;
+        5) equilibrium ;;
+        6) production_md ;;
+        7) run_analysis ;;
+        8) echo -e "${LIGHT_GREEN}Thanks for using GROMACS!${NC}"
+           echo "Exiting..."
+           echo; exit 0 ;;
+        *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 8.${NC}" 
+        sleep 1.0 ;;
+    esac
+done
