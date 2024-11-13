@@ -438,7 +438,21 @@ production_md() {
     echo
     
     #User input simulation time
-    
+    echo -e ${YELLOW} "Do you want to continue with default simulation time (10ns)?"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
+    echo
+    read -p "Enter your choice [1-2]: " simulation_time
+        echo -e ${NC}
+        case $simulation_time in
+            1) ;;
+            2) read -p "Set simulation time: " md_time_ns
+            md_time_ps=$(echo "$md_time_ns * 1000" | bc)
+            md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
+            echo -e ${NC} ;;
+            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0 ;;
+        esac
 
     # Prepare for production MD
     prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
