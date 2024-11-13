@@ -472,8 +472,7 @@ prepare_md_production() {
 
 # Function to run production MD
 production_md() {
-    echo
-    
+    echo    
     # Check for required files
     if [ ! -f "npt.gro" ]; then
         echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
