@@ -454,7 +454,8 @@ production_md() {
             sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
             ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-            sleep 1.0 ;;
+            sleep 2.0
+            return ;;
         esac
 
     # Prepare for production MD
