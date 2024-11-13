@@ -437,6 +437,9 @@ production_md() {
     check_file_exists "md.xtc" || return
     echo
     
+    #User input simulation time
+    
+
     # Prepare for production MD
     prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
     
