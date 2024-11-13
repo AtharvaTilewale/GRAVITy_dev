@@ -421,7 +421,7 @@ prepare_md_production() {
 
 # Function to run production MD
 production_md() {
-    echo    
+    echo   
     # Check for required files
     if [ ! -f "npt.gro" ]; then
         echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
@@ -457,7 +457,7 @@ production_md() {
             
             # Measure and show time while running the simulation, suppress output
             start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm md -v -nb gpu > /dev/null 2>&1
+            gmx mdrun -deffnm md -v -nb gpu > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
             end_time=$(date +%s)  # Get end time
             
             elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -470,7 +470,7 @@ production_md() {
             
             # Measure and show time while running the simulation, suppress output
             start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm md -v > /dev/null 2>&1
+            gmx mdrun -deffnm md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
             end_time=$(date +%s)  # Get end time
             
             elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -483,7 +483,7 @@ production_md() {
         
         # Measure and show time while running the simulation, suppress output
         start_time=$(date +%s)  # Get start time
-        gmx mdrun -deffnm md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation on CPU"
+        gmx mdrun -deffnm md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
         end_time=$(date +%s)  # Get end time
         
         elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -494,8 +494,6 @@ production_md() {
     # Wait for background processes to finish
     wait
 }
-
-
 
 # Function to run analysis
 run_analysis() {
@@ -591,6 +589,7 @@ run_analysis() {
 #     esac
 # done
 # }
+
 automatic_run(){
     generate_protein_topology
     define_box_and_solvate
