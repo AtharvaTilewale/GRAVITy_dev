@@ -411,13 +411,34 @@ equilibrium() {
     done
 }
 
-prepare_md_production() {
-    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { 
+# Update nsteps in md.mdp and regenerate md.tpr
+update_simulation_steps() {
+    # Update nsteps in md.mdp
+    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
+    echo "Updated nsteps in md.mdp:"
+    grep "nsteps" md.mdp  # Verify the update in md.mdp
+
+    # Clear old .tpr file (optional but recommended)
+    rm -f md.tpr
+
+    # Regenerate md.tpr using the updated md.mdp
+    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || {
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
-        sleep 2.0
         exit 1
     }
+
+    # Confirm the update in the new md.tpr file
+    echo "Confirming nsteps in md.tpr:"
+    gmx dump -s md.tpr | grep nsteps
 }
+
+# prepare_md_production() {
+#     gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { 
+#         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
+#         sleep 2.0
+#         exit 1
+#     }
+# }
 
 # Function to run production MD
 production_md() {
@@ -445,19 +466,16 @@ production_md() {
     read -p "Enter your choice [1-2]: " simulation_time
         echo -e ${NC}
         case $simulation_time in
-            1) md_nsteps=50,00,000
-            sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp 
-            ;;
+            1) md_nsteps=5000000 ;;
             2) read -p "Set simulation time (ns): " md_time_ns
             md_time_ps=$(echo "$md_time_ns * 1000" | bc)
             md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
-            sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
             ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-            sleep 2.0
+            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}" ;
+            sleep 2.0 ;
             return ;;
         esac
-
+    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
     # Prepare for production MD
     prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
     
