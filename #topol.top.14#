@@ -2,7 +2,7 @@
 ;	File 'topol.top' was generated
 ;	By user: unknown (1000)
 ;	On host: LAPTOP-JJ8HHK89
-;	At date: Wed Nov 13 17:48:15 2024
+;	At date: Wed Nov 13 16:24:58 2024
 ;
 ;	This is a standalone topology file
 ;
@@ -72191,8 +72191,10 @@ Protein_chain_A     3
 
 [ system ]
 ; Name
-HUMAN PANCREATIC ALPHA-AMYLASE
+HUMAN PANCREATIC ALPHA-AMYLASE in water
 
 [ molecules ]
 ; Compound        #mols
 Protein_chain_A     1
+SOL         31953
+NA               3
