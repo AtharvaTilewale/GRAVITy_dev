@@ -415,21 +415,21 @@ equilibrium() {
 update_simulation_steps() {
     # Update nsteps in md.mdp
     sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
-    echo "Updated nsteps in md.mdp:"
-    grep "nsteps" md.mdp  # Verify the update in md.mdp
+    # echo "Updated nsteps in md.mdp:"
+    # grep "nsteps" md.mdp  # Verify the update in md.mdp
 
     # Clear old .tpr file (optional but recommended)
     rm -f md.tpr
 
     # Regenerate md.tpr using the updated md.mdp
-    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || {
+    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr > /dev/null 2>&1 || {
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
         exit 1
     }
 
     # Confirm the update in the new md.tpr file
-    echo "Confirming nsteps in md.tpr:"
-    gmx dump -s md.tpr | grep nsteps
+    # echo "Confirming nsteps in md.tpr:"
+    # gmx dump -s md.tpr | grep nsteps
 }
 
 # prepare_md_production() {
@@ -475,9 +475,12 @@ production_md() {
             sleep 2.0 ;
             return ;;
         esac
-    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
+
+    # Update nsteps and generate new md.tpr file
+    update_simulation_steps
+
     # Prepare for production MD
-    prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
+    # prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
     
     echo -e ${LIGHT_GREEN}"Preparation DONE!${NC}"
     

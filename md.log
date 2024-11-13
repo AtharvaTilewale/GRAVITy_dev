@@ -34,7 +34,7 @@ GROMACS:      gmx mdrun, version 2021.4-Ubuntu-2021.4-2
 Executable:   /usr/bin/gmx
 Data prefix:  /usr
 Working dir:  /home/atharva/GRAVITy_dev
-Process ID:   36138
+Process ID:   41551
 Command line:
   gmx mdrun -deffnm md -v
 
@@ -143,14 +143,14 @@ Input Parameters:
    integrator                     = md
    tinit                          = 0
    dt                             = 0.002
-   nsteps                         = 5000
+   nsteps                         = 5000000
    init-step                      = 0
    simulation-part                = 1
    mts                            = false
    comm-mode                      = Linear
    nstcomm                        = 100
    bd-fric                        = 0
-   ld-seed                        = 1839197051
+   ld-seed                        = -92641001
    emtol                          = 10
    emstep                         = 0.01
    niter                          = 20
@@ -308,7 +308,7 @@ annealing-npoints:           0           0
    nfreeze:           N           N           N
    energygrp-flags[  0]: 0
 
-Changing nstlist from 10 to 50, rlist from 1 to 1.106
+Changing nstlist from 10 to 50, rlist from 1 to 1.105
 
 Using 1 MPI thread
 Using 12 OpenMP threads 
@@ -327,11 +327,11 @@ Using a Gaussian width (1/beta) of 0.320163 nm for Ewald
 Potential shift: LJ r^-12: -1.000e+00 r^-6: -1.000e+00, Ewald -1.000e-05
 Initialized non-bonded Ewald tables, spacing: 9.33e-04 size: 1073
 
-Generated table with 1053 data points for 1-4 COUL.
+Generated table with 1052 data points for 1-4 COUL.
 Tabscale = 500 points/nm
-Generated table with 1053 data points for 1-4 LJ6.
+Generated table with 1052 data points for 1-4 LJ6.
 Tabscale = 500 points/nm
-Generated table with 1053 data points for 1-4 LJ12.
+Generated table with 1052 data points for 1-4 LJ12.
 Tabscale = 500 points/nm
 Long Range LJ corr.: <C6> 3.1114e-04
 
@@ -339,7 +339,7 @@ Long Range LJ corr.: <C6> 3.1114e-04
 Using SIMD 4x4 nonbonded short-range kernels
 
 Using a dual 4x4 pair-list setup updated with dynamic pruning:
-  outer list: updated every 50 steps, buffer 0.106 nm, rlist 1.106 nm
+  outer list: updated every 50 steps, buffer 0.105 nm, rlist 1.105 nm
   inner list: updated every 12 steps, buffer 0.001 nm, rlist 1.001 nm
 At tolerance 0.005 kJ/mol/ps per atom, equivalent classical 1x1 list would be:
   outer list: updated every 50 steps, buffer 0.232 nm, rlist 1.232 nm
@@ -376,146 +376,23 @@ Center of mass motion removal mode is Linear
 We have the following groups for center of mass motion removal:
   0:  rest
 
-Started mdrun on rank 0 Wed Nov 13 23:23:49 2024
+Started mdrun on rank 0 Wed Nov 13 23:41:17 2024
 
            Step           Time
               0        0.00000
 
    Energies (kJ/mol)
            Bond          Angle    Proper Dih.  Improper Dih.          LJ-14
-    5.77715e+03    1.50876e+04    2.16502e+04    9.80512e+02    7.72662e+03
+    6.05841e+03    1.51590e+04    2.14992e+04    9.92109e+02    7.66122e+03
      Coulomb-14        LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.
-    8.91416e+04    1.84156e+05   -1.34082e+04   -1.64269e+06    9.74031e+03
+    8.90697e+04    1.84161e+05   -1.33754e+04   -1.63940e+06    9.80304e+03
       Potential    Kinetic En.   Total Energy  Conserved En.    Temperature
-   -1.32184e+06    2.63496e+05   -1.05834e+06   -1.05828e+06    3.00434e+02
+   -1.31837e+06    2.64374e+05   -1.05399e+06   -1.05393e+06    3.01435e+02
  Pres. DC (bar) Pressure (bar)   Constr. rmsd
-   -2.14278e+02    1.60915e+02    3.30348e-06
-
-
-
-Received the INT signal, stopping within 50 steps
+   -2.13231e+02    8.32837e+01    3.10511e-06
 
            Step           Time
-           1250        2.50000
-
-Writing checkpoint, step 1250 at Wed Nov 13 23:24:31 2024
-
+           5000       10.00000
 
    Energies (kJ/mol)
-           Bond          Angle    Proper Dih.  Improper Dih.          LJ-14
-    5.97659e+03    1.58283e+04    2.15782e+04    9.81258e+02    7.48409e+03
-     Coulomb-14        LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.
-    8.88254e+04    1.82106e+05   -1.34768e+04   -1.64066e+06    9.52780e+03
-      Potential    Kinetic En.   Total Energy  Conserved En.    Temperature
-   -1.32183e+06    2.64204e+05   -1.05763e+06   -1.05825e+06    3.01241e+02
- Pres. DC (bar) Pressure (bar)   Constr. rmsd
-   -2.16474e+02   -4.44737e+01    3.04369e-06
-
-
-Energy conservation over simulation part #1 of length 2.5 ns, time 0 to 2.5 ns
-  Conserved energy drift: 1.00e-04 kJ/mol/ps per atom
-
-
-	<======  ###############  ==>
-	<====  A V E R A G E S  ====>
-	<==  ###############  ======>
-
-	Statistics over 1251 steps using 13 frames
-
-   Energies (kJ/mol)
-           Bond          Angle    Proper Dih.  Improper Dih.          LJ-14
-    5.99162e+03    1.54819e+04    2.16345e+04    1.00857e+03    7.53107e+03
-     Coulomb-14        LJ (SR)  Disper. corr.   Coulomb (SR)   Coul. recip.
-    8.88249e+04    1.83549e+05   -1.33974e+04   -1.63998e+06    9.67735e+03
-      Potential    Kinetic En.   Total Energy  Conserved En.    Temperature
-   -1.31968e+06    2.63768e+05   -1.05591e+06   -1.05827e+06    3.00744e+02
- Pres. DC (bar) Pressure (bar)   Constr. rmsd
-   -2.13935e+02    2.01453e+00    0.00000e+00
-
-          Box-X          Box-Y          Box-Z
-    1.01353e+01    1.01353e+01    1.01353e+01
-
-   Total Virial (kJ/mol)
-    8.80491e+04   -5.74869e+02   -2.79142e+02
-   -5.75353e+02    8.76239e+04   -3.48329e+02
-   -2.81894e+02   -3.49329e+02    8.79076e+04
-
-   Pressure (bar)
-   -2.63340e+00    1.51999e+01    1.07692e+01
-    1.52154e+01    1.44862e+01    1.04221e+01
-    1.08570e+01    1.04541e+01   -5.80923e+00
-
-      T-Protein  T-non-Protein
-    3.01741e+02    3.00644e+02
-
-
-	M E G A - F L O P S   A C C O U N T I N G
-
- NB=Group-cutoff nonbonded kernels    NxN=N-by-N cluster Verlet kernels
- RF=Reaction-Field  VdW=Van der Waals  QSTab=quadratic-spline table
- W3=SPC/TIP3p  W4=TIP4p (single or pairs)
- V&F=Potential and force  V=Potential only  F=Force only
-
- Computing:                               M-Number         M-Flops  % Flops
------------------------------------------------------------------------------
- Pair Search distance check             996.215946        8965.944     0.3
- NxN QSTab Elec. + LJ [F]             34001.801008     1394073.841    53.3
- NxN QSTab Elec. + LJ [V&F]             385.055072       22718.249     0.9
- NxN QSTab Elec. [F]                  28515.962448      969542.723    37.1
- NxN QSTab Elec. [V&F]                  322.958608       13241.303     0.5
- 1,4 nonbonded interactions              25.095060        2258.555     0.1
- Calc Weights                           388.495548       13985.840     0.5
- Spread Q Bspline                      8287.905024       16575.810     0.6
- Gather F Bspline                      8287.905024       49727.430     1.9
- 3D-FFT                               11805.917184       94447.337     3.6
- Solve PME                                5.124096         327.942     0.0
- Shift-X                                  2.691416          16.148     0.0
- Bonds                                    5.074056         299.369     0.0
- Angles                                  17.428932        2928.061     0.1
- Propers                                 27.015345        6186.514     0.2
- Impropers                                2.137959         444.695     0.0
- Virial                                  13.048686         234.876     0.0
- Stop-CM                                  1.345708          13.457     0.0
- Calc-Ekin                               26.086032         704.323     0.0
- Lincs                                    4.648716         278.923     0.0
- Lincs-Mat                               22.593060          90.372     0.0
- Constraint-V                           129.217041        1162.953     0.0
- Constraint-Vir                          12.546450         301.115     0.0
- Settle                                  39.973203       14790.085     0.6
------------------------------------------------------------------------------
- Total                                                 2613315.868   100.0
------------------------------------------------------------------------------
-
-
-     R E A L   C Y C L E   A N D   T I M E   A C C O U N T I N G
-
-On 1 MPI rank, each using 12 OpenMP threads
-
- Computing:          Num   Num      Call    Wall time         Giga-Cycles
-                     Ranks Threads  Count      (s)         total sum    %
------------------------------------------------------------------------------
- Neighbor search        1   12         26       0.911         26.637   2.2
- Force                  1   12       1251      27.306        798.587  65.0
- PME mesh               1   12       1251       8.467        247.611  20.2
- NB X/F buffer ops.     1   12       2476       2.664         77.920   6.3
- Write traj.            1   12          2       0.040          1.159   0.1
- Update                 1   12       1251       1.152         33.705   2.7
- Constraints            1   12       1251       1.172         34.268   2.8
- Rest                                           0.273          7.994   0.7
------------------------------------------------------------------------------
- Total                                         41.985       1227.881 100.0
------------------------------------------------------------------------------
- Breakdown of PME mesh computation
------------------------------------------------------------------------------
- PME spread             1   12       1251       3.159         92.385   7.5
- PME gather             1   12       1251       3.062         89.537   7.3
- PME 3D-FFT             1   12       2502       1.864         54.516   4.4
- PME solve Elec         1   12       1251       0.095          2.791   0.2
------------------------------------------------------------------------------
-
-               Core t (s)   Wall t (s)        (%)
-       Time:      503.822       41.985     1200.0
-                 (ns/day)    (hour/ns)
-Performance:        5.149        4.661
-Finished mdrun on rank 0 Wed Nov 13 23:24:31 2024
-
+           Bond          Angle    Proper Dih.  Improper Dih.          LJ-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
