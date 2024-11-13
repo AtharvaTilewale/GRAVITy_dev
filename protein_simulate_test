@@ -95,10 +95,10 @@ prompt_user() {
 check_file_exists() {
     local file=$1
     if [ -f "$file" ]; then
-        echo "File '$file' already exists."
+        echo -e ${LIGHT_CYAN}"File '$file' already exists."
         while true; do
-            echo "Do you want to continue and overwrite the file? (y/n)"
-            read -p "Enter your choice [y/n]: " choice
+            read -p "Do you want to continue and overwrite the file? (y/n): " choice
+            echo -e ${NC}
             case $choice in
                 [Yy]* ) echo "Proceeding with overwriting the file."; return 0 ;;
                 [Nn]* ) echo "Aborting process."; return 1 ;;
@@ -438,7 +438,7 @@ production_md() {
     echo
     
     #User input simulation time
-    echo -e ${YELLOW} "Do you want to continue with default simulation time (10ns)?"
+    echo -e ${YELLOW}"Do you want to continue with default simulation time (10ns)?"
     echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
     echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
     echo
@@ -448,7 +448,7 @@ production_md() {
             1) md_nsteps=50,00,000
             sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp 
             ;;
-            2) read -p "Set simulation time: " md_time_ns
+            2) read -p "Set simulation time (ns): " md_time_ns
             md_time_ps=$(echo "$md_time_ns * 1000" | bc)
             md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
             sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
