@@ -411,57 +411,6 @@ equilibrium() {
     done
 }
 
-# prepare_md_production() {
-#     gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
-#     sleep 2.0; exit 1; }
-# }
-# # Function to run production MD
-# production_md() {
-#     echo
-#     echo "Running production MD..."
-#     if [ ! -f "npt.gro" ]; then
-#         echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
-#         sleep 2.0
-#         exit 1
-#     fi
-
-#     if [ ! -f "md.mdp" ]; then
-#         echo "md.mdp does not exist. Downloading..."
-#         wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp"
-#     fi
-    
-#     check_file_exists "md.xtc" || return
-#     prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing"
-#     echo -e ${LIGHT_GREEN}"DONE!${NC}"
-#     # Check for any GPU using lspci
-#     gpu_info=$(lspci | grep -i vga)
-
-#     if [[ -n "$gpu_info" ]]; then
-#         echo "GPU detected:"
-#         echo "$gpu_info"
-        
-#         # Check if the GPU is an NVIDIA card and if nvidia-smi is available
-#         if command -v nvidia-smi &> /dev/null; then
-#             echo -e ${LIGHT_CYAN} "NVIDIA GPU detected. Running nvidia-smi for details:${NC}"
-#             nvidia-smi
-#             sleep 3.0
-#             ( gmx mdrun -deffnm md -v -nb gpu > /dev/null 2>&1 || { echo -e ${LIGHT_RED}"Error: Production MD on GPU failed.${NC}"; sleep 2.0; exit 1; })  & show_spinner $! "Running MD Simulation"
-            
-#         else
-#             echo -e ${LIGHT_CYAN} "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU...${NC}"
-#             sleep 3.0
-#             ( gmx mdrun -deffnm md -v > /dev/null 2>&1 || { echo -e ${LIGHT_RED}"Error: Production MD on CPU failed.${NC}"; sleep 2.0; exit 1; })
-#         fi
-#     else
-#         echo -e ${LIGHT_CYAN}"No GPU detected. Running simulation on CPU..."${NC}
-#         sleep 3.0
-#         ( gmx mdrun -deffnm md -v > /dev/null 2>&1 || { echo -e ${LIGHT_RED}"Error: Production MD on CPU failed.${NC}"; sleep 2.0; exit 1; }) & show_spinner $! "Running MD Simulation on CPU"
-#     fi
-
-#     # Wait for background processes to finish
-#     wait
-# }
-
 prepare_md_production() {
     gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { 
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
