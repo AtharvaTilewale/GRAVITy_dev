@@ -67,19 +67,6 @@ solvate_loader(){
     fi 
 }
 
-#preparing ion.tpr loader
-ion_tpr_loader(){
-    show_spinner $! "Preparing ions.tpr file"
-    wait $!
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: Failed to prepare ions.tpr file. See log file for more info.${NC}"
-        exit 1
-    else
-    echo -e ${LIGHT_GREEN}"File prepared successfully!"${NC}
-    sleep 1.0
-    fi 
-}
-
 #Ion addition loader
 ion_add_loader(){
     show_spinner $! "Adding ions to the system"
@@ -89,6 +76,58 @@ ion_add_loader(){
         exit 1
     else
     echo -e ${LIGHT_GREEN}"Ions added successfully"${NC}
+    sleep 1.0
+    fi 
+}
+
+# #Energy minimization preparation
+# preparing_energy_min_loader(){
+#     show_spinner $! "Preparing"
+#     wait $!
+#     if [ $? -ne 0 ]; then
+#         echo -e "${LIGHT_RED}Error: Preparation step failed. See log file for more info.${NC}"
+#         exit 1
+#     else
+#     echo -e ${LIGHT_GREEN}"Preparation successful!"${NC}
+#     sleep 1.0
+#     fi 
+# }
+
+#Energy minimization loader
+energy_minimization_loader(){
+    show_spinner $! "Running energy minimization"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed minimize energy. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"Energy minimized successfully"${NC}
+    sleep 1.0
+    fi     
+}
+
+#Equilibration preparation loader
+equilibration_preparation_loader(){
+    show_spinner $! "Preparing for $equilibration_step_name"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: $equilibration_step_name preparation failed. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"$equilibration_step_name preparation successful"${NC}
+    sleep 1.0
+    fi 
+}
+
+#Equilibration loader
+equilibration_loader(){
+    show_spinner $! "Running $equilibration_step_name"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: $equilibration_step_name failed. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"$equilibration_step_name done successfully"${NC}
     sleep 1.0
     fi 
 }
@@ -353,30 +392,31 @@ energy_minimization() {
         ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
     fi
     check_file_exists "em.gro" || return
-    gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare for energy minimization.${NC}"
-    sleep 2.0; exit 1; }
-    gmx mdrun -v -deffnm em || { echo -e ${LIGHT_RED} "Error: Energy minimization failed.${NC}"
-    sleep 2.0; exit 1; }
+    gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing..."
+    gmx mdrun -v -deffnm em > /dev/null 2>&1 & energy_minimization_loader
+    echo
     #generating potential energy xvg file
-    gmx energy -f em.edr -o potential.xvg || { echo -e ${LIGHT_RED} "Error: Failed to generate potential energy file.${NC}" 
-    sleep 2.0; exit 1; } 
+    echo -e "Calculating potential energy..."
+    gmx energy -f em.edr -o potential.xvg
 }
 
 NVT_equilibration(){
-    gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare NVT equilibration. ${NC}"
-    sleep 2.0; exit 1;}
-    gmx mdrun -deffnm nvt -v || { echo -e ${LIGHT_RED} "Error: NVT equilibration failed.${NC}"
-    sleep 2.0; exit 1; }
+    equilibration_step_name="NVT equilibration"
+    gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    echo
+    gmx mdrun -deffnm nvt -v > /dev/null 2>&1 & equilibration_loader
+    echo
     #Analyzing the temperature progression
     echo "Analyzing the temperature progression..."
     gmx energy -f nvt.edr -o temperature.xvg #generate temperature.xvg file
 }
 
 NPT_equilibration() {
-    gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p topol.top -o npt.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare NPT equilibration. ${NC}"
-    sleep 2.0; exit 1;}
-    gmx mdrun -deffnm npt -v || { echo -e ${LIGHT_RED} "Error: NPT equilibration failed. ${NC}"
-    sleep 2.0; exit 1;}
+    equilibration_step_name="NPT equilibration"
+    gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p topol.top -o npt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    echo
+    gmx mdrun -deffnm npt -v > /dev/null 2>&1 & equilibration_loader
+    echo
     #Analyzing the pressure and density progression
     echo "Analyzing the pressure and density progression..."
     gmx energy -f npt.edr -o pressure.xvg
@@ -414,7 +454,9 @@ equilibrium() {
                 
                 check_file_exists "nvt.gro" || return
 
-                NVT_equilibration 2>/dev/null & show_spinner $! "Running NVT Equilibration" ;;
+                NVT_equilibration 
+                #2>/dev/null & show_spinner $! "Running NVT Equilibration"
+                ;;
             2)
                 if [ ! -f "nvt.gro" ]; then
                     echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
@@ -429,7 +471,9 @@ equilibrium() {
 
                 check_file_exists "npt.gro" || return
                 
-                NPT_equilibration 2>/dev/null & show_spinner $! "Running NPT Equilibration" ;;
+                NPT_equilibration 
+                #2>/dev/null & show_spinner $! "Running NPT Equilibration" 
+                ;;
             3) 
                 if [ ! -f "em.gro" ]; then
                     echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
@@ -450,12 +494,8 @@ equilibrium() {
 
                 # Run NVT and NPT in the background, suppress both stdout and stderr
                 # Run NVT and NPT in the background, suppressing output, but show loader
-                NVT_equilibration > /dev/null 2>&1 & 
-                show_spinner $! "Running NVT Equilibration"
-                echo -e ${LIGHT_GREEN}"DONE!${NC}"
-                NPT_equilibration > /dev/null 2>&1 & 
-                show_spinner $! "Running NPT Equilibration"
-                echo -e ${LIGHT_GREEN}"DONE!${NC}"
+                NVT_equilibration
+                NPT_equilibration
                 sleep 1.0
                 # Wait for both NVT and NPT processes to finish
                 wait

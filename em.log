@@ -34,7 +34,7 @@ GROMACS:      gmx mdrun, version 2021.4-Ubuntu-2021.4-2
 Executable:   /usr/bin/gmx
 Data prefix:  /usr
 Working dir:  /home/atharva/GRAVITy_dev
-Process ID:   40282
+Process ID:   29286
 Command line:
   gmx mdrun -v -deffnm em
 
@@ -67,7 +67,7 @@ Hardware detected:
     Sockets, cores, and logical processors:
       Socket  0: [   0   1] [   2   3] [   4   5] [   6   7] [   8   9] [  10  11]
     Numa nodes:
-      Node  0 (8186413056 bytes mem):   0   1   2   3   4   5   6   7   8   9  10  11
+      Node  0 (8186417152 bytes mem):   0   1   2   3   4   5   6   7   8   9  10  11
       Latency:
                0
          0  1.00
@@ -76,8 +76,8 @@ Hardware detected:
       L2: 1310720 bytes, linesize 64 bytes, assoc. 10, shared 2 ways
       L3: 12582912 bytes, linesize 64 bytes, assoc. 8, shared 12 ways
     PCI devices:
-      24a3:00:00.0  Id: 1414:008e  Class: 0x0302  Numa: 0
-      2f34:00:00.0  Id: 1af4:1043  Class: 0x0100  Numa: 0
+      9851:00:00.0  Id: 1af4:1043  Class: 0x0100  Numa: 0
+      b940:00:00.0  Id: 1414:008e  Class: 0x0302  Numa: 0
 
 Highest SIMD level supported by all nodes in run: AVX2_256
 SIMD instructions selected at compile time:       SSE4.1
@@ -351,7 +351,7 @@ J. Comp. Chem. 13 (1992) pp. 952-962
 
 Note that activating steepest-descent energy minimization via the integrator .mdp option and the command gmx mdrun may be available in a different form in a future version of GROMACS, e.g. gmx minimize and an .mdp option.
 Initiating Steepest Descents
-Started Steepest Descents on rank 0 Wed Nov 13 23:34:18 2024
+Started Steepest Descents on rank 0 Thu Nov 14 15:58:00 2024
 
 
 Steepest Descents:
@@ -10431,5 +10431,5 @@ Steepest Descents converged to Fmax < 1000 in 1079 steps
 Potential Energy  = -1.5738801e+06
 Maximum force     =  8.9821625e+02 on atom 3606
 Norm of force     =  1.6255786e+01
-Finished mdrun on rank 0 Wed Nov 13 23:35:25 2024
+Finished mdrun on rank 0 Thu Nov 14 16:00:43 2024
 
