@@ -34,7 +34,7 @@ download_loader(){
         echo -e "${LIGHT_RED}Error: Download failed. Please check your internet connection and try again.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN} $file_download_name "downloaded successfully"${NC}
+    echo -e ${LIGHT_GREEN} $file_download_name "downloaded successfully!"${NC}
     sleep 1.0
     fi 
 }
