@@ -349,7 +349,8 @@ energy_minimization() {
     
     if [ ! -f "minim.mdp" ]; then
         echo "minim.mdp does not exist. Downloading..."
-        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp"
+        file_download_name="minim.mdp"
+        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
     fi
     check_file_exists "em.gro" || return
     gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare for energy minimization.${NC}"
@@ -407,7 +408,8 @@ equilibrium() {
                 
                 if [ ! -f "nvt.mdp" ]; then
                     echo "nvt.mdp does not exist. Downloading..."
-                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp"
+                    file_download_name="nvt.mdp"
+                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
                 fi
                 
                 check_file_exists "nvt.gro" || return
@@ -421,7 +423,8 @@ equilibrium() {
                 
                 if [ ! -f "npt.mdp" ]; then
                     echo "npt.mdp does not exist. Downloading..."
-                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp"
+                    file_download_name="npt.mdp"
+                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
                 fi
 
                 check_file_exists "npt.gro" || return
@@ -436,11 +439,13 @@ equilibrium() {
                 
                 if [ ! -f "nvt.mdp" ]; then
                     echo "nvt.mdp does not exist. Downloading..."
-                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp"
+                    file_download_name="nvt.mdp"
+                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
                 fi
                 if [ ! -f "npt.mdp" ]; then
                     echo "npt.mdp does not exist. Downloading..."
-                    wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp"
+                    file_download_name="npt.mdp"
+                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
                 fi
 
                 # Run NVT and NPT in the background, suppress both stdout and stderr
@@ -509,7 +514,8 @@ production_md() {
 
     if [ ! -f "md.mdp" ]; then
         echo "md.mdp does not exist. Downloading..."
-        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp"
+        file_download_name="md.mdp"
+        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp" ) & download_loader
     fi
     
     check_file_exists "md.xtc" || return
