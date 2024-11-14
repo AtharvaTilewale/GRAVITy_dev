@@ -161,11 +161,25 @@ generate_protein_topology() {
 }
 
 box_loader(){
-    show_spinner $! "Preparing box"
+show_spinner $! "Preparing Box"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to define the box.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
+    fi 
 }
 
 solvate_loader(){
-    show_spinner $! "Solvating the system"
+show_spinner $! "Solvating the system"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to solvate the system.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
+    fi 
 }
 
 # Function to define box and solvate the system
@@ -221,8 +235,8 @@ define_box_and_solvate() {
             sleep 2.0; exit 1; }) & solvate_loader ;;
             #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
             #sleep 2.0; exit 1; } ;;
-            2) (gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro > /dev/null 2>&1 || { echo -e ${LIGHT_RED}"Error: Failed to solvate the system.${NC}"
-            sleep 2.0; exit 1; }) & solvate_loader ;;
+            2) gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro > /dev/null 2>&1 &
+            solvate_loader ;;
             3) (gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro > /dev/null 2>&1 || { echo -e ${LIGHT_RED}"Error: Failed to solvate the system.${NC}"
             sleep 2.0; exit 1; }) & solvate_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
