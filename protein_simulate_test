@@ -183,10 +183,10 @@ define_box_and_solvate() {
     check_file_exists "solv.gro" || return
     read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
     if [ $select_solvate_box == "y" ]; then
-        (gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-        sleep 2.0; exit 1; }) & box_loader
-        (gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-        sleep 2.0; exit 1; }) & solvate_loader
+        gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+        sleep 2.0; exit 1; }
+        gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+        sleep 2.0; exit 1; }
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
@@ -197,14 +197,14 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) (gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-            sleep 2.0; exit 1; }) & box_loader;;
+            1) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+            sleep 2.0; exit 1; };;
             #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
             #sleep 2.0; exit 1; } ;;
-            2) (gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt dodecahedron > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-            sleep 2.0; exit 1; }) & box_loader ;;
-            3) (gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt triclinic > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-            sleep 2.0; exit 1; }) & box_loader ;;
+            2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt dodecahedron > /dev/null 2>&1 & box_loader || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+            sleep 2.0; exit 1; } ;;
+            3) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt triclinic > /dev/null 2>&1 & box_loader || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+            sleep 2.0; exit 1; } ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
@@ -219,14 +219,14 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) (gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-            sleep 2.0; exit 1; }) & solvate_loader ;;
+            1) gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+            sleep 2.0; exit 1; } ;;
             #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
             #sleep 2.0; exit 1; } ;;
-            2) (gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-            sleep 2.0; exit 1; }) & solvate_loader ;;
-            3) (gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-            sleep 2.0; exit 1; }) & solvate_loader ;;
+            2) gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+            sleep 2.0; exit 1; } ;;
+            3) gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+            sleep 2.0; exit 1; };;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
