@@ -27,6 +27,18 @@ show_spinner() {
     printf "\r%s...        \n" "$message"
 }
 
+download_loader(){
+    show_spinner $! $file_download_name
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Download failed. Please check your internet connection and try again.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN} $file_download_name "downloaded successfully"${NC}
+    sleep 1.0
+    fi 
+}
+
 #check internet connection
 check_internet() {
     if ping -c 1 -W 1 8.8.8.8 &> /dev/null; then
