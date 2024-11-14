@@ -162,7 +162,11 @@ generate_protein_topology() {
 
 box_loader(){
     show_spinner $! "Preparing box"
-    echo -e ${LIGHT_GREEN}"Done!${NC}"
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Box preparation failed.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Box preparation complete!${NC}"
 }
 
 solvate_loader(){
