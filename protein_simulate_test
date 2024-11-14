@@ -171,7 +171,11 @@ box_loader(){
 
 solvate_loader(){
     show_spinner $! "Solvating the system"
-    echo -e ${LIGHT_GREEN}"Done!${NC}"
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Solvation failed.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Solvation complete!${NC}"
 }
 
 # Function to define box and solvate the system
