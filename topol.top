@@ -2,7 +2,7 @@
 ;	File 'topol.top' was generated
 ;	By user: unknown (1000)
 ;	On host: LAPTOP-JJ8HHK89
-;	At date: Wed Nov 13 23:33:35 2024
+;	At date: Thu Nov 14 15:24:46 2024
 ;
 ;	This is a standalone topology file
 ;
@@ -72196,23 +72196,4 @@ HUMAN PANCREATIC ALPHA-AMYLASE in water
 [ molecules ]
 ; Compound        #mols
 Protein_chain_A     1
-SOL         31953
-NA               3
 SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             14918
-SOL             14609
-SOL             31956
-SOL             14609
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             31956
-SOL             14918
-SOL             32243

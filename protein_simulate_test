@@ -27,14 +27,68 @@ show_spinner() {
     printf "\r%s...        \n" "$message"
 }
 
+#Loaders
+#Download loader
 download_loader(){
-    show_spinner $! $file_download_name
+    show_spinner $! "Downloading $file_download_name"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Download failed. Please check your internet connection and try again.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN} $file_download_name "downloaded successfully!"${NC}
+    echo -e ${LIGHT_GREEN}$file_download_name "downloaded successfully!"${NC}
+    sleep 1.0
+    fi 
+}
+
+#Box loader
+box_loader(){
+    show_spinner $! "Preparing Box"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to define the box. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
+    sleep 1.0
+    fi 
+}
+
+#Solvate model loader
+solvate_loader(){
+    show_spinner $! "Solvating the system"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to solvate the system. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
+    sleep 1.0
+    fi 
+}
+
+#preparing ion.tpr loader
+ion_tpr_loader(){
+    show_spinner $! "Preparing ions.tpr file"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to prepare ions.tpr file. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"File prepared successfully!"${NC}
+    sleep 1.0
+    fi 
+}
+
+#Ion addition loader
+ion_add_loader(){
+    show_spinner $! "Adding ions to the system"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to add ions. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"Ions added successfully"${NC}
     sleep 1.0
     fi 
 }
@@ -172,30 +226,6 @@ generate_protein_topology() {
     fi
 }
 
-box_loader(){
-show_spinner $! "Preparing Box"
-    wait $!
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: Failed to define the box.${NC}"
-        exit 1
-    else
-    echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
-    sleep 1.0
-    fi 
-}
-
-solvate_loader(){
-show_spinner $! "Solvating the system"
-    wait $!
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: Failed to solvate the system.${NC}"
-        exit 1
-    else
-    echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
-    sleep 1.0
-    fi 
-}
-
 # Function to define box and solvate the system
 define_box_and_solvate() {
     echo
@@ -258,8 +288,6 @@ define_box_and_solvate() {
 
 # Function to add ions
 add_ions() {
-    echo
-    echo "Adding ions..."
     if [ ! -f "solv.gro" ]; then
         echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
         sleep 2.0
@@ -267,18 +295,18 @@ add_ions() {
     fi
     
     if [ ! -f "ions.mdp" ]; then
-        echo "ions.mdp does not exist. Downloading..."
-        wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp"
+        echo "ions.mdp file does not exist."
+        file_download_name="ions.mdp"
+        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" > /dev/null 2>&1 ) & download_loader
     fi
+    echo
     check_file_exists "solv_ions.gro" || return
-    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr || { echo -e ${LIGHT_RED} "Error: Failed to prepare ions.${NC}"
-    sleep 2.0; exit 1; }
+    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr > /dev/null 2>&1 & ion_tpr_loader 
     echo -e ${LIGHT_YELLOW}
     read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
     echo -e ${NC}
     if [ $select_ion_addition == "y" ]; then
-        gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo -e ${LIGHT_RED} "Error: Failed to add ions.${NC}"
-        sleep 2.0; exit 1; }
+        gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader
     else
     echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
@@ -288,12 +316,9 @@ add_ions() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo -e ${LIGHT_RED} "Error: Failed to add ions.${NC}"
-            sleep 2.0; exit 1; } ;;
-            2) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA || { echo -e ${LIGHT_RED} "Error: Failed to add ions.${NC}"
-            sleep 2.0; exit 1; } ;;
-            3) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -nname CL || { echo -e ${LIGHT_RED} "Error: Failed to add ions.${NC}"
-            sleep 2.0; exit 1; } ;;
+            1) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader ;;
+            2) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA > /dev/null 2>&1 & ion_add_loader ;;
+            3) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -nname CL > /dev/null 2>&1 & ion_add_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
