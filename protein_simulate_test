@@ -168,6 +168,7 @@ show_spinner $! "Preparing Box"
         exit 1
     else
     echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
+    sleep 1.0
     fi 
 }
 
@@ -179,6 +180,7 @@ show_spinner $! "Solvating the system"
         exit 1
     else
     echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
+    sleep 1.0
     fi 
 }
 
@@ -193,9 +195,12 @@ define_box_and_solvate() {
         exit 1
     fi
     check_file_exists "solv.gro" || return
+    echo -e ${YELLOW}
     read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
+    echo -e ${NC}
     if [ $select_solvate_box == "y" ]; then
         gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader
+        echo
         gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
@@ -216,7 +221,7 @@ define_box_and_solvate() {
             sleep 1.0
             ;;
         esac
-
+        echo
         echo -e ${YELLOW}"Select solvation model from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} SPC"
         #echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} SPC/E"
@@ -226,12 +231,12 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) (gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
+            1) gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
             #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
             #sleep 2.0; exit 1; } ;;
             2) gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro > /dev/null 2>&1 &
             solvate_loader ;;
-            3) (gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
+            3) gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
