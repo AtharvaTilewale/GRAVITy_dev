@@ -160,6 +160,10 @@ generate_protein_topology() {
     fi
 }
 
+solvate_loader(){
+    show_spinner $! "Solvating the system"
+}
+
 # Function to define box and solvate the system
 define_box_and_solvate() {
     echo
@@ -173,10 +177,10 @@ define_box_and_solvate() {
     check_file_exists "solv.gro" || return
     read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
     if [ $select_solvate_box == "y" ]; then
-        gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-        sleep 2.0; exit 1; }
-        gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-        sleep 2.0; exit 1; }
+        ( gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+        sleep 2.0; exit 1; } ) & solvate_loader
+        ( gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+        sleep 2.0; exit 1; } ) & solvate_loader
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
