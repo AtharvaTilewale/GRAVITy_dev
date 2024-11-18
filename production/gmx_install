@@ -1,0 +1,13 @@
+#!/bin/bash
+#Author: Atharva Tilewale
+#This is the GROMACS installation script
+
+tar xfz gromacs-2024.4.tar.gz
+cd gromacs-2024.4
+mkdir build
+cd build
+cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON
+make
+make check
+sudo make install
+source /usr/local/gromacs/bin/GMXRC

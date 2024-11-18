@@ -390,7 +390,7 @@ energy_minimization() {
     if [ ! -f "minim.mdp" ]; then
         echo "minim.mdp does not exist. Downloading..."
         file_download_name="minim.mdp"
-        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
+        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" > /dev/null 2>&1 & ) & download_loader
     fi
     check_file_exists "em.gro" || return
     gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing..."
