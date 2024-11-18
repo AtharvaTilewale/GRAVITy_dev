@@ -10,3 +10,4 @@ cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
 cd $HOME/.GRAVITy #enter to working directory
 chmod +x gmx_install #make gmx_install executable
 bash gmx_install #run gmx_install script
+source /usr/local/gromacs/bin/GMXRC
