@@ -2,12 +2,37 @@
 #Author: Atharva Tilewale
 #This is the GRAVITy setup installation script
 
+# Function to stop the spinner if an error occurs
+stop_spinner() {
+    if [ ! -z "$spinner_pid" ]; then
+        kill $spinner_pid
+    fi
+}
+
+# Function to display a rotating loader with custom text
+show_spinner() {
+    local pid=$1         # Process ID to monitor
+    local message=$2     # Custom loading message
+    local spin='-\|/'    # Spinner characters
+    local i=0
+
+    # Loop to display the spinner until the task completes
+    while kill -0 $pid 2>/dev/null; do
+        i=$(( (i + 1) % 4 ))
+        printf "\r${spin:$i:1} %s..." "$message"
+        sleep 0.1
+    done
+    printf "\r%s...        \n" "$message"
+}
+
 # usr=$(whoami) #get username
 # dir="/home/$usr" #set home directory
 
+echo "Setting up GRAVITy..."
 mkdir $HOME/.GRAVITy #create GRAVITy folder
 cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
 cd $HOME/.GRAVITy #enter to working directory
 chmod +x gmx_install #make gmx_install executable
 bash gmx_install #run gmx_install script
 source /usr/local/gromacs/bin/GMXRC #add gromacs to source
+cd $HOME/.GRAVITy
