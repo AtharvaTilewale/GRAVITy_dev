@@ -1,0 +1,5 @@
+#!/bin/bash
+#Author: Atharva Tilewale
+#This is the GRAVITy executing script
+
+bash $HOME/.GRAVITy/simulate
