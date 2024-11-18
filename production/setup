@@ -36,3 +36,5 @@ chmod +x gmx_install #make gmx_install executable
 bash gmx_install #run gmx_install script
 source /usr/local/gromacs/bin/GMXRC #add gromacs to source
 cd $HOME/.GRAVITy
+chmod +x gravity colors merge.py #make all necessary files executable
+bash gravity #run gravity
