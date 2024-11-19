@@ -2,8 +2,8 @@
 #Author: Atharva Tilewale
 #This is the GROMACS installation script
 
-tar xfz gromacs-2024.4.tar.gz
-cd gromacs-2024.4
+tar xfz gromacs-2020.tar.gz
+cd gromacs-2020
 mkdir build
 cd build
 cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON

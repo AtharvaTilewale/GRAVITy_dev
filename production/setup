@@ -28,7 +28,8 @@ show_spinner() {
 dir1=$(pwd) #existing directory
 # usr=$(whoami) #get username
 # dir="/home/$usr" #set home directory
-
+echo "Installing dependencies..."
+bash requirements
 echo "Setting up GRAVITy..."
 mkdir $HOME/.GRAVITy #create GRAVITy folder
 cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
