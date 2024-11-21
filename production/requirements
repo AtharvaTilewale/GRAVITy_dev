@@ -19,8 +19,37 @@ install_package() {
     fi
 }
 
+# Function to check if GROMACS is installed and install if not
+check_and_install_gromacs() {
+    if command -v gmx &> /dev/null; then
+        echo "GROMACS is already installed."
+        echo "Version: $(gmx --version | head -n 1)"
+    else
+        echo "GROMACS is not installed. Proceeding with installation..."
+        sudo apt update && sudo apt install -y gromacs
+
+        # # Download and install GROMACS
+        # echo "Downloading and installing GROMACS..."
+        # mkdir -p ~/gromacs_install && cd ~/gromacs_install
+        # wget http://ftp.gromacs.org/pub/gromacs/gromacs-2023.1.tar.gz
+        # tar -xvzf gromacs-2023.1.tar.gz
+        # cd gromacs-2023.1
+        # mkdir build && cd build
+        # cmake .. -DGMX_BUILD_OWN_FFTW=ON -DREGRESSIONTEST_DOWNLOAD=ON -DCMAKE_INSTALL_PREFIX=/usr/local/gromacs
+        # make -j$(nproc)
+        # sudo make install
+        
+        # # Source GROMACS
+        # echo "Sourcing GROMACS..."
+        # echo 'source /usr/local/gromacs/bin/GMXRC' >> ~/.bashrc
+        # source ~/.bashrc
+        
+        # echo "GROMACS installation completed successfully."
+    fi
+}
+
 # Check and install required system packages
-SYSTEM_PACKAGES=("python3" "python3-pip" "cmake" "wget")
+SYSTEM_PACKAGES=("python3" "python3-pip" "cmake" "wget" "build-essential" "gcc" "g++" "libfftw3-dev" "openmpi-bin" "openmpi-common" "libopenmpi-dev")
 
 for package in "${SYSTEM_PACKAGES[@]}"; do
     install_package "$package"
@@ -33,6 +62,9 @@ if [ -f "requirements.txt" ]; then
 else
     echo -e "${RED}requirements.txt not found. Skipping Python dependencies installation.${NC}"
 fi
+
+# Run the function
+check_and_install_gromacs
 
 # Additional steps: Modify as per your project's requirements
 # Uncomment and customize the following lines if needed

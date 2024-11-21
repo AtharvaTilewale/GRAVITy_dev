@@ -1,5 +1,5 @@
 #!/bin/bash
 #Author: Atharva Tilewale
 #This is the GRAVITy executing script
-source /usr/local/gromacs/bin/GMXRC #add gromacs to source 
+#source /usr/local/gromacs/bin/GMXRC #add gromacs to source 
 bash $HOME/.GRAVITy/simulate #run GRAVITy simulation

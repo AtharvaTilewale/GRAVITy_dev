@@ -34,10 +34,10 @@ echo "Setting up GRAVITy..."
 mkdir $HOME/.GRAVITy #create GRAVITy folder
 cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
 cd $HOME/.GRAVITy #enter to working directory
-chmod +x gmx_install #make gmx_install executable
-bash gmx_install #run gmx_install script
-source /usr/local/gromacs/bin/GMXRC #add gromacs to source
-cd $HOME/.GRAVITy
+# chmod +x gmx_install #make gmx_install executable
+# bash gmx_install #run gmx_install script
+# source /usr/local/gromacs/bin/GMXRC #add gromacs to source
+# cd $HOME/.GRAVITy
 cp prm/* $HOME/.GRAVITy/ #copy all parameter file to directory
 cp gravity $HOME #copy gravity to home
 chmod +x $HOME/gravity #make gravity executable
