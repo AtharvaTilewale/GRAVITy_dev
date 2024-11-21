@@ -68,6 +68,20 @@ solvate_loader(){
     fi 
 }
 
+#ion tpr loader
+ion_tpr_loader(){
+    show_spinner $! "Adding ions to the system"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to generate ions.tpr. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"Ions.tpr generated successfully"${NC}
+    sleep 1.0
+    fi 
+}
+
+
 #Ion addition loader
 ion_add_loader(){
     show_spinner $! "Adding ions to the system"
