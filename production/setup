@@ -33,6 +33,7 @@ bash requirements
 echo "Setting up GRAVITy..."
 mkdir $HOME/.GRAVITy #create GRAVITy folder
 cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
+sudo cp gravity /bin/ #copy run file to /bin
 cd $HOME/.GRAVITy #enter to working directory
 # chmod +x gmx_install #make gmx_install executable
 # bash gmx_install #run gmx_install script
@@ -41,6 +42,7 @@ cd $HOME/.GRAVITy #enter to working directory
 cp prm/* $HOME/.GRAVITy/ #copy all parameter file to directory
 cp gravity $HOME #copy gravity to home
 chmod +x $HOME/gravity #make gravity executable
+sudo chmod +x /bin/gravity /usr/bin/gravity #make gravity executable
 chmod +x gravity colors merge.py #make all necessary files executable
 rm -rf $dir1 #remove previous directory
 bash gravity #run gravity
