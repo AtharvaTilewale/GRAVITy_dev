@@ -45,6 +45,19 @@ download_loader(){
 }
 
 #Box loader
+pdbfix_loader(){
+    show_spinner $! "Fixing PDB File"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to fix PDB file. See log file for more info.${NC}"
+        exit 1
+    else
+    echo -e ${LIGHT_GREEN}"PDB file fixed successfully. Restarting generating protein topology."${NC}
+    sleep 1.0
+    fi 
+}
+
+#Box loader
 box_loader(){
     show_spinner $! "Preparing Box"
     wait $!
@@ -255,7 +268,12 @@ download_protein() {
 # Function to fix PDB file using PDBFixer tool
 pdbfixer(){
     rm protein.pdb 2>/dev/null
-    ( pdbfixer --pdbid=$pdb_id --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose )  & show_spinner $! "Fixing PDB file"
+    pdbfixer --pdbid=$pdb_id --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose > /dev/null 2>&1 & pdbfix_loader
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: PDBFixer failed to fix the PDB file.${NC}"
+        exit 1
+    fi
+    generate_protein_topology
 }
 
 # Function to generate protein topology
