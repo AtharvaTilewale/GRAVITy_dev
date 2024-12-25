@@ -252,6 +252,12 @@ download_protein() {
     sleep 3.0
 }
 
+# Function to fix PDB file using PDBFixer tool
+pdbfixer(){
+    rm protein.pdb 2>/dev/null
+    ( pdbfixer --pdbid=$pdb_id --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose )  & show_spinner $! "Fixing PDB file"
+}
+
 # Function to generate protein topology
 generate_protein_topology() {
     echo
@@ -269,7 +275,7 @@ generate_protein_topology() {
             # Remove lines containing HETATM and save back to the same file
             sed -i '/^HETATM/d' protein.pdb
         fi
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." ${NC}
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." & pdbfixer ${NC}
         sleep 2.0; exit 1; }
     else
         check_file_exists "protein.gro" || return
@@ -277,7 +283,7 @@ generate_protein_topology() {
             # Remove lines containing HETATM and save back to the same file
             sed -i '/^HETATM/d' protein.pdb
         fi
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." ${NC}
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." & pdbfixer ${NC}
         sleep 2.0; exit 1; }
     fi
 }
