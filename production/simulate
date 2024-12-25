@@ -53,7 +53,7 @@ pdbfix_loader(){
         exit 1
     else
     echo -e ${LIGHT_GREEN}"PDB file fixed successfully. Restarting generating protein topology."${NC}
-    sleep 1.0
+    sleep 3.0
     fi 
 }
 
@@ -246,32 +246,28 @@ check_file_exists() {
 
 # Download protein structure
 # Download protein structure
-# Function to download protein structure
 download_protein() {
-    echo -e "${YELLOW}Downloading protein structure using PDB ID...${NC}"
+    echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
     read -p "Enter PDB ID: " pdb_id
 
-    # Attempt to download PDB file
-    wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb 2>/dev/null
+    # Attempt download and show spinner
+    ( wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb 2>/dev/null ) & show_spinner $! "Downloading protein structure"
+    
+    # Check if the file was downloaded successfully
     if [ -s protein.pdb ]; then
-        echo -e "${LIGHT_GREEN}Protein structure downloaded successfully!${NC}"
+        echo -e "${LIGHT_GREEN}Protein Structure Downloaded successfully!${NC}"
     else
         echo -e "${LIGHT_RED}Error: Failed to download PDB structure.${NC}"
-        rm -f protein.pdb
+        rm -f protein.pdb  # Clean up any incomplete file
         exit 1
     fi
+    sleep 1.0
 }
 
 # Function to fix PDB file using PDBFixer
 pdb_fixer() {
-    echo "Fixing PDB file with PDBFixer..."
-    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose
-
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: PDBFixer failed to fix the PDB file.${NC}"
-        exit 1
-    fi
-    echo -e "${LIGHT_GREEN}PDB file fixed successfully!${NC}"
+    echo
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose >/dev/null 2>&1 &pdbfix_loader
 }
 
 # Function to remove HETATM lines
