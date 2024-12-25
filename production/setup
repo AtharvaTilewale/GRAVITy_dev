@@ -62,11 +62,26 @@ echo "Creating Conda environment 'gravity_env'..."
 conda create -y -n gravity_env python=3.9
 
 # Step 4: Activate the environment
-source activate gravity_env
+echo "Activating the Conda environment..."
+if ! source activate gravity_env; then
+    echo "Failed to activate the 'gravity_env' environment. Exiting."
+    exit 1
+fi
 
 # Step 5: Install required Python packages
 echo "Installing required Python packages..."
-conda install -y -c conda-forge openmm numpy pdbfixer
+if ! conda install -y -c conda-forge openmm numpy pdbfixer; then
+    echo "Failed to install Python packages. Exiting."
+    exit 1
+fi
+
+# Step 6: Validate environment activation
+if [[ $(conda info --envs | grep '* gravity_env') ]]; then
+    echo "'gravity_env' environment activated successfully."
+else
+    echo "Environment activation failed. Please check your Conda setup."
+    exit 1
+fi
 
 echo "Installing dependencies..."
 bash requirements
