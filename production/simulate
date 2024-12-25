@@ -263,10 +263,9 @@ download_protein() {
 }
 
 # Function to fix PDB file using PDBFixer
-pdbfixer() {
+pdb_fixer() {
     echo "Fixing PDB file with PDBFixer..."
-    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues \
-        --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose
 
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: PDBFixer failed to fix the PDB file.${NC}"
@@ -305,7 +304,7 @@ generate_protein_topology() {
     gmx pdb2gmx -f protein.pdb -o protein.gro -ignh
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-        pdbfixer
+        pdb_fixer
         gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || {
             echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
             exit 1
