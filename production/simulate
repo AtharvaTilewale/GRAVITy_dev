@@ -246,65 +246,74 @@ check_file_exists() {
 
 # Download protein structure
 # Download protein structure
+# Function to download protein structure
 download_protein() {
-    echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
+    echo -e "${YELLOW}Downloading protein structure using PDB ID...${NC}"
     read -p "Enter PDB ID: " pdb_id
 
-    # Attempt download and show spinner
-    ( wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb 2>/dev/null ) & show_spinner $! "Downloading protein structure"
-    
-    # Check if the file was downloaded successfully
+    # Attempt to download PDB file
+    wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb 2>/dev/null
     if [ -s protein.pdb ]; then
-        echo -e "${LIGHT_GREEN}Protein Structure Downloaded successfully!${NC}"
+        echo -e "${LIGHT_GREEN}Protein structure downloaded successfully!${NC}"
     else
         echo -e "${LIGHT_RED}Error: Failed to download PDB structure.${NC}"
-        rm -f protein.pdb  # Clean up any incomplete file
+        rm -f protein.pdb
         exit 1
     fi
-
-    sleep 3.0
 }
 
-# Function to fix PDB file using PDBFixer tool
-pdbfixer(){
-    rm protein.pdb 2>/dev/null
-    pdbfixer --pdbid=$pdb_id --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose > /dev/null 2>&1 & pdbfix_loader
+# Function to fix PDB file using PDBFixer
+pdbfixer() {
+    echo "Fixing PDB file with PDBFixer..."
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues \
+        --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose
+
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: PDBFixer failed to fix the PDB file.${NC}"
         exit 1
     fi
-    generate_protein_topology
+    echo -e "${LIGHT_GREEN}PDB file fixed successfully!${NC}"
+}
+
+# Function to remove HETATM lines
+remove_hetatm() {
+    if grep -q "HETATM" protein.pdb; then
+        echo "Removing HETATM entries from protein.pdb..."
+        sed -i '/^HETATM/d' protein.pdb
+    fi
 }
 
 # Function to generate protein topology
 generate_protein_topology() {
-    echo
     echo "Generating protein topology..."
+
     if [ ! -f "protein.pdb" ]; then
-        echo -e ${LIGHT_RED} "protein.pdb file does not exist. ${NC}"
-        read -p "Do you want download the protein structure (y/n): " protein_download
-            if [ "$protein_download" == "y" ]; then
-                download_protein
-            else
-                echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
+        echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
+        read -p "Do you want to download the protein structure (y/n): " response
+        if [ "$response" == "y" ]; then
+            download_protein
+        else
+            echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
             exit 1
-            fi
-        if grep -q "HETATM" protein.pdb; then
-            # Remove lines containing HETATM and save back to the same file
-            sed -i '/^HETATM/d' protein.pdb
         fi
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." & pdbfixer ${NC}
-        sleep 2.0; exit 1; }
-    else
-        check_file_exists "protein.gro" || return
-        if grep -q "HETATM" protein.pdb; then
-            # Remove lines containing HETATM and save back to the same file
-            sed -i '/^HETATM/d' protein.pdb
-        fi
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo -e ${LIGHT_RED} "Error: Failed to prepare protein topology." & pdbfixer ${NC}
-        sleep 2.0; exit 1; }
     fi
+
+    # Remove HETATM entries
+    remove_hetatm
+
+    # Run GROMACS pdb2gmx
+    gmx pdb2gmx -f protein.pdb -o protein.gro -ignh
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+        pdbfixer
+        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || {
+            echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+            exit 1
+        }
+    fi
+    echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
 }
+
 
 # Function to define box and solvate the system
 define_box_and_solvate() {
