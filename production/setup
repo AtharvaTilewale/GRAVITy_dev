@@ -102,20 +102,43 @@ conda install -y -c conda-forge openmm numpy pdbfixer
 
 echo "Installing dependencies..."
 bash requirements
+
 echo "Setting up GRAVITy..."
-mkdir $HOME/.GRAVITy #create GRAVITy folder
-cp * $HOME/.GRAVITy/ -r #copy all the files to working directory
-sudo cp gravity /bin/ #copy run file to /bin
-cd $HOME/.GRAVITy #enter to working directory
-# chmod +x gmx_install #make gmx_install executable
-# bash gmx_install #run gmx_install script
-# source /usr/local/gromacs/bin/GMXRC #add gromacs to source
-# cd $HOME/.GRAVITy
-cp prm/* $HOME/.GRAVITy/ #copy all parameter file to directory
-cp gravity $HOME #copy gravity to home
-chmod +x $HOME/gravity #make gravity executable
-sudo chmod +x /bin/gravity /usr/bin/gravity #make gravity executable
-chmod +x gravity colors merge.py #make all necessary files executable
-rm -rf $dir1 #remove previous directory
-bash gravity #run gravity
+# Create GRAVITy folder if not exists, remove it if already exists
+if [ -d "$HOME/.GRAVITy" ]; then
+    echo "Existing .GRAVITy folder found. Removing..."
+    rm -rf $HOME/.GRAVITy
+fi
+mkdir $HOME/.GRAVITy
+
+# Copy all files to GRAVITy folder
+cp * $HOME/.GRAVITy/ -r
+
+# Replace gravity executable in /bin if exists
+if [ -f "/bin/gravity" ]; then
+    echo "Existing gravity executable found in /bin. Removing..."
+    sudo rm -f /bin/gravity
+fi
+sudo cp gravity /bin/
+
+cd $HOME/.GRAVITy
+cp prm/* $HOME/.GRAVITy/
+
+# Replace gravity executable in home directory if exists
+if [ -f "$HOME/gravity" ]; then
+    echo "Existing gravity executable found in home directory. Removing..."
+    rm -f $HOME/gravity
+fi
+cp gravity $HOME
+
+# Make all necessary files executable
+chmod +x $HOME/gravity
+sudo chmod +x /bin/gravity /usr/bin/gravity
+chmod +x gravity colors merge.py
+
+# Remove previous working directory
+rm -rf $dir1
+
+# Run GRAVITy
+bash gravity
 exit 0
