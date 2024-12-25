@@ -2,6 +2,7 @@
 #Author: Atharva Tilewale
 
 #Change working directory
+conda activate gravity_env
 cd $HOMME/.GRAVITy
 
 new_project() {
@@ -74,8 +75,8 @@ settings() {
     esac
 }
 
-# Entry point
-mkdir -p projects reports
-main_menu
+# # Entry point
+# mkdir -p projects reports
+# main_menu
 
 bash $HOME/.GRAVITy/simulate #run GRAVITy simulation

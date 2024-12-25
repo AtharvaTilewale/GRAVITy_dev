@@ -28,6 +28,46 @@ show_spinner() {
 dir1=$(pwd) #existing directory
 # usr=$(whoami) #get username
 # dir="/home/$usr" #set home directory
+set -e # Stop script on any error
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" &>/dev/null
+}
+
+# Function to install Miniconda if Conda is not installed
+install_conda() {
+    echo "Conda not found. Installing Miniconda..."
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda3.sh
+    bash Miniconda3.sh -b -p $HOME/miniconda
+    rm Miniconda3.sh
+    export PATH="$HOME/miniconda/bin:$PATH"
+    echo 'export PATH="$HOME/miniconda/bin:$PATH"' >> ~/.bashrc
+    source ~/.bashrc
+}
+
+# Step 1: Check for Conda
+if ! command_exists conda; then
+    install_conda
+else
+    echo "Conda is already installed."
+fi
+
+# Step 2: Ensure Conda is initialized
+conda init bash
+source ~/.bashrc
+
+# Step 3: Create a dedicated environment for GRAVITy
+echo "Creating Conda environment 'gravity_env'..."
+conda create -y -n gravity_env python=3.9
+
+# Step 4: Activate the environment
+source activate gravity_env
+
+# Step 5: Install required Python packages
+echo "Installing required Python packages..."
+conda install -y -c conda-forge openmm numpy pdbfixer
+
 echo "Installing dependencies..."
 bash requirements
 echo "Setting up GRAVITy..."
