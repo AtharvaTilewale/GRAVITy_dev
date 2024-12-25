@@ -4,6 +4,7 @@
 #Add miniconda to PATH 
 export PATH="$HOME/miniconda3/bin:$PATH"
 echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> ~/.bashrc
+conda init bash
 source ~/.bashrc
 
 # Ensure the current shell recognizes Conda
