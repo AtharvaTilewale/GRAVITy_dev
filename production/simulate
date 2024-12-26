@@ -260,14 +260,14 @@ download_protein() {
     read -p "Enter PDB ID: " pdb_id
 
     # Attempt download and show spinner
-    ( wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O protein.pdb 2>/dev/null ) & show_spinner $! "Downloading protein structure"
+    ( wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O $project_dir/protein.pdb 2>/dev/null ) & show_spinner $! "Downloading protein structure"
     
     # Check if the file was downloaded successfully
-    if [ -s protein.pdb ]; then
+    if [ -s $project_dir/protein.pdb ]; then
         echo -e "${LIGHT_GREEN}Protein Structure Downloaded successfully!${NC}"
     else
         echo -e "${LIGHT_RED}Error: Failed to download PDB structure.${NC}"
-        rm -f protein.pdb  # Clean up any incomplete file
+        rm -f $project_dir/protein.pdb  # Clean up any incomplete file
         exit 1
     fi
     sleep 1.0
@@ -276,14 +276,14 @@ download_protein() {
 # Function to fix PDB file using PDBFixer
 pdb_fixer() {
     echo
-    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=protein.pdb --verbose >/dev/null 2>&1 &pdbfix_loader
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &pdbfix_loader
 }
 
 # Function to remove HETATM lines
 remove_hetatm() {
-    if grep -q "HETATM" protein.pdb; then
+    if grep -q "HETATM" $project_dir/protein.pdb; then
         echo "Removing HETATM entries from protein.pdb..."
-        sed -i '/^HETATM/d' protein.pdb
+        sed -i '/^HETATM/d' $project_dir/protein.pdb
     fi
 }
 
@@ -291,7 +291,7 @@ remove_hetatm() {
 generate_protein_topology() {
     echo "Generating protein topology..."
 
-    if [ ! -f "protein.pdb" ]; then
+    if [ ! -f "$project_dir/protein.pdb" ]; then
         echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
         read -p "Do you want to download the protein structure (y/n): " response
         if [ "$response" == "y" ]; then
@@ -306,11 +306,11 @@ generate_protein_topology() {
     remove_hetatm
 
     # Run GROMACS pdb2gmx
-    gmx pdb2gmx -f protein.pdb -o protein.gro -ignh
+    gmx pdb2gmx -f $project_dir/protein.pdb -o $project_dir/protein.gro -ignh
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
         pdb_fixer
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || {
+        gmx pdb2gmx -f $project_dir/protein.pdb -o $project_dir/protein.gro -ignh || {
             echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
             exit 1
         }
@@ -324,19 +324,19 @@ define_box_and_solvate() {
     echo
     echo "Defining box and solvating system..."
     echo
-        if [ ! -f "protein.gro" ]; then
+        if [ ! -f "$project_dir/protein.gro" ]; then
         echo -e ${LIGHT_RED} "protein.gro does not exist.${NC}"
         sleep 2.0 
         exit 1
     fi
-    check_file_exists "solv.gro" || return
+    check_file_exists "$project_dir/solv.gro" || return
     echo -e ${YELLOW}
     read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
     echo -e ${NC}
     if [ $select_solvate_box == "y" ]; then
-        gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader
         echo
-        gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
@@ -347,11 +347,11 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader;;
+            1) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader;;
             #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
             #sleep 2.0; exit 1; } ;;
-            2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt dodecahedron > /dev/null 2>&1 & box_loader ;;
-            3) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt triclinic > /dev/null 2>&1 & box_loader ;;
+            2) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron > /dev/null 2>&1 & box_loader ;;
+            3) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic > /dev/null 2>&1 & box_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
@@ -366,12 +366,12 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx solvate -cp newbox.gro -cs spc216.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
+            1) gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader ;;
             #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
             #sleep 2.0; exit 1; } ;;
-            2) gmx solvate -cp newbox.gro -cs tip3p.gro -p topol.top -o solv.gro > /dev/null 2>&1 &
+            2) gmx solvate -cp $project_dir/newbox.gro -cs tip3p.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 &
             solvate_loader ;;
-            3) gmx solvate -cp newbox.gro -cs tip4p.gro -p topol.top -o solv.gro > /dev/null 2>&1 & solvate_loader ;;
+            3) gmx solvate -cp $project_dir/newbox.gro -cs tip4p.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
@@ -381,25 +381,25 @@ define_box_and_solvate() {
 
 # Function to add ions
 add_ions() {
-    if [ ! -f "solv.gro" ]; then
+    if [ ! -f "$project_dir/solv.gro" ]; then
         echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
         sleep 2.0
         exit 1
     fi
     
-    if [ ! -f "ions.mdp" ]; then
+    if [ ! -f "$project_dir/ions.mdp" ]; then
         echo "ions.mdp file does not exist."
         file_download_name="ions.mdp"
         ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" > /dev/null 2>&1 ) & download_loader
     fi
     echo
-    check_file_exists "solv_ions.gro" || return
-    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr > /dev/null 2>&1 & ion_tpr_loader 
+    check_file_exists "$project_dir/solv_ions.gro" || return
+    gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr > /dev/null 2>&1 & ion_tpr_loader 
     echo -e ${LIGHT_YELLOW}
     read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
     echo -e ${NC}
     if [ $select_ion_addition == "y" ]; then
-        gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral # > /dev/null 2>&1 & ion_add_loader
+        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral # > /dev/null 2>&1 & ion_add_loader
     else
     echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
@@ -409,9 +409,9 @@ add_ions() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral ;; # > /dev/null 2>&1 & ion_add_loader
-            2) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA > /dev/null 2>&1 & ion_add_loader ;;
-            3) gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -nname CL > /dev/null 2>&1 & ion_add_loader ;;
+            1) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral ;; # > /dev/null 2>&1 & ion_add_loader
+            2) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA > /dev/null 2>&1 & ion_add_loader ;;
+            3) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL > /dev/null 2>&1 & ion_add_loader ;;
             *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
@@ -434,20 +434,20 @@ energy_minimization() {
     echo
     echo "Running energy minimization..."
     printf "\n"
-    if [ ! -f "solv_ions.gro" ]; then
+    if [ ! -f "$project_dir/solv_ions.gro" ]; then
         echo -e ${LIGHT_RED} "solv_ions.gro does not exist." ${NC}
         sleep 2.0
         exit 1
     fi
     
-    if [ ! -f "minim.mdp" ]; then
+    if [ ! -f "$project_dir/minim.mdp" ]; then
         echo "minim.mdp does not exist. Downloading..."
         file_download_name="minim.mdp"
         ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
     fi
-    check_file_exists "em.gro" || return
-    gmx grompp -f minim.mdp -c solv_ions.gro -p topol.top -o em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing..."
-    gmx mdrun -v -deffnm em > /dev/null 2>&1 & energy_minimization_loader
+    check_file_exists "$project_dir/em.gro" || return
+    gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing..."
+    gmx mdrun -v -deffnm $project_dir/em > /dev/null 2>&1 & energy_minimization_loader
     echo
     #generating potential energy xvg file
     # echo -e "Calculating potential energy..."
@@ -456,9 +456,9 @@ energy_minimization() {
 
 NVT_equilibration(){
     equilibration_step_name="NVT equilibration"
-    gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -o nvt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -o $project_dir/nvt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
     echo
-    gmx mdrun -deffnm nvt -v > /dev/null 2>&1 & equilibration_loader
+    gmx mdrun -deffnm $project_dir/nvt -v > /dev/null 2>&1 & equilibration_loader
     echo
     #Analyzing the temperature progression
     # echo "Analyzing the temperature progression..."
@@ -467,9 +467,9 @@ NVT_equilibration(){
 
 NPT_equilibration() {
     equilibration_step_name="NPT equilibration"
-    gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -t nvt.cpt -p topol.top -o npt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -t $project_dir/nvt.cpt -p $project_dir/topol.top -o $project_dir/npt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
     echo
-    gmx mdrun -deffnm npt -v > /dev/null 2>&1 & equilibration_loader
+    gmx mdrun -deffnm $project_dir/npt -v > /dev/null 2>&1 & equilibration_loader
     echo
     #Analyzing the pressure and density progression
     # echo "Analyzing the pressure and density progression..."
@@ -494,53 +494,53 @@ equilibrium() {
         echo -e ${NC}
         case $equil_choice in
             1)
-                if [ ! -f "em.gro" ]; then
+                if [ ! -f "$project_dir/em.gro" ]; then
                     echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
                     sleep 2.0
                     exit 1
                 fi
                 
-                if [ ! -f "nvt.mdp" ]; then
+                if [ ! -f "$project_dir/nvt.mdp" ]; then
                     echo "nvt.mdp does not exist. Downloading..."
                     file_download_name="nvt.mdp"
                     ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
                 fi
                 
-                check_file_exists "nvt.gro" || return
+                check_file_exists "$project_dir/nvt.gro" || return
 
                 NVT_equilibration 
                 #2>/dev/null & show_spinner $! "Running NVT Equilibration"
                 ;;
             2)
-                if [ ! -f "nvt.gro" ]; then
+                if [ ! -f "$project_dir/nvt.gro" ]; then
                     echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
                     exit 1
                 fi
                 
-                if [ ! -f "npt.mdp" ]; then
+                if [ ! -f "$project_dir/npt.mdp" ]; then
                     echo "npt.mdp does not exist. Downloading..."
                     file_download_name="npt.mdp"
                     ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
                 fi
 
-                check_file_exists "npt.gro" || return
+                check_file_exists "$project_dir/npt.gro" || return
                 
                 NPT_equilibration 
                 #2>/dev/null & show_spinner $! "Running NPT Equilibration" 
                 ;;
             3) 
-                if [ ! -f "em.gro" ]; then
+                if [ ! -f "$project_dir/em.gro" ]; then
                     echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
                     sleep 2.0
                     exit 1
                 fi
                 
-                if [ ! -f "nvt.mdp" ]; then
+                if [ ! -f "$project_dir/nvt.mdp" ]; then
                     echo "nvt.mdp does not exist. Downloading..."
                     file_download_name="nvt.mdp"
                     ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
                 fi
-                if [ ! -f "npt.mdp" ]; then
+                if [ ! -f "$project_dir/npt.mdp" ]; then
                     echo "npt.mdp does not exist. Downloading..."
                     file_download_name="npt.mdp"
                     ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
@@ -571,15 +571,15 @@ equilibrium() {
 # Update nsteps in md.mdp and regenerate md.tpr
 update_simulation_steps() {
     # Update nsteps in md.mdp
-    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
+    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" $project_dir/md.mdp
     # echo "Updated nsteps in md.mdp:"
     # grep "nsteps" md.mdp  # Verify the update in md.mdp
 
     # Clear old .tpr file (optional but recommended)
-    rm -f md.tpr
+    rm -f $project_dir/md.tpr
 
     # Regenerate md.tpr using the updated md.mdp
-    gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr > /dev/null 2>&1 || {
+    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr > /dev/null 2>&1 || {
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
         exit 1
     }
@@ -601,19 +601,19 @@ update_simulation_steps() {
 production_md() {
     echo   
     # Check for required files
-    if [ ! -f "npt.gro" ]; then
+    if [ ! -f "$project_dir/npt.gro" ]; then
         echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
         sleep 2.0
         exit 1
     fi
 
-    if [ ! -f "md.mdp" ]; then
+    if [ ! -f "$project_dir/md.mdp" ]; then
         echo "md.mdp does not exist. Downloading..."
         file_download_name="md.mdp"
         ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp" ) & download_loader
     fi
     
-    check_file_exists "md.xtc" || return
+    check_file_exists "$project_dir/md.xtc" || return
     echo
     
     #User input simulation time
@@ -657,7 +657,7 @@ production_md() {
             
             # Measure and show time while running the simulation, suppress output
             start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm md -v -nb gpu > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
+            gmx mdrun -deffnm $project_dir/md -v -nb gpu > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
             end_time=$(date +%s)  # Get end time
             
             elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -670,7 +670,7 @@ production_md() {
             
             # Measure and show time while running the simulation, suppress output
             start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
+            gmx mdrun -deffnm $project_dir/md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
             end_time=$(date +%s)  # Get end time
             
             elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -683,7 +683,7 @@ production_md() {
         
         # Measure and show time while running the simulation, suppress output
         start_time=$(date +%s)  # Get start time
-        gmx mdrun -deffnm md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
+        gmx mdrun -deffnm $project_dir/md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
         end_time=$(date +%s)  # Get end time
         
         elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
@@ -717,67 +717,67 @@ run_analysis() {
                 echo
                 echo "Recentering and Rewrapping Coordinates..."
                 echo
-                if [ ! -f "md.xtc" ]; then
+                if [ ! -f "$project_dir/md.xtc" ]; then
                     echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "md_noPBC.xtc" || return
-                gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center || exit 1
+                check_file_exists "$project_dir/md_noPBC.xtc" || return
+                gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center || exit 1
                 ;;
             2)
                 echo
                 echo "Finding RMSD..."
                 echo
-                if [ ! -f "md_noPBC.xtc" ]; then
+                if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "rmsd.xvg" || return
-                gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd.xvg -tu ns || exit 1
+                check_file_exists "$project_dir/rmsd.xvg" || return
+                gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
                 ;;
             3)
                 echo
                 echo "Analyzing Temperature Progression..."
                 echo
-                if [ ! -f "nvt.edr" ]; then
+                if [ ! -f "$project_dir/nvt.edr" ]; then
                     echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "temperature.xvg" || return
-                gmx energy -f nvt.edr -o temperature.xvg #generate temperature.xvg file
+                check_file_exists "$project_dir/temperature.xvg" || return
+                gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
                 ;;
             4)
                 echo
                 echo "Analyzing Pressure Progression..."
                 echo
-                if [ ! -f "npt.edr" ]; then
+                if [ ! -f "$project_dir/npt.edr" ]; then
                     echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "pressure.xvg" || return
-                gmx energy -f nvt.edr -o pressure.xvg #generate temperature.xvg file
+                check_file_exists "$project_dir/pressure.xvg" || return
+                gmx energy -f $project_dir/nvt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
                 ;;
             5)
                 echo
                 echo "Analyzing Density Progression..."
                 echo
-                if [ ! -f "npt.edr" ]; then
+                if [ ! -f "$project_dir/npt.edr" ]; then
                     echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "density.xvg" || return
-                gmx energy -f nvt.edr -o density.xvg #generate temperature.xvg file
+                check_file_exists "$project_dir/density.xvg" || return
+                gmx energy -f $project_dir/nvt.edr -o $project_dir/density.xvg #generate temperature.xvg file
                 ;;
             6)
                 echo
                 echo "Calculating Potential Energy..."
                 echo
-                if [ ! -f "em.edr" ]; then
+                if [ ! -f "$project_dir/em.edr" ]; then
                     echo -e ${LIGHT_RED} "em.edr does not exist.${NC}" 
                     exit 1
                 fi
-                check_file_exists "potential.xvg" || return
-                gmx energy -f em.edr -o potential.xvg #generate temperature.xvg file
+                check_file_exists "$project_dir/potential.xvg" || return
+                gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
                 ;;
             7)
                 echo
@@ -850,9 +850,9 @@ automatic_run(){
 }
 
 test_run(){
-    sed -i "s/^nsteps.*/nsteps = 500/" npt.mdp
-    sed -i "s/^nsteps.*/nsteps = 500/" nvt.mdp
-    sed -i "s/^nsteps.*/nsteps = 5000/" md.mdp
+    sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/npt.mdp
+    sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/nvt.mdp
+    sed -i "s/^nsteps.*/nsteps = 5000/" $project_dir/md.mdp
     automatic_run
 }
 
@@ -867,9 +867,9 @@ advanced_options(){
     echo -e ${NC}
     read -p "Are you confirm? Do you want to contine? (y/n): " adv_confirm
     if [ $adv_confirm == "y" ]; then
-        sed -i "s/^nsteps.*/nsteps = $npt_steps/" npt.mdp
-        sed -i "s/^nsteps.*/nsteps = $nvt_steps/" nvt.mdp
-        sed -i "s/^nsteps.*/nsteps = $md_nsteps/" md.mdp
+        sed -i "s/^nsteps.*/nsteps = $npt_steps/" $project_dir/npt.mdp
+        sed -i "s/^nsteps.*/nsteps = $nvt_steps/" $project_dir/nvt.mdp
+        sed -i "s/^nsteps.*/nsteps = $md_nsteps/" $project_dir/md.mdp
         echo -e "${LIGHT_GREEN}Changes saved successfully...${NC}"
         echo
         sleep 2.0
