@@ -3,9 +3,11 @@
 #Protein simulation made easy with GRAVITy
 
 # Change working directory
-cd $HOME/.GRAVITy
+cd /etc/GRAVITy/
 # Source the color script
-source $HOME/.GRAVITy/colors
+source /etc/GRAVITy/colors
+#Source parameter files
+
 
 # Function to stop the spinner if an error occurs
 stop_spinner() {
