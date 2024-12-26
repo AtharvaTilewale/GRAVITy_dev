@@ -136,7 +136,7 @@ cp gravity $HOME
 # Make all necessary files executable
 chmod +x $HOME/gravity
 sudo chmod +x /bin/gravity /usr/bin/gravity
-chmod +x gravity colors merge.py
+sudo chmod +x gravity colors merge.py
 
 # Remove previous working directory
 rm -rf $dir1
