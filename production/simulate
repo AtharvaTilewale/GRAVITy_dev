@@ -9,12 +9,12 @@ cd /etc/GRAVITy/
 source /etc/GRAVITy/colors
 
 #Source mdp files
-ions_mdp = '/etc/GRAVITy/core/prm/ions.mdp'
-md_mdp = '/etc/GRAVITy/core/prm/md.mdp'
-mdout_mdp = '/etc/GRAVITy/core/prm/mdout.mdp'
-minim_mdp = '/etc/GRAVITy/core/prm/minim.mdp'
-npt_mdp = '/etc/GRAVITy/core/prm/npt.mdp'
-nvt_mdp = '/etc/GRAVITy/core/prm/nvt.mdp'
+ions_mdp = '$project_dir/ions.mdp'
+md_mdp = '$project_dir/md.mdp'
+mdout_mdp = '$project_dir/mdout.mdp'
+minim_mdp = '$project_dir/minim.mdp'
+npt_mdp = '$project_dir/npt.mdp'
+nvt_mdp = '$project_dir/nvt.mdp'
 
 # Function to stop the spinner if an error occurs
 stop_spinner() {
