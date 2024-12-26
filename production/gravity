@@ -17,8 +17,8 @@ cd /etc/GRAVITy
 
 new_project() {
     echo "\nStarting a new project..."
-    read -p "Enter project name: " project_name
-    mkdir -p $HOME/.GRAVITy/projects/$project_name
+    read -p "Enter project name: " project_dir
+    mkdir -p $HOME/.GRAVITy/projects/$project_dir
     echo "New project created in the 'projects' directory."
 }
 

@@ -4,10 +4,17 @@
 
 # Change working directory
 cd /etc/GRAVITy/
+
 # Source the color script
 source /etc/GRAVITy/colors
-#Source parameter files
 
+#Source mdp files
+ions_mdp = '/etc/GRAVITy/core/prm/ions.mdp'
+md_mdp = '/etc/GRAVITy/core/prm/md.mdp'
+mdout_mdp = '/etc/GRAVITy/core/prm/mdout.mdp'
+minim_mdp = '/etc/GRAVITy/core/prm/minim.mdp'
+npt_mdp = '/etc/GRAVITy/core/prm/npt.mdp'
+nvt_mdp = '/etc/GRAVITy/core/prm/nvt.mdp'
 
 # Function to stop the spinner if an error occurs
 stop_spinner() {
