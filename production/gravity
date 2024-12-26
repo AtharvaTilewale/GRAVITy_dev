@@ -13,7 +13,7 @@ eval "$(conda shell.bash hook)"
 conda activate gravity_env
 
 #Change working directory
-cd $HOME/.GRAVITy
+cd /etc/GRAVITy
 
 new_project() {
     echo "\nStarting a new project..."

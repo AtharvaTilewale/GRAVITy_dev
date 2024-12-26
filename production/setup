@@ -112,6 +112,7 @@ if [ -d "$HOME/.GRAVITy" or "/etc/GRAVITy"]; then
 fi
 sudo mkdir /etc/GRAVITy 
 mkdir $HOME/.GRAVITy
+mkdir $HOME/.GRAVITy/projects
 
 # Copy all files to GRAVITy folder
 cp * /etc/GRAVITy/ -r
