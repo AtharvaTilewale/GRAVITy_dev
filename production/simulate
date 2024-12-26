@@ -4,7 +4,7 @@
 
 # Change working directory
 cd /etc/GRAVITy/
-
+project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
 # Source the color script
 source /etc/GRAVITy/colors
 
@@ -316,6 +316,8 @@ generate_protein_topology() {
         }
     fi
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+    sudo cp topol.top $project_dir/
+    sudo cp posre.itp $project_dir/
 }
 
 
