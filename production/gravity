@@ -89,5 +89,7 @@ settings() {
 # # Entry point
 # mkdir -p projects reports
 # main_menu
+#copy necessary files to new dir
+sudo cp /etc/GRAVITy/core/prm/ $project_dir -r 
 
-bash $HOME/.GRAVITy/simulate #run GRAVITy simulation
+sudo bash /etc/GRAVITy/simulate #run GRAVITy simulation
