@@ -115,7 +115,7 @@ mkdir $HOME/.GRAVITy
 mkdir $HOME/.GRAVITy/projects
 
 # Copy all files to GRAVITy folder
-cp * /etc/GRAVITy/ -r
+sudo cp * /etc/GRAVITy/ -r
 
 # Replace gravity executable in /bin if exists
 if [ -f "/bin/gravity" ]; then
@@ -125,7 +125,7 @@ fi
 sudo cp gravity /bin/
 
 cd /etc/GRAVITy
-cp prm/ /etc/GRAVITy/ -r
+sudo cp prm/ /etc/GRAVITy/ -r
 
 # Replace gravity executable in home directory if exists
 if [ -f "$HOME/gravity" ]; then

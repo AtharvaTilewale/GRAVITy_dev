@@ -17,9 +17,10 @@ cd /etc/GRAVITy
 
 new_project() {
     echo "\nStarting a new project..."
-    read -p "Enter project name: " project_dir
-    mkdir -p $HOME/.GRAVITy/projects/$project_dir
+    read -p "Enter project name: " project_name
+    mkdir -p $HOME/.GRAVITy/projects/$project_name
     echo "New project created in the 'projects' directory."
+    echo '$HOME/.GRAVITy/projects/'$project_name > current_dir.txt
 }
 
 open_project() {
@@ -89,7 +90,10 @@ settings() {
 # # Entry point
 # mkdir -p projects reports
 # main_menu
+
+new_project
 #copy necessary files to new dir
-sudo cp /etc/GRAVITy/core/prm/ $project_dir -r 
+project_dir = 
+sudo cp /etc/GRAVITy/core/prm/ $HOME/.GRAVITy/$project_name/ -r 
 
 sudo bash /etc/GRAVITy/simulate #run GRAVITy simulation
