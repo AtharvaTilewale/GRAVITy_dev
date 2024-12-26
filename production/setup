@@ -39,10 +39,10 @@ command_exists() {
 install_conda() {
     echo "Conda not found. Installing Miniconda..."
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda3.sh
-    bash Miniconda3.sh -b -p $HOME/miniconda3
+    bash Miniconda3.sh -b -p /etc/GRAVITy/miniconda3
     rm Miniconda3.sh
-    export PATH="$HOME/miniconda3/bin:$PATH"
-    echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> ~/.bashrc
+    export PATH="/etc/miniconda3/bin:$PATH"
+    echo 'export PATH="/etc/miniconda3/bin:$PATH"' >> ~/.bashrc
     source ~/.bashrc
 }
 
@@ -51,8 +51,8 @@ if ! command_exists conda; then
     install_conda
 else
     echo "Conda is already installed."
-    export PATH="$HOME/miniconda3/bin:$PATH"
-    echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> ~/.bashrc
+    export PATH="/etc/miniconda3/bin:$PATH"
+    echo 'export PATH="/etc/miniconda3/bin:$PATH"' >> ~/.bashrc
     source ~/.bashrc
 fi
 
@@ -105,14 +105,16 @@ bash requirements
 
 echo "Setting up GRAVITy..."
 # Create GRAVITy folder if not exists, remove it if already exists
-if [ -d "$HOME/.GRAVITy" ]; then
+if [ -d "$HOME/.GRAVITy" or "/etc/GRAVITy"]; then
     echo "Existing .GRAVITy folder found. Removing..."
     rm -rf $HOME/.GRAVITy
+    sudo rm -rf /etc/GRAVITy
 fi
+sudo mkdir /etc/GRAVITy 
 mkdir $HOME/.GRAVITy
 
 # Copy all files to GRAVITy folder
-cp * $HOME/.GRAVITy/ -r
+cp * /etc/GRAVITy/ -r
 
 # Replace gravity executable in /bin if exists
 if [ -f "/bin/gravity" ]; then
@@ -121,8 +123,8 @@ if [ -f "/bin/gravity" ]; then
 fi
 sudo cp gravity /bin/
 
-cd $HOME/.GRAVITy
-cp prm/* $HOME/.GRAVITy/
+cd /etc/GRAVITy
+cp prm/ /etc/GRAVITy/ -r
 
 # Replace gravity executable in home directory if exists
 if [ -f "$HOME/gravity" ]; then

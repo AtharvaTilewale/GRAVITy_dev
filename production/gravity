@@ -2,8 +2,8 @@
 #Author: Atharva Tilewale
 
 #Add miniconda to PATH 
-export PATH="$HOME/miniconda3/bin:$PATH"
-echo 'export PATH="$HOME/miniconda3/bin:$PATH"' >> ~/.bashrc
+export PATH="/etc/miniconda3/bin:$PATH"
+echo 'export PATH="/etc/miniconda3/bin:$PATH"' >> ~/.bashrc
 conda init bash
 source ~/.bashrc
 
