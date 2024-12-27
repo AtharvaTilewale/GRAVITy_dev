@@ -76,13 +76,13 @@ if [ -d "$GRAVITY_HOME" ]; then
 fi
 if [ -d "$USER_GRAVITY" ]; then
     echo "Existing $USER_GRAVITY directory found. Removing..."
-    rm -rf "$USER_GRAVITY"
+    sudo rm -rf "$USER_GRAVITY"
 fi
 
 # Create new directories
 echo "Creating GRAVITy directories..."
 sudo mkdir -p "$GRAVITY_HOME"
-mkdir -p "$USER_GRAVITY/projects"
+sudo mkdir -p "$USER_GRAVITY/projects"
 
 # Copy files to GRAVITy system directory
 echo "Copying files to $GRAVITY_HOME..."
@@ -101,7 +101,7 @@ sudo chmod -R +x "$GRAVITY_HOME/core/"
 
 # Step 6: Run initial GRAVITy setup
 echo "Running GRAVITy setup..."
-bash "$GRAVITY_HOME/gravity" setup
+sudo bash "$GRAVITY_HOME/gravity" setup
 
 echo "GRAVITy setup completed successfully!"
 exit 0

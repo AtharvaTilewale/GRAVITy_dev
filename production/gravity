@@ -83,7 +83,7 @@ fi
 
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
-cp -r /etc/GRAVITy/core/prm/ "$project_dir/"
+sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
 
 # Run the GRAVITy simulation
 echo "Running GRAVITy simulation..."
