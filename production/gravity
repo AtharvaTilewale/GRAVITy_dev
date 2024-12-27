@@ -40,7 +40,7 @@ load_project_dir() {
         project_dir=$(head -n 1 /etc/GRAVITy/current_dir.txt)
     else
         echo "No project directory found. Please create a new project first."
-        exit 1
+        new_project
     fi
 }
 

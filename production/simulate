@@ -3,8 +3,8 @@
 #Protein simulation made easy with GRAVITy
 
 # Change working directory
-cd /etc/GRAVITy/
 project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
+cd $project_dir
 # Source the color script
 source /etc/GRAVITy/colors
 

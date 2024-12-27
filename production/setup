@@ -34,9 +34,9 @@ command_exists() {
 # Function to install Miniconda if Conda is not installed
 install_conda() {
     echo "Conda not found. Installing Miniconda..."
-    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O Miniconda3.sh
-    bash Miniconda3.sh -b -p /etc/GRAVITy/miniconda3
-    rm Miniconda3.sh
+    sudo wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /etc/GRAVITy/Miniconda3.sh
+    sudo bash /etc/GRAVITy/Miniconda3.sh -b -p /etc/GRAVITy/miniconda3
+    sudo rm /etc/GRAVITy/Miniconda3.sh
     export PATH="/etc/GRAVITy/miniconda3/bin:$PATH"
     echo 'export PATH="/etc/GRAVITy/miniconda3/bin:$PATH"' >> ~/.bashrc
     source ~/.bashrc
@@ -86,7 +86,7 @@ sudo mkdir -p "$USER_GRAVITY/projects"
 
 # Copy files to GRAVITy system directory
 echo "Copying files to $GRAVITY_HOME..."
-sudo cp -r . "$GRAVITY_HOME/"
+sudo cp -r * "$GRAVITY_HOME/"
 
 # Step 5: Setup executable
 echo "Setting up GRAVITy executable..."
