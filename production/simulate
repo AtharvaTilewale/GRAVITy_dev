@@ -257,21 +257,34 @@ check_file_exists() {
 # Download protein structure
 download_protein() {
     echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
-    read -p "Enter PDB ID: " pdb_id
+    read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
 
-    # Attempt download and show spinner
-    ( wget "https://files.rcsb.org/download/${pdb_id}.pdb" -O $project_dir/protein.pdb 2>/dev/null ) & show_spinner $! "Downloading protein structure"
-    
-    # Check if the file was downloaded successfully
-    if [ -s $project_dir/protein.pdb ]; then
-        echo -e "${LIGHT_GREEN}Protein Structure Downloaded successfully!${NC}"
+    # Validate PDB ID format
+    if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+        echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+        return 1
+    fi
+
+    # Prepare target file path
+    local target_file="$project_dir/${pdb_id}.pdb"
+
+    # Attempt download
+    echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
+    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") & show_spinner $! "Downloading protein structure"
+
+    # Check download success
+    if [[ -s "$target_file" ]]; then
+        echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+        mv $target_file $project_dir/protein.pdb
     else
-        echo -e "${LIGHT_RED}Error: Failed to download PDB structure.${NC}"
-        rm -f $project_dir/protein.pdb  # Clean up any incomplete file
-        exit 1
+        echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+        rm -f "$target_file"  # Clean up incomplete file
+        return 1
     fi
     sleep 1.0
+    return 0
 }
+
 
 # Function to fix PDB file using PDBFixer
 pdb_fixer() {
