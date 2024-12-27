@@ -84,10 +84,12 @@ fi
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
 sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
+sudo cp -r /etc/GRAVITy/charmm36-jul2022.ff "$project_dir/"
+sudo cp /etc/GRAVITy/simulate "$project_dir/"
 
 # Run the GRAVITy simulation
 echo "Running GRAVITy simulation..."
-sudo bash /etc/GRAVITy/simulate "$project_dir"
+sudo bash $project_dir/simulate
 
 echo "Simulation completed. Check the results in $project_dir."
 exit 0
