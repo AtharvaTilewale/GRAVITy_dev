@@ -329,8 +329,8 @@ generate_protein_topology() {
         }
     fi
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
-    sudo cp topol.top $project_dir/
-    sudo cp posre.itp $project_dir/
+    # sudo cp topol.top $project_dir/
+    # sudo cp posre.itp $project_dir/
 }
 
 
