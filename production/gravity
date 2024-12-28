@@ -4,13 +4,16 @@
 #Add miniconda to PATH 
 export PATH="/etc/miniconda3/bin:$PATH"
 echo 'export PATH="/etc/miniconda3/bin:$PATH"' >> ~/.bashrc
-conda init bash
-source ~/.bashrc
+conda init bash > /dev/null 2>&1
+source ~/.bashrc 
+
+# Source the color script
+source /etc/GRAVITy/colors
 
 # Ensure the current shell recognizes Conda
-eval "$(conda shell.bash hook)"
+eval "$(conda shell.bash hook)" > /dev/null 2>&1
 
-conda activate gravity_env
+conda activate gravity_env > /dev/null 2>&1
 
 #Change working directory
 cd /etc/GRAVITy
@@ -48,7 +51,11 @@ load_project_dir() {
 cd /etc/GRAVITy || { echo "Failed to change to /etc/GRAVITy directory."; exit 1; }
 
 # Menu for project management
-echo "GRAVITy Simulation Tool"
+echo
+echo -e "${YELLOW}--------------------------"
+echo -e "GRAVITy Simulation Tool"
+echo -e "${YELLOW}--------------------------"
+echo
 PS3="Choose an option: "
 options=("Create New Project" "Use Existing Project" "Exit")
 select opt in "${options[@]}"; do
@@ -82,7 +89,7 @@ else
 fi
 
 sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
-chmod u+w /home/student14/.GRAVITy/projects
+chmod u+w /home/$(whoami)/.GRAVITy/projects
 
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
