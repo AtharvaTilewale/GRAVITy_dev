@@ -81,6 +81,9 @@ else
     exit 1
 fi
 
+sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
+chmod u+w /home/student14/.GRAVITy/projects
+
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
 sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
