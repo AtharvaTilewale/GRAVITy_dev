@@ -461,7 +461,7 @@ energy_minimization() {
         ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
     fi
     check_file_exists "$project_dir/em.gro" || return
-    gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing..."
+    gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing"
     gmx mdrun -v -deffnm $project_dir/em > /dev/null 2>&1 & energy_minimization_loader
     echo
     #generating potential energy xvg file
