@@ -629,7 +629,6 @@ production_md() {
     fi
     
     check_file_exists "$project_dir/md.xtc" || return
-    echo
     
     #User input simulation time
     echo -e ${YELLOW}"Do you want to continue with default simulation time (10ns)?"
