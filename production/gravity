@@ -22,7 +22,7 @@ cd /etc/GRAVITy
 new_project() {
     echo -e "\nStarting a new project..."
     read -p "Enter project name: " project_name
-    project_path="/home/$(whoami)/.GRAVITy/projects/$project_name"
+    project_path="$HOME/.GRAVITy/projects/$project_name"
     
     if [ -d "$project_path" ]; then
         echo "Project '$project_name' already exists. Choose a different name."
