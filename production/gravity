@@ -53,10 +53,11 @@ cd /etc/GRAVITy || { echo "Failed to change to /etc/GRAVITy directory."; exit 1;
 # Menu for project management
 echo
 echo -e "${YELLOW}--------------------------"
-echo -e "GRAVITy Simulation Tool"
-echo -e "${YELLOW}--------------------------"
+echo -e "  GRAVITy Simulation Tool"
+echo -e "--------------------------${NC}"
 echo
-PS3="Choose an option: "
+PS3="${LIGHT_YELLOW}Choose an option: "
+echo -e ${NC}
 options=("Create New Project" "Use Existing Project" "Exit")
 select opt in "${options[@]}"; do
     case $opt in

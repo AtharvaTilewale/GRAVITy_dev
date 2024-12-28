@@ -79,6 +79,9 @@ if [ -d "$USER_GRAVITY" ]; then
     sudo rm -rf "$USER_GRAVITY"
 fi
 
+sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
+chmod u+w /home/$(whoami)/.GRAVITy/projects
+
 # Create new directories
 echo "Creating GRAVITy directories..."
 sudo mkdir -p "$GRAVITY_HOME"
