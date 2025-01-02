@@ -318,8 +318,37 @@ generate_protein_topology() {
     # Remove HETATM entries
     remove_hetatm
 
+    # Prompt for force field and water model
+    echo "Select a force field:"
+    forcefields=("amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
+    select ff in "${forcefields[@]}"; do
+        case $ff in
+            "Other")
+                read -p "Enter custom force field: " ff
+                break
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+
+    echo "Select a water model:"
+    watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
+    select wm in "${watermodels[@]}"; do
+        case $wm in
+            "Other")
+                read -p "Enter custom water model: " wm
+                break
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+    
     # Run GROMACS pdb2gmx
-    gmx pdb2gmx -f $project_dir/protein.pdb -o $project_dir/protein.gro -ignh
+    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
         pdb_fixer
