@@ -53,6 +53,18 @@ download_loader() {
     fi
 }
 
+topology_loader() {
+    show_spinner $! "Generating Protein Topology"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to genrate protein topology. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"Topology generated successfully."${NC}
+        sleep 3.0
+    fi
+}
+
 #Box loader
 pdbfix_loader() {
     show_spinner $! "Fixing PDB File"
@@ -367,11 +379,11 @@ generate_protein_topology() {
     water_model
 
     # Run GROMACS pdb2gmx
-    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh
+    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 & topology_loader
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
         pdb_fixer
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh || {
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh 2>&1 & topology_loader || {
             echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
             exit 1
         }
