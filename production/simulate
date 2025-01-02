@@ -367,7 +367,7 @@ generate_protein_topology() {
     water_model
 
     # Run GROMACS pdb2gmx
-    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 & show_spinner $! "Generating Protein Topology"
+    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
         pdb_fixer
