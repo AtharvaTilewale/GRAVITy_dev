@@ -352,7 +352,7 @@ generate_protein_topology() {
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
         pdb_fixer
-        gmx pdb2gmx -f $project_dir/protein.pdb -o $project_dir/protein.gro -ignh || {
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh || {
             echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
             exit 1
         }
