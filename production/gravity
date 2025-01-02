@@ -35,6 +35,9 @@ new_project() {
     # Save the current project directory to a tracking file in /etc/GRAVITy
     echo "$project_path" | sudo tee /etc/GRAVITy/current_dir.txt >/dev/null
     echo "Project directory saved to /etc/GRAVITy/current_dir.txt"
+
+    # Update project_dir to the new project path
+    project_dir="$project_path"
 }
 
 # Function to load the current project directory from the tracking file
