@@ -25,14 +25,14 @@ stop_spinner() {
 
 # Function to display a rotating loader with custom text
 show_spinner() {
-    local pid=$1         # Process ID to monitor
-    local message=$2     # Custom loading message
-    local spin='-\|/'    # Spinner characters
+    local pid=$1      # Process ID to monitor
+    local message=$2  # Custom loading message
+    local spin='-\|/' # Spinner characters
     local i=0
 
     # Loop to display the spinner until the task completes
     while kill -0 $pid 2>/dev/null; do
-        i=$(( (i + 1) % 4 ))
+        i=$(((i + 1) % 4))
         printf "\r${spin:$i:1} %s..." "$message"
         sleep 0.1
     done
@@ -41,82 +41,81 @@ show_spinner() {
 
 #Loaders
 #Download loader
-download_loader(){
+download_loader() {
     show_spinner $! "Downloading $file_download_name"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Download failed. Please check your internet connection and try again.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}$file_download_name "downloaded successfully!"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}$file_download_name "downloaded successfully!"${NC}
+        sleep 1.0
+    fi
 }
 
 #Box loader
-pdbfix_loader(){
+pdbfix_loader() {
     show_spinner $! "Fixing PDB File"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to fix PDB file. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"PDB file fixed successfully. Restarting generating protein topology."${NC}
-    sleep 3.0
-    fi 
+        echo -e ${LIGHT_GREEN}"PDB file fixed successfully. Restarting generating protein topology."${NC}
+        sleep 3.0
+    fi
 }
 
 #Box loader
-box_loader(){
+box_loader() {
     show_spinner $! "Preparing Box"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to define the box. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
+        sleep 1.0
+    fi
 }
 
 #Solvate model loader
-solvate_loader(){
+solvate_loader() {
     show_spinner $! "Solvating the system"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to solvate the system. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"System solvated successfully!"${NC}
+        sleep 1.0
+    fi
 }
 
 #ion tpr loader
-ion_tpr_loader(){
+ion_tpr_loader() {
     show_spinner $! "Adding ions to the system"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to generate ions.tpr. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"Ions.tpr generated successfully"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"Ions.tpr generated successfully"${NC}
+        sleep 1.0
+    fi
 }
 
-
 #Ion addition loader
-ion_add_loader(){
+ion_add_loader() {
     show_spinner $! "Adding ions to the system"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed to add ions. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"Ions added successfully"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"Ions added successfully"${NC}
+        sleep 1.0
+    fi
 }
 
 # #Energy minimization preparation
@@ -129,51 +128,51 @@ ion_add_loader(){
 #     else
 #     echo -e ${LIGHT_GREEN}"Preparation successful!"${NC}
 #     sleep 1.0
-#     fi 
+#     fi
 # }
 
 #Energy minimization loader
-energy_minimization_loader(){
+energy_minimization_loader() {
     show_spinner $! "Running energy minimization"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: Failed minimize energy. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"Energy minimized successfully"${NC}
-    sleep 1.0
-    fi     
+        echo -e ${LIGHT_GREEN}"Energy minimized successfully"${NC}
+        sleep 1.0
+    fi
 }
 
 #Equilibration preparation loader
-equilibration_preparation_loader(){
+equilibration_preparation_loader() {
     show_spinner $! "Preparing for $equilibration_step_name"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: $equilibration_step_name preparation failed. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"$equilibration_step_name preparation successful"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"$equilibration_step_name preparation successful"${NC}
+        sleep 1.0
+    fi
 }
 
 #Equilibration loader
-equilibration_loader(){
+equilibration_loader() {
     show_spinner $! "Running $equilibration_step_name"
     wait $!
     if [ $? -ne 0 ]; then
         echo -e "${LIGHT_RED}Error: $equilibration_step_name failed. See log file for more info.${NC}"
         exit 1
     else
-    echo -e ${LIGHT_GREEN}"$equilibration_step_name done successfully"${NC}
-    sleep 1.0
-    fi 
+        echo -e ${LIGHT_GREEN}"$equilibration_step_name done successfully"${NC}
+        sleep 1.0
+    fi
 }
 
 #check internet connection
 check_internet() {
-    if ping -c 1 -W 1 8.8.8.8 &> /dev/null; then
+    if ping -c 1 -W 1 8.8.8.8 &>/dev/null; then
         echo -e "Status [${LIGHT_GREEN}Online${NC}]"
     else
         echo -e "Status [${LIGHT_RED}Offline${NC}]"
@@ -184,14 +183,20 @@ check_internet() {
 
 #Check dependencies
 check_dependencies() {
-    command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. It is necessary to install GROMACS.${NC}" 
+    command -v gmx >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "GROMACS not found. It is necessary to install GROMACS.${NC}" >&2
         sleep 1.0
         echo "Installing GROMACS..."
-        sudo apt-get install gromacs; exit 1; }
-    command -v wget >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "wget not found. It is necessary to install wget.${NC}" 
+        sudo apt-get install gromacs
+        exit 1
+    }
+    command -v wget >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "wget not found. It is necessary to install wget.${NC}" >&2
         sleep 1.0
         echo "Installing wget..."
-        sudo apt-get install wget; exit 1; }
+        sudo apt-get install wget
+        exit 1
+    }
 }
 
 # Function to check if a command exists
@@ -224,7 +229,7 @@ if command_exists python3; then
         sudo apt install python3-pip
     fi
 else
-    echo -e ${LIGHT_RED} "Python3 is not installed ${NC}" 
+    echo -e ${LIGHT_RED} "Python3 is not installed ${NC}"
     echo "Installing Python3"
     sudo apt-get install python3
 fi
@@ -233,6 +238,40 @@ fi
 prompt_user() {
     read -p "$1" choice
     echo "$choice"
+}
+
+force_field() {
+    echo "Select a force field:"
+    PS3="Enter your choice: "
+    forcefields=("amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
+    select ff in "${forcefields[@]}"; do
+        case $ff in
+        "Other")
+            read -p "Enter custom force field: " ff
+            break
+            ;;
+        *)
+            break
+            ;;
+        esac
+    done
+}
+
+water_model() {
+    echo "Select a water model:"
+    PS3="Enter your choice: "
+    watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
+    select wm in "${watermodels[@]}"; do
+        case $wm in
+        "Other")
+            read -p "Enter custom water model: " wm
+            break
+            ;;
+        *)
+            break
+            ;;
+        esac
+    done
 }
 
 # Function to check if a file exists and prompt to overwrite
@@ -244,9 +283,15 @@ check_file_exists() {
             read -p "Do you want to continue and overwrite the file? (y/n): " choice
             echo -e ${NC}
             case $choice in
-                [Yy]* ) echo "Proceeding with overwriting the file."; return 0 ;;
-                [Nn]* ) echo "Aborting process."; return 1 ;;
-                * ) echo "Please answer yes or no." ;;
+            [Yy]*)
+                echo "Proceeding with overwriting the file."
+                return 0
+                ;;
+            [Nn]*)
+                echo "Aborting process."
+                return 1
+                ;;
+            *) echo "Please answer yes or no." ;;
             esac
         done
     fi
@@ -270,7 +315,8 @@ download_protein() {
 
     # Attempt download
     echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
-    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") & show_spinner $! "Downloading protein structure"
+    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+    show_spinner $! "Downloading protein structure"
 
     # Check download success
     if [[ -s "$target_file" ]]; then
@@ -278,18 +324,18 @@ download_protein() {
         mv $target_file $project_dir/protein.pdb
     else
         echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
-        rm -f "$target_file"  # Clean up incomplete file
+        rm -f "$target_file" # Clean up incomplete file
         return 1
     fi
     sleep 1.0
     return 0
 }
 
-
 # Function to fix PDB file using PDBFixer
 pdb_fixer() {
     echo
-    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &pdbfix_loader
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
+    pdbfix_loader
 }
 
 # Function to remove HETATM lines
@@ -317,36 +363,9 @@ generate_protein_topology() {
 
     # Remove HETATM entries
     remove_hetatm
+    force_field
+    water_model
 
-    # Prompt for force field and water model
-    echo "Select a force field:"
-    forcefields=("amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
-    select ff in "${forcefields[@]}"; do
-        case $ff in
-            "Other")
-                read -p "Enter custom force field: " ff
-                break
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
-
-    echo "Select a water model:"
-    watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
-    select wm in "${watermodels[@]}"; do
-        case $wm in
-            "Other")
-                read -p "Enter custom water model: " wm
-                break
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
-    
     # Run GROMACS pdb2gmx
     gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh
     if [ $? -ne 0 ]; then
@@ -362,15 +381,14 @@ generate_protein_topology() {
     # sudo cp posre.itp $project_dir/
 }
 
-
 # Function to define box and solvate the system
 define_box_and_solvate() {
     echo
     echo "Defining box and solvating system..."
     echo
-        if [ ! -f "$project_dir/protein.gro" ]; then
+    if [ ! -f "$project_dir/protein.gro" ]; then
         echo -e ${LIGHT_RED} "protein.gro does not exist.${NC}"
-        sleep 2.0 
+        sleep 2.0
         exit 1
     fi
     check_file_exists "$project_dir/solv.gro" || return
@@ -378,9 +396,11 @@ define_box_and_solvate() {
     read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
     echo -e ${NC}
     if [ $select_solvate_box == "y" ]; then
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
+        box_loader
         echo
-        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+        solvate_loader
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
@@ -391,12 +411,22 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic > /dev/null 2>&1 & box_loader;;
-            #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-            #sleep 2.0; exit 1; } ;;
-            2) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron > /dev/null 2>&1 & box_loader ;;
-            3) gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic > /dev/null 2>&1 & box_loader ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        1)
+            gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
+            box_loader
+            ;;
+        #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+        #sleep 2.0; exit 1; } ;;
+        2)
+            gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron >/dev/null 2>&1 &
+            box_loader
+            ;;
+        3)
+            gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic >/dev/null 2>&1 &
+            box_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
         esac
@@ -410,13 +440,22 @@ define_box_and_solvate() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader ;;
-            #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-            #sleep 2.0; exit 1; } ;;
-            2) gmx solvate -cp $project_dir/newbox.gro -cs tip3p.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 &
-            solvate_loader ;;
-            3) gmx solvate -cp $project_dir/newbox.gro -cs tip4p.gro -p $project_dir/topol.top -o $project_dir/solv.gro > /dev/null 2>&1 & solvate_loader ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        1)
+            gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+        #sleep 2.0; exit 1; } ;;
+        2)
+            gmx solvate -cp $project_dir/newbox.gro -cs tip3p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        3)
+            gmx solvate -cp $project_dir/newbox.gro -cs tip4p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
         esac
@@ -430,22 +469,24 @@ add_ions() {
         sleep 2.0
         exit 1
     fi
-    
+
     if [ ! -f "$project_dir/ions.mdp" ]; then
         echo "ions.mdp file does not exist."
         file_download_name="ions.mdp"
-        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" > /dev/null 2>&1 ) & download_loader
+        (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" >/dev/null 2>&1) &
+        download_loader
     fi
     echo
     check_file_exists "$project_dir/solv_ions.gro" || return
-    gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr > /dev/null 2>&1 & ion_tpr_loader 
+    gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
+    ion_tpr_loader
     echo -e ${LIGHT_YELLOW}
     read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
     echo -e ${NC}
     if [ $select_ion_addition == "y" ]; then
         gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral # > /dev/null 2>&1 & ion_add_loader
     else
-    echo -e ${YELLOW}"Select box type from the following${NC}"
+        echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
         echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Add only Na+ ions"
         echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Add only Cl- ions"
@@ -453,10 +494,17 @@ add_ions() {
         echo -e ${NC}
 
         case $choice in
-            1) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral ;; # > /dev/null 2>&1 & ion_add_loader
-            2) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA > /dev/null 2>&1 & ion_add_loader ;;
-            3) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL > /dev/null 2>&1 & ion_add_loader ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        1) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral ;; # > /dev/null 2>&1 & ion_add_loader
+        2)
+            gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA >/dev/null 2>&1 &
+            ion_add_loader
+            ;;
+        3)
+            gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL >/dev/null 2>&1 &
+            ion_add_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
             sleep 1.0
             ;;
         esac
@@ -483,26 +531,31 @@ energy_minimization() {
         sleep 2.0
         exit 1
     fi
-    
+
     if [ ! -f "$project_dir/minim.mdp" ]; then
         echo "minim.mdp does not exist. Downloading..."
         file_download_name="minim.mdp"
-        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp" ) & download_loader
+        (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/minim.mdp") &
+        download_loader
     fi
     check_file_exists "$project_dir/em.gro" || return
-    gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr > /dev/null 2>&1 & show_spinner $! "Preparing"
-    gmx mdrun -v -deffnm $project_dir/em > /dev/null 2>&1 & energy_minimization_loader
+    gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr >/dev/null 2>&1 &
+    show_spinner $! "Preparing"
+    gmx mdrun -v -deffnm $project_dir/em >/dev/null 2>&1 &
+    energy_minimization_loader
     echo
     #generating potential energy xvg file
     # echo -e "Calculating potential energy..."
     # gmx energy -f em.edr -o potential.xvg
 }
 
-NVT_equilibration(){
+NVT_equilibration() {
     equilibration_step_name="NVT equilibration"
-    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -o $project_dir/nvt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -o $project_dir/nvt.tpr >/dev/null 2>&1 &
+    equilibration_preparation_loader
     echo
-    gmx mdrun -deffnm $project_dir/nvt -v > /dev/null 2>&1 & equilibration_loader
+    gmx mdrun -deffnm $project_dir/nvt -v >/dev/null 2>&1 &
+    equilibration_loader
     echo
     #Analyzing the temperature progression
     # echo "Analyzing the temperature progression..."
@@ -511,14 +564,16 @@ NVT_equilibration(){
 
 NPT_equilibration() {
     equilibration_step_name="NPT equilibration"
-    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -t $project_dir/nvt.cpt -p $project_dir/topol.top -o $project_dir/npt.tpr > /dev/null 2>&1 & equilibration_preparation_loader
+    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -t $project_dir/nvt.cpt -p $project_dir/topol.top -o $project_dir/npt.tpr >/dev/null 2>&1 &
+    equilibration_preparation_loader
     echo
-    gmx mdrun -deffnm $project_dir/npt -v > /dev/null 2>&1 & equilibration_loader
+    gmx mdrun -deffnm $project_dir/npt -v >/dev/null 2>&1 &
+    equilibration_loader
     echo
     #Analyzing the pressure and density progression
     # echo "Analyzing the pressure and density progression..."
     # gmx energy -f npt.edr -o pressure.xvg
-    # gmx energy -f npt.edr -o density.xvg 
+    # gmx energy -f npt.edr -o density.xvg
 }
 
 # Function to run equilibrium
@@ -537,77 +592,81 @@ equilibrium() {
         read -p "Enter your choice [1-4]: " equil_choice
         echo -e ${NC}
         case $equil_choice in
-            1)
-                if [ ! -f "$project_dir/em.gro" ]; then
-                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
-                    sleep 2.0
-                    exit 1
-                fi
-                
-                if [ ! -f "$project_dir/nvt.mdp" ]; then
-                    echo "nvt.mdp does not exist. Downloading..."
-                    file_download_name="nvt.mdp"
-                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
-                fi
-                
-                check_file_exists "$project_dir/nvt.gro" || return
+        1)
+            if [ ! -f "$project_dir/em.gro" ]; then
+                echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                sleep 2.0
+                exit 1
+            fi
 
-                NVT_equilibration 
-                #2>/dev/null & show_spinner $! "Running NVT Equilibration"
-                ;;
-            2)
-                if [ ! -f "$project_dir/nvt.gro" ]; then
-                    echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
-                    exit 1
-                fi
-                
-                if [ ! -f "$project_dir/npt.mdp" ]; then
-                    echo "npt.mdp does not exist. Downloading..."
-                    file_download_name="npt.mdp"
-                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
-                fi
+            if [ ! -f "$project_dir/nvt.mdp" ]; then
+                echo "nvt.mdp does not exist. Downloading..."
+                file_download_name="nvt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                download_loader
+            fi
 
-                check_file_exists "$project_dir/npt.gro" || return
-                
-                NPT_equilibration 
-                #2>/dev/null & show_spinner $! "Running NPT Equilibration" 
-                ;;
-            3) 
-                if [ ! -f "$project_dir/em.gro" ]; then
-                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
-                    sleep 2.0
-                    exit 1
-                fi
-                
-                if [ ! -f "$project_dir/nvt.mdp" ]; then
-                    echo "nvt.mdp does not exist. Downloading..."
-                    file_download_name="nvt.mdp"
-                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp" ) & download_loader
-                fi
-                if [ ! -f "$project_dir/npt.mdp" ]; then
-                    echo "npt.mdp does not exist. Downloading..."
-                    file_download_name="npt.mdp"
-                    ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp" ) & download_loader
-                fi
+            check_file_exists "$project_dir/nvt.gro" || return
 
-                # Run NVT and NPT in the background, suppress both stdout and stderr
-                # Run NVT and NPT in the background, suppressing output, but show loader
-                NVT_equilibration
-                NPT_equilibration
-                sleep 1.0
-                # Wait for both NVT and NPT processes to finish
-                wait
-                manual_run
-                ;;
-            4)
-                echo
-                echo "Returning to main menu..."
-                return
-                ;;
-            *)
-                echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-                sleep 1.0
-                ;;
+            NVT_equilibration
+            #2>/dev/null & show_spinner $! "Running NVT Equilibration"
+            ;;
+        2)
+            if [ ! -f "$project_dir/nvt.gro" ]; then
+                echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
+                exit 1
+            fi
+
+            if [ ! -f "$project_dir/npt.mdp" ]; then
+                echo "npt.mdp does not exist. Downloading..."
+                file_download_name="npt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                download_loader
+            fi
+
+            check_file_exists "$project_dir/npt.gro" || return
+
+            NPT_equilibration
+            #2>/dev/null & show_spinner $! "Running NPT Equilibration"
+            ;;
+        3)
+            if [ ! -f "$project_dir/em.gro" ]; then
+                echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                sleep 2.0
+                exit 1
+            fi
+
+            if [ ! -f "$project_dir/nvt.mdp" ]; then
+                echo "nvt.mdp does not exist. Downloading..."
+                file_download_name="nvt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                download_loader
+            fi
+            if [ ! -f "$project_dir/npt.mdp" ]; then
+                echo "npt.mdp does not exist. Downloading..."
+                file_download_name="npt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                download_loader
+            fi
+
+            # Run NVT and NPT in the background, suppress both stdout and stderr
+            # Run NVT and NPT in the background, suppressing output, but show loader
+            NVT_equilibration
+            NPT_equilibration
+            sleep 1.0
+            # Wait for both NVT and NPT processes to finish
+            wait
+            manual_run
+            ;;
+        4)
+            echo
+            echo "Returning to main menu..."
+            return
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0
+            ;;
         esac
     done
 }
@@ -623,7 +682,7 @@ update_simulation_steps() {
     rm -f $project_dir/md.tpr
 
     # Regenerate md.tpr using the updated md.mdp
-    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr > /dev/null 2>&1 || {
+    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr >/dev/null 2>&1 || {
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
         exit 1
     }
@@ -634,7 +693,7 @@ update_simulation_steps() {
 }
 
 # prepare_md_production() {
-#     gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || { 
+#     gmx grompp -f md.mdp -c npt.gro -t npt.cpt -p topol.top -o md.tpr || {
 #         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
 #         sleep 2.0
 #         exit 1
@@ -643,7 +702,7 @@ update_simulation_steps() {
 
 # Function to run production MD
 production_md() {
-    echo   
+    echo
     # Check for required files
     if [ ! -f "$project_dir/npt.gro" ]; then
         echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
@@ -654,82 +713,89 @@ production_md() {
     if [ ! -f "$project_dir/md.mdp" ]; then
         echo "md.mdp does not exist. Downloading..."
         file_download_name="md.mdp"
-        ( wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp" ) & download_loader
+        (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp") &
+        download_loader
     fi
-    
+
     check_file_exists "$project_dir/md.xtc" || return
-    
+
     #User input simulation time
     echo -e ${YELLOW}"Do you want to continue with default simulation time (10ns)?"
     echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
     echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
     echo
     read -p "Enter your choice [1-2]: " simulation_time
-        echo -e ${NC}
-        case $simulation_time in
-            1) md_nsteps=5000000 ;;
-            2) read -p "Set simulation time (ns): " md_time_ns
-            md_time_ps=$(echo "$md_time_ns * 1000" | bc)
-            md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
-            ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}" ;
-            sleep 2.0 ;
-            return ;;
-        esac
+    echo -e ${NC}
+    case $simulation_time in
+    1) md_nsteps=5000000 ;;
+    2)
+        read -p "Set simulation time (ns): " md_time_ns
+        md_time_ps=$(echo "$md_time_ns * 1000" | bc)
+        md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
+        ;;
+    *)
+        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        sleep 2.0
+        return
+        ;;
+    esac
 
     # Update nsteps and generate new md.tpr file
     update_simulation_steps
 
     # Prepare for production MD
     # prepare_md_production > /dev/null 2>&1 & show_spinner $! "Processing Preparation"
-    
+
     echo -e ${LIGHT_GREEN}"Preparation DONE!${NC}"
-    
+
     # Check for any GPU using lspci
     gpu_info=$(lspci | grep -i vga)
 
     if [[ -n "$gpu_info" ]]; then
         echo "GPU detected:"
         echo "$gpu_info"
-        
+
         # Check if the GPU is an NVIDIA card and if nvidia-smi is available
-        if command -v nvidia-smi &> /dev/null; then
+        if command -v nvidia-smi &>/dev/null; then
             echo -e ${LIGHT_CYAN} "NVIDIA GPU detected. Running nvidia-smi for details:${NC}"
             nvidia-smi
             sleep 3.0
-            
+
             # Measure and show time while running the simulation, suppress output
-            start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm $project_dir/md -v -nb gpu > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
-            end_time=$(date +%s)  # Get end time
-            
-            elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v -nb gpu >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
             echo "Elapsed time: $elapsed seconds"
             show_spinner $! "Running MD Simulation on GPU"
-            
+
         else
             echo -e ${LIGHT_CYAN} "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU...${NC}"
             sleep 3.0
-            
+
             # Measure and show time while running the simulation, suppress output
-            start_time=$(date +%s)  # Get start time
-            gmx mdrun -deffnm $project_dir/md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
-            end_time=$(date +%s)  # Get end time
-            
-            elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
             echo "Elapsed time: $elapsed seconds"
             show_spinner $! "Running MD Simulation on CPU"
         fi
     else
         echo -e ${LIGHT_CYAN}"No GPU detected. Running simulation on CPU..."${NC}
         sleep 3.0
-        
+
         # Measure and show time while running the simulation, suppress output
-        start_time=$(date +%s)  # Get start time
-        gmx mdrun -deffnm $project_dir/md -v > /dev/null 2>&1 & show_spinner $! "Running MD Simulation"
-        end_time=$(date +%s)  # Get end time
-        
-        elapsed=$((end_time - start_time))  # Calculate elapsed time in seconds
+        start_time=$(date +%s) # Get start time
+        gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+        show_spinner $! "Running MD Simulation"
+        end_time=$(date +%s) # Get end time
+
+        elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
         echo "Elapsed time: $elapsed seconds"
         sleep 2.0
     fi
@@ -756,81 +822,81 @@ run_analysis() {
         read -p "Enter your choice [1-3]: " analysis_choice
 
         case $analysis_choice in
-            1)
-                echo
-                echo "Recentering and Rewrapping Coordinates..."
-                echo
-                if [ ! -f "$project_dir/md.xtc" ]; then
-                    echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/md_noPBC.xtc" || return
-                gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center || exit 1
-                ;;
-            2)
-                echo
-                echo "Finding RMSD..."
-                echo
-                if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-                    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/rmsd.xvg" || return
-                gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
-                ;;
-            3)
-                echo
-                echo "Analyzing Temperature Progression..."
-                echo
-                if [ ! -f "$project_dir/nvt.edr" ]; then
-                    echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/temperature.xvg" || return
-                gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
-                ;;
-            4)
-                echo
-                echo "Analyzing Pressure Progression..."
-                echo
-                if [ ! -f "$project_dir/npt.edr" ]; then
-                    echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/pressure.xvg" || return
-                gmx energy -f $project_dir/nvt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
-                ;;
-            5)
-                echo
-                echo "Analyzing Density Progression..."
-                echo
-                if [ ! -f "$project_dir/npt.edr" ]; then
-                    echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/density.xvg" || return
-                gmx energy -f $project_dir/nvt.edr -o $project_dir/density.xvg #generate temperature.xvg file
-                ;;
-            6)
-                echo
-                echo "Calculating Potential Energy..."
-                echo
-                if [ ! -f "$project_dir/em.edr" ]; then
-                    echo -e ${LIGHT_RED} "em.edr does not exist.${NC}" 
-                    exit 1
-                fi
-                check_file_exists "$project_dir/potential.xvg" || return
-                gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
-                ;;
-            7)
-                echo
-                echo "Returning to Main Menu..."
-                return
-                ;;
-            *)
-                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-                sleep 1.0
-                ;;
+        1)
+            echo
+            echo "Recentering and Rewrapping Coordinates..."
+            echo
+            if [ ! -f "$project_dir/md.xtc" ]; then
+                echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/md_noPBC.xtc" || return
+            gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center || exit 1
+            ;;
+        2)
+            echo
+            echo "Finding RMSD..."
+            echo
+            if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+                echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/rmsd.xvg" || return
+            gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
+            ;;
+        3)
+            echo
+            echo "Analyzing Temperature Progression..."
+            echo
+            if [ ! -f "$project_dir/nvt.edr" ]; then
+                echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/temperature.xvg" || return
+            gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
+            ;;
+        4)
+            echo
+            echo "Analyzing Pressure Progression..."
+            echo
+            if [ ! -f "$project_dir/npt.edr" ]; then
+                echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/pressure.xvg" || return
+            gmx energy -f $project_dir/nvt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
+            ;;
+        5)
+            echo
+            echo "Analyzing Density Progression..."
+            echo
+            if [ ! -f "$project_dir/npt.edr" ]; then
+                echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/density.xvg" || return
+            gmx energy -f $project_dir/nvt.edr -o $project_dir/density.xvg #generate temperature.xvg file
+            ;;
+        6)
+            echo
+            echo "Calculating Potential Energy..."
+            echo
+            if [ ! -f "$project_dir/em.edr" ]; then
+                echo -e ${LIGHT_RED} "em.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/potential.xvg" || return
+            gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
+            ;;
+        7)
+            echo
+            echo "Returning to Main Menu..."
+            return
+            ;;
+        *)
+            echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0
+            ;;
         esac
     done
 }
@@ -847,7 +913,7 @@ run_analysis() {
 #     read -p "Enter your choice [1-3]: " run_choice
 
 #     case $run_choice in
-#         1) 
+#         1)
 #             manual_steps ;;
 #         2)
 #             echo
@@ -874,14 +940,14 @@ run_analysis() {
 #             echo "Exiting..."
 #             exit 1
 #             ;;
-#         *)  echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 8.${NC}" 
-#             sleep 1.0 
+#         *)  echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 8.${NC}"
+#             sleep 1.0
 #             exit 0 ;;
 #     esac
 # done
 # }
 
-automatic_run(){
+automatic_run() {
     generate_protein_topology
     define_box_and_solvate
     add_ions
@@ -892,14 +958,14 @@ automatic_run(){
     exit 0
 }
 
-test_run(){
+test_run() {
     sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/npt.mdp
     sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/nvt.mdp
     sed -i "s/^nsteps.*/nsteps = 5000/" $project_dir/md.mdp
     automatic_run
 }
 
-advanced_options(){
+advanced_options() {
     echo -e "${YELLOW}Set custom values"
     echo
     read -p "Set NVT steps (default: 50000): " nvt_steps
@@ -942,35 +1008,35 @@ advanced_options(){
 #         3) echo -e "${LIGHT_GREEN}Thanks for using GROMACS!${NC}"
 #            echo "Exiting..."
 #            echo; exit 0 ;;
-#         *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 8.${NC}" 
+#         *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 8.${NC}"
 #         sleep 1.0 ;;
 #     esac
 # done
 # }
 
-manual_run(){
-while true; do
-    echo
-    echo -e "${YELLOW}------------------------------------"
-    echo -e "             Main Menu"
-    echo -e "------------------------------------${NC}"
-    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Download Protein Structure"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Generate Protein Topology"
-    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Define box and solvate the system"
-    echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Add ions"
-    echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Energy minimization"
-    echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Equilibrium"
-    echo -e "${LIGHT_PURPLE}[${NC}07${LIGHT_PURPLE}]${NC} Production MD"
-    echo -e "${LIGHT_PURPLE}[${NC}08${LIGHT_PURPLE}]${NC} Analysis"
-    echo -e "${LIGHT_PURPLE}[${NC}09${LIGHT_PURPLE}]${NC} Main menu"
-    echo -e "${LIGHT_PURPLE}[${NC}10${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
-    echo -e "${YELLOW}------------------------------------${NC}"
-    echo -e ${LIGHT_YELLOW}
+manual_run() {
+    while true; do
+        echo
+        echo -e "${YELLOW}------------------------------------"
+        echo -e "             Main Menu"
+        echo -e "------------------------------------${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Download Protein Structure"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Generate Protein Topology"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Define box and solvate the system"
+        echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Add ions"
+        echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Energy minimization"
+        echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Equilibrium"
+        echo -e "${LIGHT_PURPLE}[${NC}07${LIGHT_PURPLE}]${NC} Production MD"
+        echo -e "${LIGHT_PURPLE}[${NC}08${LIGHT_PURPLE}]${NC} Analysis"
+        echo -e "${LIGHT_PURPLE}[${NC}09${LIGHT_PURPLE}]${NC} Main menu"
+        echo -e "${LIGHT_PURPLE}[${NC}10${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
+        echo -e "${YELLOW}------------------------------------${NC}"
+        echo -e ${LIGHT_YELLOW}
 
-    choice=$(prompt_user "Enter your choice [1-10]: ")
-    echo -e ${NC}
+        choice=$(prompt_user "Enter your choice [1-10]: ")
+        echo -e ${NC}
 
-    case $choice in
+        case $choice in
         1) download_protein ;;
         2) generate_protein_topology ;;
         3) define_box_and_solvate ;;
@@ -979,35 +1045,41 @@ while true; do
         6) equilibrium ;;
         7) production_md ;;
         8) run_analysis ;;
-        9) banner
-        main_menu ;;
-        10) echo -e "${LIGHT_YELLOW}Thanks for using GRAVITy!${NC}"
-        echo "Exiting..."
-        echo
-        exit 0 ;;
-        *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 11.${NC}" 
-        sleep 1.0 ;;
-    esac
-done
+        9)
+            banner
+            main_menu
+            ;;
+        10)
+            echo -e "${LIGHT_YELLOW}Thanks for using GRAVITy!${NC}"
+            echo "Exiting..."
+            echo
+            exit 0
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 11.${NC}"
+            sleep 1.0
+            ;;
+        esac
+    done
 }
 
-banner(){
-# Main script loop
-clear
-echo
-# Print the colored ASCII art
-echo -e "${LIGHT_RED}  __________________    _________   ____.______________      ${RESET}"
-echo -e "${LIGHT_RED} /  _____/\\______   \\  /  _  \\   \\ /   /|   \\__    ___/${RESET}__.__. "
-echo -e "${LIGHT_RED}/   \\  ___ |       _/ /  /_\\  \\   Y   / |   | |    | ${RESET}<   |  | "
-echo -e "${LIGHT_RED}\\    \\_\\  \\|    |   \\/    |    \\     /  |   | |    |  ${RESET}\\___  | "
-echo -e "${LIGHT_RED} \\______  /|____|_  /\\____|__  /\\___/   |___| |____|  ${RESET}/ ____| "
-echo -e "${LIGHT_RED}        \\/        \\/         \\/                       ${RESET}\\/      "
-echo
-echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}apid ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
-echo
+banner() {
+    # Main script loop
+    clear
+    echo
+    # Print the colored ASCII art
+    echo -e "${LIGHT_RED}  __________________    _________   ____.______________      ${RESET}"
+    echo -e "${LIGHT_RED} /  _____/\\______   \\  /  _  \\   \\ /   /|   \\__    ___/${RESET}__.__. "
+    echo -e "${LIGHT_RED}/   \\  ___ |       _/ /  /_\\  \\   Y   / |   | |    | ${RESET}<   |  | "
+    echo -e "${LIGHT_RED}\\    \\_\\  \\|    |   \\/    |    \\     /  |   | |    |  ${RESET}\\___  | "
+    echo -e "${LIGHT_RED} \\______  /|____|_  /\\____|__  /\\___/   |___| |____|  ${RESET}/ ____| "
+    echo -e "${LIGHT_RED}        \\/        \\/         \\/                       ${RESET}\\/      "
+    echo
+    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}apid ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
+    echo
 }
 
-main_menu(){
+main_menu() {
     while true; do
         echo -e "${YELLOW}--------------------------"
         echo -e "        Select Run"
@@ -1022,25 +1094,31 @@ main_menu(){
 
         choice=$(prompt_user "Enter your choice [1-5]: ")
         echo -e ${NC}
-        
+
         case $choice in
-            1) clear 
-            manual_run ;;
-            2) automatic_run ;;
-            3) test_run ;;
-            4) advanced_options ;;
-            5) echo -e "${YELLOW}Thanks for using GRAVITy!${NC}"
+        1)
+            clear
+            manual_run
+            ;;
+        2) automatic_run ;;
+        3) test_run ;;
+        4) advanced_options ;;
+        5)
+            echo -e "${YELLOW}Thanks for using GRAVITy!${NC}"
             echo "Exiting..."
             echo
-            exit 0 ;;
-            *) echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 5.${NC}" 
-            sleep 1.0 ;;
+            exit 0
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 5.${NC}"
+            sleep 1.0
+            ;;
         esac
     done
 }
 #echo -e "${LIGHT_WH}Please keep protein file ready in the working "
 #echo -e "directory and rename it as 'protein.pdb'${NC}"
-echo 
+echo
 
 #HOME SCREEN
 banner
