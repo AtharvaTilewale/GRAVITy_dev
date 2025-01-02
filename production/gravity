@@ -39,13 +39,37 @@ new_project() {
 
 # Function to load the current project directory from the tracking file
 load_project_dir() {
-    if [ -f "/etc/GRAVITy/current_dir.txt" ]; then
-        project_dir=$(head -n 1 /etc/GRAVITy/current_dir.txt)
+    project_base_dir="$HOME/.GRAVITy/projects"
+    
+    if [ -d "$project_base_dir" ]; then
+        echo -e "\nAvailable Projects:"
+        project_list=("$project_base_dir"/*)
+        
+        if [ ${#project_list[@]} -eq 0 ]; then
+            echo "No projects found in $project_base_dir."
+            new_project
+            return
+        fi
+
+        for i in "${!project_list[@]}"; do
+            echo "$((i + 1)). $(basename "${project_list[$i]}")"
+        done
+
+        read -p "Select a project by number: " project_number
+        if [[ $project_number -ge 1 && $project_number -le ${#project_list[@]} ]]; then
+            project_dir="${project_list[$((project_number - 1))]}"
+            echo "$project_dir" | sudo tee /etc/GRAVITy/current_dir.txt >/dev/null
+            echo "Project directory loaded: $project_dir"
+        else
+            echo "Invalid selection. Please try again."
+            load_project_dir
+        fi
     else
-        echo "No project directory found. Please create a new project first."
+        echo "No projects directory found. Please create a new project first."
         new_project
     fi
 }
+
 
 # Main functionality
 cd /etc/GRAVITy || { echo "Failed to change to /etc/GRAVITy directory."; exit 1; }
