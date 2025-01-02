@@ -367,8 +367,8 @@ generate_protein_topology() {
     water_model
 
     # Run GROMACS pdb2gmx with spinner
-    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
-    show_spinner $! "Generating Protein Topology"
+    echo "Generating Protein Topology..."
+    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
     local exit_status=$?
 
     if [ $exit_status -ne 0 ]; then
@@ -394,10 +394,9 @@ generate_protein_topology() {
 
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
 }
-    echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+
     # sudo cp topol.top $project_dir/
     # sudo cp posre.itp $project_dir/
-}
 
 # Function to define box and solvate the system
 define_box_and_solvate() {
