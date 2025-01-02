@@ -26,7 +26,7 @@ new_project() {
     
     if [ -d "$project_path" ]; then
         echo "Project '$project_name' already exists. Choose a different name."
-        exit 1
+        new_project
     fi
 
     mkdir -p "$project_path"
