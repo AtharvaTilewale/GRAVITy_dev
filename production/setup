@@ -67,7 +67,7 @@ conda install -y -c conda-forge openmm numpy pdbfixer
 
 # Step 4: Setup GRAVITy directories
 GRAVITY_HOME="/etc/GRAVITy"
-USER_GRAVITY="$HOME/.GRAVITy"
+USER_GRAVITY="/home/$(whoami)/.GRAVITy"
 
 # Remove existing directories if they exist
 if [ -d "$GRAVITY_HOME" ]; then
