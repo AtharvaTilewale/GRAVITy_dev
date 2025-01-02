@@ -2,8 +2,8 @@
 #Author: Atharva Tilewale
 
 #Add miniconda to PATH 
-export PATH="/etc/miniconda3/bin:$PATH"
-echo 'export PATH="/etc/miniconda3/bin:$PATH"' >> ~/.bashrc
+export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"
+echo 'export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"' >> ~/.bashrc
 conda init bash > /dev/null 2>&1
 source ~/.bashrc 
 
@@ -99,7 +99,7 @@ sudo cp /etc/GRAVITy/simulate "$project_dir/"
 
 # Run the GRAVITy simulation
 echo "Running GRAVITy simulation..."
-sudo bash $project_dir/simulate
+bash $project_dir/simulate
 
 echo "Simulation completed. Check the results in $project_dir."
 exit 0

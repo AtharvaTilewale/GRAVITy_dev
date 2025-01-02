@@ -34,11 +34,11 @@ command_exists() {
 # Function to install Miniconda if Conda is not installed
 install_conda() {
     echo "Conda not found. Installing Miniconda..."
-    sudo wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /etc/GRAVITy/Miniconda3.sh
-    sudo bash /etc/GRAVITy/Miniconda3.sh -b -p /etc/GRAVITy/miniconda3
-    sudo rm /etc/GRAVITy/Miniconda3.sh
-    export PATH="/etc/GRAVITy/miniconda3/bin:$PATH"
-    echo 'export PATH="/etc/GRAVITy/miniconda3/bin:$PATH"' >> ~/.bashrc
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /home/$(whoami)/.GRAVITy/Miniconda3.sh
+    bash /home/$(whoami)/.GRAVITy/Miniconda3.sh -b -p /home/$(whoami)/.GRAVITy/miniconda3
+    rm /home/$(whoami)/.GRAVITy/Miniconda3.sh
+    export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"
+    echo 'export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"' >> ~/.bashrc
     source ~/.bashrc
 }
 
