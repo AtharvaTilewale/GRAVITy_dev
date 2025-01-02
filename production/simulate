@@ -367,6 +367,7 @@ generate_protein_topology() {
     water_model
 
     # Run GROMACS pdb2gmx with spinner
+    echo
     echo "Generating Protein Topology..."
     gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
     local exit_status=$?
@@ -393,6 +394,7 @@ generate_protein_topology() {
     fi
 
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+    sleep 1.0
 }
 
     # sudo cp topol.top $project_dir/
