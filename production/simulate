@@ -600,16 +600,23 @@ update_eq_steps() {
     #User input simulation time
     echo -e ${YELLOW}"Do you want to continue with default equilibration time (100ps)?"
     echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value (in ps)"
     echo
     read -p "Enter your choice [1-2]: " eq_time
     echo -e ${NC}
     case $eq_time in
     1) eq_nsteps=50000 ;;
     2)
-        read -p "Set simulation time (ns): " eq_time_ps
-        eq_time_ps=$(echo "$eq_time_ps * 1000" | bc)
-        eq_nsteps=$(echo "$eq_time_ps / 0.002" | bc)
+        # Custom equilibration time in ps
+        read -p "Set simulation time in picoseconds (ps): " eq_time_ps
+        if [[ "$eq_time_ps" =~ ^[0-9]+$ && "$eq_time_ps" -gt 0 ]]; then
+            eq_nsteps=$(echo "$eq_time_ps / 0.002" | bc)
+            echo "Custom equilibration time of ${eq_time_ps} ps selected (${eq_nsteps} steps)."
+        else
+            echo -e "${LIGHT_RED}Invalid input! Please enter a positive numeric value for time in ps.${NC}"
+            sleep 2.0
+            return
+        fi
         ;;
     *)
         echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
