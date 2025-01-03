@@ -241,7 +241,7 @@ prompt_user() {
 }
 
 force_field() {
-    echo "Select a force field:"
+    echo -e "${LIGHT_BLUE}Select a force field:${NC}"
     PS3="Enter your choice: "
     forcefields=("charmm36" "amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
     select ff in "${forcefields[@]}"; do
@@ -258,7 +258,7 @@ force_field() {
 }
 
 water_model() {
-    echo "Select a water model:"
+    echo -e "${LIGHT_BLUE}Select a water model:${NC}"
     PS3="Enter your choice: "
     watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
     select wm in "${watermodels[@]}"; do
@@ -348,8 +348,6 @@ remove_hetatm() {
 
 # Function to generate protein topology
 generate_protein_topology() {
-    echo "Generating protein topology..."
-
     if [ ! -f "$project_dir/protein.pdb" ]; then
         echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
         read -p "Do you want to download the protein structure (y/n): " response
@@ -363,6 +361,7 @@ generate_protein_topology() {
 
     # Remove HETATM entries
     remove_hetatm
+    echo
     force_field
     echo
     water_model
