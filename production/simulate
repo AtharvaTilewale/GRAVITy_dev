@@ -503,7 +503,7 @@ add_ions() {
     read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
     echo -e ${NC}
     if [ $select_ion_addition == "y" ]; then
-        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral # > /dev/null 2>&1 & ion_add_loader
+        printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader
     else
         echo -e ${YELLOW}"Select box type from the following${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
@@ -513,7 +513,7 @@ add_ions() {
         echo -e ${NC}
 
         case $choice in
-        1) gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral ;; # > /dev/null 2>&1 & ion_add_loader
+        1) printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader ;;
         2)
             gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA >/dev/null 2>&1 &
             ion_add_loader
