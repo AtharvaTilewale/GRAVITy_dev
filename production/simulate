@@ -595,6 +595,39 @@ NPT_equilibration() {
     # gmx energy -f npt.edr -o density.xvg
 }
 
+update_eq_steps() {
+    #User input simulation time
+    echo -e ${YELLOW}"Do you want to continue with default equilibration time (100ps)?"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
+    echo
+    read -p "Enter your choice [1-2]: " eq_time
+    echo -e ${NC}
+    case $eq_time in
+    1) eq_nsteps=50000 ;;
+    2)
+        read -p "Set simulation time (ns): " eq_time_ps
+        eq_time_ps=$(echo "$eq_time_ps * 1000" | bc)
+        eq_nsteps=$(echo "$eq_time_ps / 0.002" | bc)
+        ;;
+    *)
+        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        sleep 2.0
+        return
+        ;;
+    esac
+
+    # Update nsteps in nvt.mdp and npt.mdp
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/nvt.mdp
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/npt.mdp
+    # echo "Updated nsteps in nvt and npt.mdp:"
+    # grep "nsteps" nvt.mdp and npt.mdp  # Verify the update in nvt and npt.mdp
+
+    # Clear old .tpr file (optional but recommended)
+    rm -f $project_dir/nvt.tpr
+    rm -f $project_dir/npt.tpr
+}
+
 # Function to run equilibrium
 equilibrium() {
     while true; do
@@ -627,6 +660,7 @@ equilibrium() {
 
             check_file_exists "$project_dir/nvt.gro" || return
 
+            update_eq_steps
             NVT_equilibration
             #2>/dev/null & show_spinner $! "Running NVT Equilibration"
             ;;
@@ -645,6 +679,7 @@ equilibrium() {
 
             check_file_exists "$project_dir/npt.gro" || return
 
+            update_eq_steps
             NPT_equilibration
             #2>/dev/null & show_spinner $! "Running NPT Equilibration"
             ;;
@@ -670,6 +705,7 @@ equilibrium() {
 
             # Run NVT and NPT in the background, suppress both stdout and stderr
             # Run NVT and NPT in the background, suppressing output, but show loader
+            update_eq_steps
             NVT_equilibration
             NPT_equilibration
             sleep 1.0
