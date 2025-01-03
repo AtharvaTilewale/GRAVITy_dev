@@ -1,19 +1,19 @@
 #!/bin/bash
 #Author: Atharva Tilewale
 
-#Add miniconda to PATH 
+#Add miniconda to PATH
 export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"
-echo 'export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"' >> ~/.bashrc
-conda init bash > /dev/null 2>&1
-source ~/.bashrc 
+echo 'export PATH="/home/$(whoami)/.GRAVITy/miniconda3/bin:$PATH"' >>~/.bashrc
+conda init bash >/dev/null 2>&1
+source ~/.bashrc
 
 # Source the color script
 source /etc/GRAVITy/colors
 
 # Ensure the current shell recognizes Conda
-eval "$(conda shell.bash hook)" > /dev/null 2>&1
+eval "$(conda shell.bash hook)" >/dev/null 2>&1
 
-conda activate gravity_env > /dev/null 2>&1
+conda activate gravity_env >/dev/null 2>&1
 
 #Change working directory
 cd /etc/GRAVITy
@@ -23,7 +23,7 @@ new_project() {
     echo -e "\nStarting a new project..."
     read -p "Enter project name: " project_name
     project_path="$HOME/.GRAVITy/projects/$project_name"
-    
+
     if [ -d "$project_path" ]; then
         echo "Project '$project_name' already exists. Choose a different name."
         new_project
@@ -31,7 +31,7 @@ new_project() {
 
     mkdir -p "$project_path"
     echo "New project created at $project_path."
-    
+
     # Save the current project directory to a tracking file in /etc/GRAVITy
     echo "$project_path" | sudo tee /etc/GRAVITy/current_dir.txt >/dev/null
     echo "Project directory saved to /etc/GRAVITy/current_dir.txt"
@@ -43,11 +43,11 @@ new_project() {
 # Function to load the current project directory from the tracking file
 load_project_dir() {
     project_base_dir="$HOME/.GRAVITy/projects"
-    
+
     if [ -d "$project_base_dir" ]; then
         echo -e "\nAvailable Projects:"
         project_list=("$project_base_dir"/*)
-        
+
         if [ ${#project_list[@]} -eq 0 ]; then
             echo "No projects found in $project_base_dir."
             new_project
@@ -73,9 +73,11 @@ load_project_dir() {
     fi
 }
 
-
 # Main functionality
-cd /etc/GRAVITy || { echo "Failed to change to /etc/GRAVITy directory."; exit 1; }
+cd /etc/GRAVITy || {
+    echo "Failed to change to /etc/GRAVITy directory."
+    exit 1
+}
 
 # Menu for project management
 echo
@@ -87,22 +89,22 @@ echo -e ${NC}
 options=("Create New Project" "Use Existing Project" "Exit")
 select opt in "${options[@]}"; do
     case $opt in
-        "Create New Project")
-            new_project
-            break
-            ;;
-        "Use Existing Project")
-            load_project_dir
-            echo "Using project directory: $project_dir"
-            break
-            ;;
-        "Exit")
-            echo "Exiting GRAVITy."
-            exit 0
-            ;;
-        *)
-            echo "Invalid option. Please try again."
-            ;;
+    "Create New Project")
+        new_project
+        break
+        ;;
+    "Use Existing Project")
+        load_project_dir
+        echo "Using project directory: $project_dir"
+        break
+        ;;
+    "Exit")
+        echo "Exiting GRAVITy."
+        exit 0
+        ;;
+    *)
+        echo "Invalid option. Please try again."
+        ;;
     esac
 done
 
@@ -130,7 +132,6 @@ bash $project_dir/simulate
 
 echo "Simulation completed. Check the results in $project_dir."
 exit 0
-
 
 # new_project() {
 #     echo "\nStarting a new project..."
@@ -211,6 +212,6 @@ exit 0
 # new_project
 # #copy necessary files to new dir
 # project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
-# sudo cp /etc/GRAVITy/core/prm/ $HOME/.GRAVITy/projects/$project_name/ -r 
+# sudo cp /etc/GRAVITy/core/prm/ $HOME/.GRAVITy/projects/$project_name/ -r
 
 # sudo bash /etc/GRAVITy/simulate #run GRAVITy simulation
