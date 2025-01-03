@@ -919,7 +919,7 @@ run_analysis() {
                 exit 1
             fi
             check_file_exists "$project_dir/pressure.xvg" || return
-            gmx energy -f $project_dir/nvt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
+            gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
             ;;
         5)
             echo
@@ -930,7 +930,7 @@ run_analysis() {
                 exit 1
             fi
             check_file_exists "$project_dir/density.xvg" || return
-            gmx energy -f $project_dir/nvt.edr -o $project_dir/density.xvg #generate temperature.xvg file
+            gmx energy -f $project_dir/npt.edr -o $project_dir/density.xvg #generate temperature.xvg file
             ;;
         6)
             echo
