@@ -243,7 +243,7 @@ prompt_user() {
 force_field() {
     echo "Select a force field:"
     PS3="Enter your choice: "
-    forcefields=("amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
+    forcefields=("charmm36" "amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
     select ff in "${forcefields[@]}"; do
         case $ff in
         "Other")
@@ -364,6 +364,7 @@ generate_protein_topology() {
     # Remove HETATM entries
     remove_hetatm
     force_field
+    echo
     water_model
 
     # Run GROMACS pdb2gmx with spinner
