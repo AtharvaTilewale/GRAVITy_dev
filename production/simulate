@@ -7,6 +7,7 @@ project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
 cd $project_dir
 # Source the color script
 source /etc/GRAVITy/colors
+echo start > run_parameters.conf
 
 # #Source mdp files
 # ions_mdp = '$project_dir/ions.mdp'
@@ -1010,6 +1011,7 @@ run_analysis() {
 # }
 
 automatic_run() {
+    sed -i '1s/.*/run_type=auto/' run_parameters.conf
     echo -e "${LIGHT_CYAN}Automatic Run Selected${NC}"
     echo
     echo -e "${YELLOW}Set parameters for simulation${NC}"
@@ -1184,6 +1186,7 @@ advanced_options() {
 # }
 
 manual_run() {
+    sed -i '1s/.*/run_type=manual/' run_parameters.conf
     while true; do
         echo
         echo -e "${YELLOW}------------------------------------"
