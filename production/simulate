@@ -1091,23 +1091,25 @@ automatic_run() {
 
     # Confirm Choices
     echo
-    echo "Summary of Input Parameters:"
-    echo "PDB ID: $pdb_id"
-    echo "Force Field: $ff"
-    echo "Water Model: $wm"
-    echo "Box Type: $bt"
-    echo "Solvation Model: $sol_mod"
-    echo "Equilibration Time: $eq_time_ps ps ($eq_nsteps steps)"
-    echo "Simulation Time: $md_time_ns ns ($md_steps steps)"
-    echo
+    echo -e "${YELLOW}Summary of Input Parameters: ${NC}"
+    echo -e "${LIGHT_CYAN}PDB ID: $pdb_id ${NC}"
+    echo -e "${LIGHT_CYAN}Force Field: $ff ${NC}"
+    echo -e "${LIGHT_CYAN}Water Model: $wm ${NC}"
+    echo -e "${LIGHT_CYAN}Box Type: $bt ${NC}"
+    echo -e "${LIGHT_CYAN}Solvation Model: $sol_mod ${NC}"
+    echo -e "${LIGHT_CYAN}Equilibration Time: $eq_time_ps ps ($eq_nsteps steps) ${NC}"
+    echo -e "${LIGHT_CYAN}Simulation Time: $md_time_ns ns ($md_steps steps) ${NC}"
+    echo -e "${LIGHT_YELLOW}"
     read -p "Do you want to save and proceed with these settings? (y/n): " confirm
     if [[ "$confirm" != "y" ]]; then
         echo "Aborting setup."
         exit 1
     fi
+    echo -e "${}"
 
     # Save Parameters to File
     echo "Saving parameters to $param_file..."
+    sleep 1.0
     cat > "$param_file" <<EOF
 pdb_id=$pdb_id
 force_field=$ff
@@ -1120,7 +1122,8 @@ simulation_time_ns=$md_time_ns
 simulation_steps=$md_steps
 EOF
 
-    echo "Parameters saved. Starting the setup and run process..."
+    echo -e "${LIGHT_GREEN}Parameters saved. Starting the setup and run process...${NC}"
+    sleep 1.0
 
 }
 
