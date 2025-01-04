@@ -1012,7 +1012,7 @@ run_analysis() {
 automatic_run() {
     echo -e "${LIGHT_CYAN}Automatic Run Selected${NC}"
     echo
-    echo -e "${LIGHT_PURPLE}Set parameters for simulation${NC}"
+    echo -e "${YELLOW}Set parameters for simulation${NC}"
     echo -e "${LIGHT_BLUE}"
     local param_file="run_parameters.conf"
 
@@ -1098,7 +1098,7 @@ automatic_run() {
     echo "Box Type: $bt"
     echo "Solvation Model: $sol_mod"
     echo "Equilibration Time: $eq_time_ps ps ($eq_nsteps steps)"
-    echo "Simulation Time: $md_time_ns ns ($sim_steps steps)"
+    echo "Simulation Time: $md_time_ns ns ($md_steps steps)"
     echo
     read -p "Do you want to save and proceed with these settings? (y/n): " confirm
     if [[ "$confirm" != "y" ]]; then
