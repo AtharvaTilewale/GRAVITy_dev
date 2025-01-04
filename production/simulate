@@ -1061,15 +1061,15 @@ automatic_run() {
         esac
     done
     echo "Selected water model: $sol_mod"
-
+    
     update_eq_steps
 
     # Prompt for Simulation Time
     read -p "Enter simulation time in nanoseconds: " md_time_ns
     md_time_ps=$(echo "$md_time_ns * 1000" | bc)
     md_steps=$(echo "$md_time_ps / 0.002" | bc)  # Assuming 2fs timestep
-
-    update_simulation_steps
+    sed -i "s/^nsteps.*/nsteps = $md_steps/" $project_dir/md.mdp
+    
 
     # Confirm Choices
     echo
