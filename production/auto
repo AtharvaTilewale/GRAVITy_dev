@@ -1,0 +1,92 @@
+automatic_run() {
+    local param_file="run_parameters.conf"
+
+    #Download Protein - Enter PDB ID
+    read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+
+    # Validate PDB ID format
+    if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+        echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+        return 1
+    fi
+
+    # Parameter Initialization
+    # local ff_choice wm_choice sim_time_ns sim_time_ps sim_steps force_field water_model
+    force_field
+    echo
+    water_model
+    
+    # Box type selection
+    echo -e "${LIGHT_BLUE}Select a box type:${NC}"
+    PS3="Enter your choice: "
+    box_types=("cubic" "dodecahedron" "triclinic" "Other")
+    select bt in "${box_types[@]}"; do
+        case $bt in
+        "Other")
+            read -p "Enter custom box type: " box_type
+            break
+            ;;
+        *)
+            box_type=$bt
+            break
+            ;;
+        esac
+    done
+    echo "Selected box type: $box_type"
+
+    # Solvation mode selection
+    echo -e "${LIGHT_BLUE}Select a solvation mode:${NC}"
+    PS3="Enter your choice: "
+    watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
+    select sol_mod in "${watermodels[@]}"; do
+        case $sol_mod in
+        "Other")
+            read -p "Enter custom water model: " wm
+            break
+            ;;
+        *)
+            break
+            ;;
+        esac
+    done
+    echo "Selected water model: $sol_mod"
+
+    update_eq_steps
+
+    # Prompt for Simulation Time
+    read -p "Enter simulation time in nanoseconds: " md_time_ns
+    md_time_ps=$(echo "$md_time_ns * 1000" | bc)
+    md_steps=$(echo "$md_time_ps / 0.002" | bc)  # Assuming 2fs timestep
+
+    update_simulation_steps
+
+    # Confirm Choices
+    echo
+    echo "Summary of Input Parameters:"
+    echo "PDB ID: $pdb_id"
+    echo "Force Field: $ff"
+    echo "Box Type: $bt"
+    echo "Water Model: $wm"
+    echo "Simulation Time: $md_time_ns ns ($sim_steps steps)"
+    echo
+    read -p "Do you want to save and proceed with these settings? (y/n): " confirm
+    if [[ "$confirm" != "y" ]]; then
+        echo "Aborting setup."
+        exit 1
+    fi
+
+    # Save Parameters to File
+    echo "Saving parameters to $param_file..."
+    cat > "$param_file" <<EOF
+pdb_id=$pdb_id
+force_field=$ff
+water_model=$wm
+box_type=$bt
+solvate_model=$sol_mod
+simulation_time_ns=$md_time_ns
+simulation_steps=$md_steps
+EOF
+
+    echo "Parameters saved. Starting the setup and run process..."
+
+}
