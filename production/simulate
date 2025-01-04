@@ -1010,11 +1010,15 @@ run_analysis() {
 # }
 
 automatic_run() {
+    echo -e "${LIGHT_CYAN}Automatic Run Selected${NC}"
+    echo
+    echo -e "${LIGHT_PURPLE}Set parameters for simulation${NC}"
+    echo -e "${LIGHT_BLUE}"
     local param_file="run_parameters.conf"
 
     #Download Protein - Enter PDB ID
     read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
-
+    echo -e "${NC}"
     # Validate PDB ID format
     if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
         echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
@@ -1024,9 +1028,11 @@ automatic_run() {
     # Parameter Initialization
     # local ff_choice wm_choice sim_time_ns sim_time_ps sim_steps force_field water_model
     force_field
+    echo -e "${LIGHT_YELLOW}Selected force field:${LIGHT_GREEN} $ff ${NC}"
     echo
     water_model
-    
+    echo -e "${LIGHT_YELLOW}Selected water model:${LIGHT_GREEN} $wm ${NC}"
+    echo
     # Box type selection
     echo -e "${LIGHT_BLUE}Select a box type:${NC}"
     PS3="Enter your choice: "
@@ -1043,8 +1049,8 @@ automatic_run() {
             ;;
         esac
     done
-    echo "Selected box type: $box_type"
-
+    echo -e "${LIGHT_YELLOW}Selected box type:${LIGHT_GREEN} $box_type ${NC}"
+    echo 
     # Solvation mode selection
     echo -e "${LIGHT_BLUE}Select a solvation mode:${NC}"
     PS3="Enter your choice: "
@@ -1060,15 +1066,27 @@ automatic_run() {
             ;;
         esac
     done
-    echo "Selected water model: $sol_mod"
+    echo -e "${LIGHT_YELLOW}Selected solvation model:${LIGHT_GREEN} $sol_mod ${NC}"
+    echo -e "${LIGHT_BLUE}"
+    read -p "Set equilibration time in ps (Default 100ps): " eq_time_ps
     
-    update_eq_steps
+    if [[ "$eq_time_ps" =~ ^[0-9]+$ && "$eq_time_ps" -gt 0 ]]; then
+        eq_nsteps=$(echo "$eq_time_ps / 0.002" | bc)
+    else
+        echo -e "${LIGHT_RED}Invalid input! Please enter a positive numeric value for time in ps.${NC}"
+        sleep 2.0
+        return
+    fi
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/nvt.mdp
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/npt.mdp
 
     # Prompt for Simulation Time
+    echo -e "${LIGHT_BLUE}"
     read -p "Enter simulation time in nanoseconds: " md_time_ns
     md_time_ps=$(echo "$md_time_ns * 1000" | bc)
     md_steps=$(echo "$md_time_ps / 0.002" | bc)  # Assuming 2fs timestep
     sed -i "s/^nsteps.*/nsteps = $md_steps/" $project_dir/md.mdp
+    echo -e "${NC}"
     
 
     # Confirm Choices
@@ -1076,8 +1094,10 @@ automatic_run() {
     echo "Summary of Input Parameters:"
     echo "PDB ID: $pdb_id"
     echo "Force Field: $ff"
-    echo "Box Type: $bt"
     echo "Water Model: $wm"
+    echo "Box Type: $bt"
+    echo "Solvation Model: $sol_mod"
+    echo "Equilibration Time: $eq_time_ps ps ($eq_nsteps steps)"
     echo "Simulation Time: $md_time_ns ns ($sim_steps steps)"
     echo
     read -p "Do you want to save and proceed with these settings? (y/n): " confirm
@@ -1094,6 +1114,8 @@ force_field=$ff
 water_model=$wm
 box_type=$bt
 solvate_model=$sol_mod
+equilibration_time=$eq_time_ps
+equilibration_steps=$eq_nsteps
 simulation_time_ns=$md_time_ns
 simulation_steps=$md_steps
 EOF
