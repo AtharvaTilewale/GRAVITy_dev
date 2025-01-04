@@ -9,6 +9,16 @@ cd $project_dir
 source /etc/GRAVITy/colors
 echo start > $project_dir/run_parameters.conf
 source $project_dir/run_parameters.conf
+param_file=$project_dir/run_parameters.conf
+
+auto_check() {
+    param_auto_file=$(head -n 1 "$param_file")
+    if [[ "$param_auto_file" == "run_type=auto" ]]; then
+        echo true
+    else
+        echo false
+    fi
+}
 
 # #Source mdp files
 # ions_mdp = '$project_dir/ions.mdp'
@@ -303,34 +313,39 @@ check_file_exists() {
 # Download protein structure
 # Download protein structure
 download_protein() {
-    echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
-    read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
-
-    # Validate PDB ID format
-    if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
-        echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
-        return 1
-    fi
-
-    # Prepare target file path
-    local target_file="$project_dir/${pdb_id}.pdb"
-
-    # Attempt download
-    echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
-    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-    show_spinner $! "Downloading protein structure"
-
-    # Check download success
-    if [[ -s "$target_file" ]]; then
-        echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
-        mv $target_file $project_dir/protein.pdb
+    if [[ $(auto_check) == true ]]; then
+        (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+        show_spinner $! "Downloading protein structure"
     else
-        echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
-        rm -f "$target_file" # Clean up incomplete file
-        return 1
+        echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
+        read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+
+        # Validate PDB ID format
+        if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+            echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+            return 1
+        fi
+
+        # Prepare target file path
+        local target_file="$project_dir/${pdb_id}.pdb"
+
+        # Attempt download
+        echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
+        (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+        show_spinner $! "Downloading protein structure"
+
+        # Check download success
+        if [[ -s "$target_file" ]]; then
+            echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+            mv $target_file $project_dir/protein.pdb
+        else
+            echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+            rm -f "$target_file" # Clean up incomplete file
+            return 1
+        fi
+        sleep 1.0
+        return 0
     fi
-    sleep 1.0
-    return 0
 }
 
 # Function to fix PDB file using PDBFixer
@@ -350,6 +365,24 @@ remove_hetatm() {
 
 # Function to generate protein topology
 generate_protein_topology() {
+    if [[ $(auto_check) == true ]]; then
+        remove_hetatm
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        if [ $exit_status -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+        
+        # Call pdb_fixer
+        pdb_fixer
+        if [ $? -ne 0 ]; then
+            echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+            exit 1
+        fi
+
+        # Retry GROMACS pdb2gmx after fixing
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
+        show_spinner $! "Generating Protein Topology (After Fix)"
+    else
+
     if [ ! -f "$project_dir/protein.pdb" ]; then
         echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
         read -p "Do you want to download the protein structure (y/n): " response
@@ -397,6 +430,7 @@ generate_protein_topology() {
 
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
     sleep 1.0
+    fi
 }
 
     # sudo cp topol.top $project_dir/
@@ -404,6 +438,12 @@ generate_protein_topology() {
 
 # Function to define box and solvate the system
 define_box_and_solvate() {
+    if [[ $(auto_check) == true ]]; then
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1 &
+        box_loader
+        gmx solvate -cp $project_dir/newbox.gro -cs $sol_mod.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+        solvate_loader
+    else
     echo
     echo "Defining box and solvating system..."
     echo
@@ -481,10 +521,16 @@ define_box_and_solvate() {
             ;;
         esac
     fi
+    fi
 }
 
 # Function to add ions
 add_ions() {
+    if [[ $(auto_check) == true ]]; then
+        gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
+        ion_tpr_loader
+        printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader
+    else
     if [ ! -f "$project_dir/solv.gro" ]; then
         echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
         sleep 2.0
@@ -530,10 +576,17 @@ add_ions() {
             ;;
         esac
     fi
+    fi
 }
 
 # Function to run energy minimization
 energy_minimization() {
+    if [[ $(auto_check) == true ]]; then
+        gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr >/dev/null 2>&1 &
+    show_spinner $! "Preparing"
+    gmx mdrun -v -deffnm $project_dir/em >/dev/null 2>&1 &
+    energy_minimization_loader
+    else
     # energy_minimization() {
     # echo -e "${YELLOW}Perform Energy Minimization${NC}"
     # echo -e "Choose an energy minimization method:"
@@ -568,6 +621,7 @@ energy_minimization() {
     #generating potential energy xvg file
     # echo -e "Calculating potential energy..."
     # gmx energy -f em.edr -o potential.xvg
+    fi
 }
 
 NVT_equilibration() {
@@ -639,6 +693,10 @@ update_eq_steps() {
 
 # Function to run equilibrium
 equilibrium() {
+    if [[ "$param_auto_file" == "run_type=auto" ]]; then
+        NVT_equilibration
+        NPT_equilibration
+    else
     while true; do
         echo
         echo -e "${YELLOW}--------------------------"
@@ -733,6 +791,7 @@ equilibrium() {
             ;;
         esac
     done
+fi
 }
 
 # Update nsteps in md.mdp and regenerate md.tpr
@@ -766,6 +825,56 @@ update_simulation_steps() {
 
 # Function to run production MD
 production_md() {
+    if [[ "$param_auto_file" == "run_type=auto" ]]; then
+        if [[ -n "$gpu_info" ]]; then
+        echo "GPU detected:"
+        echo "$gpu_info"
+
+        # Check if the GPU is an NVIDIA card and if nvidia-smi is available
+        if command -v nvidia-smi &>/dev/null; then
+            echo -e ${LIGHT_CYAN} "NVIDIA GPU detected. Running nvidia-smi for details:${NC}"
+            nvidia-smi
+            sleep 3.0
+
+            # Measure and show time while running the simulation, suppress output
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v -nb gpu >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+            echo "Elapsed time: $elapsed seconds"
+            show_spinner $! "Running MD Simulation on GPU"
+
+        else
+            echo -e ${LIGHT_CYAN} "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU...${NC}"
+            sleep 3.0
+
+            # Measure and show time while running the simulation, suppress output
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+            echo "Elapsed time: $elapsed seconds"
+            show_spinner $! "Running MD Simulation on CPU"
+        fi
+    else
+        echo -e ${LIGHT_CYAN}"No GPU detected. Running simulation on CPU..."${NC}
+        sleep 3.0
+
+        # Measure and show time while running the simulation, suppress output
+        start_time=$(date +%s) # Get start time
+        gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+        show_spinner $! "Running MD Simulation"
+        end_time=$(date +%s) # Get end time
+
+        elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+        echo "Elapsed time: $elapsed seconds"
+        sleep 2.0
+    fi
+    else
     echo
     # Check for required files
     if [ ! -f "$project_dir/npt.gro" ]; then
@@ -863,7 +972,7 @@ production_md() {
         echo "Elapsed time: $elapsed seconds"
         sleep 2.0
     fi
-
+fi
     # Wait for background processes to finish
     wait
 }
