@@ -7,7 +7,8 @@ project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
 cd $project_dir
 # Source the color script
 source /etc/GRAVITy/colors
-echo start > run_parameters.conf
+echo start > $project_dir/run_parameters.conf
+source $project_dir/run_parameters.conf
 
 # #Source mdp files
 # ions_mdp = '$project_dir/ions.mdp'
