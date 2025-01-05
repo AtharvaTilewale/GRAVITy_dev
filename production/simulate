@@ -384,7 +384,7 @@ generate_protein_topology() {
         local exit_status=$?
         if [[ $exit_status -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-            pdb_fixer || { echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"; exit 1; }
+            pdb_fixer 
             
             # Retry GROMACS pdb2gmx after fixing
             gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$force_field" -water "$water_model" -ignh >/dev/null 2>&1
