@@ -1215,6 +1215,7 @@ automatic_run() {
     echo "Saving parameters to $param_file..."
     sleep 1.0
     cat > "$param_file" <<EOF
+run_type=auto
 pdb_id=$pdb_id
 force_field=$ff
 water_model=$wm
@@ -1229,13 +1230,13 @@ EOF
     echo -e "${LIGHT_GREEN}Parameters saved. Starting the setup and run process...${NC}"
     sleep 1.0
 
-download_protein;;
-generate_protein_topology;;
-define_box_and_solvate;;
-add_ions;;
-energy_minimization;;
-equilibration;;
-production_md;;
+download_protein
+generate_protein_topology
+define_box_and_solvate
+add_ions
+energy_minimization
+equilibration
+production_md
 
 }
 
