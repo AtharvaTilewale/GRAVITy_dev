@@ -1311,7 +1311,7 @@ generate_protein_topology
 define_box_and_solvate
 add_ions
 energy_minimization
-equilibration
+equilibrium
 production_md
 
 }
