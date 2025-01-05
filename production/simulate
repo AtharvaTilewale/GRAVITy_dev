@@ -15,6 +15,7 @@ auto_check() {
     param_auto_file=$(head -n 1 "$param_file")
     if [[ "$param_auto_file" == "run_type=auto" ]]; then
         echo true
+        source $project_dir/run_parameters.conf
     else
         echo false
     fi
@@ -314,8 +315,19 @@ check_file_exists() {
 # Download protein structure
 download_protein() {
     if [[ $(auto_check) == true ]]; then
+        # Prepare target file path
+        local target_file="$project_dir/${pdb_id}.pdb"
+
         (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
         show_spinner $! "Downloading protein structure"
+        if [[ -s "$target_file" ]]; then
+            echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+            mv $target_file $project_dir/protein.pdb
+        else
+            echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+            rm -f "$target_file" # Clean up incomplete file
+            return 1
+        fi
     else
         echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
         read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
@@ -368,14 +380,14 @@ generate_protein_topology() {
     # Check auto_check function
     if [[ $(auto_check) == true ]]; then
         remove_hetatm
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$force_field" -water "$water_model" -ignh >/dev/null 2>&1
         local exit_status=$?
         if [[ $exit_status -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
             pdb_fixer || { echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"; exit 1; }
             
             # Retry GROMACS pdb2gmx after fixing
-            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$force_field" -water "$water_model" -ignh >/dev/null 2>&1
             exit_status=$?
             if [[ $exit_status -ne 0 ]]; then
                 echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
@@ -431,9 +443,9 @@ generate_protein_topology() {
 # Function to define box and solvate the system
 define_box_and_solvate() {
     if [[ $(auto_check) == true ]]; then
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1 &
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $box_type >/dev/null 2>&1 &
         box_loader
-        gmx solvate -cp $project_dir/newbox.gro -cs $sol_mod.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+        gmx solvate -cp $project_dir/newbox.gro -cs $solvate_model.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
         solvate_loader
     else
     echo
