@@ -443,10 +443,22 @@ generate_protein_topology() {
 # Function to define box and solvate the system
 define_box_and_solvate() {
     if [[ $(auto_check) == true ]]; then
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1 &
-        box_loader
-        gmx solvate -cp $project_dir/newbox.gro -cs $sol_mod.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
-        solvate_loader
+        echo "Auto mode: Defining box and solvating system..."
+        echo "Box type: $bt, Solvation model: $sol_mod.gro"
+
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2> $project_dir/editconf.log
+        if [ $? -ne 0 ]; then
+            echo "Error in gmx editconf. Check editconf.log for details."
+            exit 1
+        fi
+
+        gmx solvate -cp $project_dir/newbox.gro -cs $sol_mod.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2> $project_dir/solvate.log
+        if [ $? -ne 0 ]; then
+            echo "Error in gmx solvate. Check solvate.log for details."
+            exit 1
+        fi
+
+        echo "Box defined and system solvated successfully."
     else
     echo
     echo "Defining box and solvating system..."
@@ -531,9 +543,32 @@ define_box_and_solvate() {
 # Function to add ions
 add_ions() {
     if [[ $(auto_check) == true ]]; then
-        gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
-        ion_tpr_loader
-        printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral > /dev/null 2>&1 & ion_add_loader
+        # Ensure all required files exist
+        if [ ! -f "$project_dir/solv.gro" ]; then
+            echo -e "${LIGHT_RED}Error: solv.gro file does not exist. Exiting.${NC}"
+            exit 1
+        fi
+        if [ ! -f "$project_dir/ions.mdp" ]; then
+            echo -e "${LIGHT_RED}Error: ions.mdp file does not exist. Downloading...${NC}"
+            wget -q -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" -O "$project_dir/ions.mdp"
+            if [ $? -ne 0 ]; then
+                echo -e "${LIGHT_RED}Error: Failed to download ions.mdp. Exiting.${NC}"
+                exit 1
+            fi
+        fi
+
+        # Run GROMACS commands
+        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo -e "${LIGHT_RED}Error: grompp failed. Check your input files.${NC}"
+            exit 1
+        fi
+
+        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
+            exit 1
+        fi
     else
     if [ ! -f "$project_dir/solv.gro" ]; then
         echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
@@ -585,11 +620,40 @@ add_ions() {
 
 # Function to run energy minimization
 energy_minimization() {
-    if [[ $(auto_check) == true ]]; then
-        gmx grompp -f $project_dir/minim.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr >/dev/null 2>&1 &
-    show_spinner $! "Preparing"
-    gmx mdrun -v -deffnm $project_dir/em >/dev/null 2>&1 &
-    energy_minimization_loader
+   if [[ $(auto_check) == true ]]; then
+    echo "Starting energy minimization process..."
+
+    # Check if necessary files exist
+    if [[ ! -f "$project_dir/minim.mdp" ]]; then
+        echo -e "${LIGHT_RED}Error: minim.mdp not found in $project_dir.${NC}"
+        exit 1
+    fi
+    if [[ ! -f "$project_dir/solv_ions.gro" ]]; then
+        echo -e "${LIGHT_RED}Error: solv_ions.gro not found in $project_dir.${NC}"
+        exit 1
+    fi
+    if [[ ! -f "$project_dir/topol.top" ]]; then
+        echo -e "${LIGHT_RED}Error: topol.top not found in $project_dir.${NC}"
+        exit 1
+    fi
+
+    # Prepare the system for energy minimization
+    echo "Preparing input files for energy minimization..."
+    gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2> "$project_dir/grompp.log"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
+
+    # Run energy minimization
+    echo "Running energy minimization..."
+    gmx mdrun -v -deffnm "$project_dir/em" 2> "$project_dir/mdrun.log"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
     else
     # energy_minimization() {
     # echo -e "${YELLOW}Perform Energy Minimization${NC}"
