@@ -557,18 +557,27 @@ add_ions() {
             fi
         fi
 
-        # Run GROMACS commands
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: grompp failed. Check your input files.${NC}"
-            exit 1
-        fi
+       # Run grompp and debug potential issues
+echo -e "${LIGHT_GREEN}Running grompp...${NC}"
+gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
 
-        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
-            exit 1
-        fi
+if [ $? -ne 0 ]; then
+    echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
+    gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
+    echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
+    exit 1
+fi
+
+# Run genion to add ions
+echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
+printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
+
+if [ $? -ne 0 ]; then
+    echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
+    exit 1
+fi
+
+echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
     else
     if [ ! -f "$project_dir/solv.gro" ]; then
         echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
