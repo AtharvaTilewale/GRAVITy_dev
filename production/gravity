@@ -22,7 +22,7 @@ cd /etc/GRAVITy
 new_project() {
     echo -e "\nStarting a new project..."
     read -p "Enter project name: " project_name
-    project_path="$HOME/.GRAVITy/projects/$project_name"
+    project_path="/home/$(whoami)/.GRAVITy/projects/$project_name"
 
     if [ -d "$project_path" ]; then
         echo "Project '$project_name' already exists. Choose a different name."
@@ -38,6 +38,8 @@ new_project() {
 
     # Update project_dir to the new project path
     project_dir="$project_path"
+    chmod u+w /home/$(whoami)/.GRAVITy/projects/$project_name
+    sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy/projects/$project_name
 }
 
 # Function to load the current project directory from the tracking file
@@ -120,6 +122,7 @@ fi
 
 sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
 chmod u+w /home/$(whoami)/.GRAVITy/projects
+
 
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
