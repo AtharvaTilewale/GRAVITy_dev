@@ -761,10 +761,34 @@ update_eq_steps() {
 
 # Function to run equilibrium
 equilibrium() {
-    if [[ "$param_auto_file" == "run_type=auto" ]]; then
-        NVT_equilibration
-        NPT_equilibration
-    else
+# Check if the parameter file exists
+if [[ ! -f "$param_file" ]]; then
+    echo -e "${LIGHT_RED}Error: Parameter file $param_file not found.${NC}"
+    exit 1
+fi
+
+# Check if the run type is set to auto
+if grep -q "run_type=auto" "$param_file"; then
+    echo "Run type is set to auto. Proceeding with equilibration steps..."
+
+    # NVT Equilibration
+    echo "Starting NVT equilibration..."
+    NVT_equilibration
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: NVT equilibration failed.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}NVT equilibration completed successfully.${NC}"
+
+    # NPT Equilibration
+    echo "Starting NPT equilibration..."
+    NPT_equilibration
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: NPT equilibration failed.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}NPT equilibration completed successfully.${NC}"
+else
     while true; do
         echo
         echo -e "${YELLOW}--------------------------"
