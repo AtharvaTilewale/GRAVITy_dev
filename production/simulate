@@ -452,7 +452,7 @@ define_box_and_solvate() {
             exit 1
         fi
 
-        gmx solvate -cp $project_dir/newbox.gro -cs $sol_mod.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2> $project_dir/solvate.log
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2> $project_dir/solvate.log
         if [ $? -ne 0 ]; then
             echo "Error in gmx solvate. Check solvate.log for details."
             exit 1
@@ -918,40 +918,41 @@ update_simulation_steps() {
 # Function to run production MD
 production_md() {
     if [[ "$param_auto_file" == "run_type=auto" ]]; then
-        if [[ -n "$gpu_info" ]]; then
-        echo "GPU detected:"
-        echo "$gpu_info"
+    if [[ -n "$gpu_info" ]]; then
+        echo "GPU detected: $gpu_info"
 
-        # Check if the GPU is an NVIDIA card and if nvidia-smi is available
+        # Check for NVIDIA GPU and nvidia-smi
         if command -v nvidia-smi &>/dev/null; then
-            echo -e ${LIGHT_CYAN} "NVIDIA GPU detected. Running nvidia-smi for details:${NC}"
+            echo -e "${LIGHT_CYAN}NVIDIA GPU detected. Displaying details:${NC}"
             nvidia-smi
-            sleep 3.0
+            sleep 3
 
-            # Measure and show time while running the simulation, suppress output
-            start_time=$(date +%s) # Get start time
-            gmx mdrun -deffnm $project_dir/md -v -nb gpu >/dev/null 2>&1 &
-            show_spinner $! "Running MD Simulation"
-            end_time=$(date +%s) # Get end time
-
-            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
-            echo "Elapsed time: $elapsed seconds"
-            show_spinner $! "Running MD Simulation on GPU"
-
+            run_mode="GPU"
+            run_cmd="gmx mdrun -deffnm $project_dir/md -v -nb gpu"
         else
-            echo -e ${LIGHT_CYAN} "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU...${NC}"
-            sleep 3.0
-
-            # Measure and show time while running the simulation, suppress output
-            start_time=$(date +%s) # Get start time
-            gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
-            show_spinner $! "Running MD Simulation"
-            end_time=$(date +%s) # Get end time
-
-            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
-            echo "Elapsed time: $elapsed seconds"
-            show_spinner $! "Running MD Simulation on CPU"
+            echo -e "${LIGHT_YELLOW}NVIDIA GPU not detected or nvidia-smi unavailable. Falling back to CPU...${NC}"
+            run_mode="CPU"
+            run_cmd="gmx mdrun -deffnm $project_dir/md -v"
         fi
+    else
+        echo -e "${LIGHT_YELLOW}No GPU information found. Running simulation on CPU...${NC}"
+        run_mode="CPU"
+        run_cmd="gmx mdrun -deffnm $project_dir/md -v"
+    fi
+
+    # Measure and show elapsed time
+    echo -e "${LIGHT_GREEN}Starting MD simulation on $run_mode...${NC}"
+    start_time=$(date +%s)
+
+    eval "$run_cmd >/dev/null 2>&1 &"
+    show_spinner $! "Running MD Simulation on $run_mode"
+
+    end_time=$(date +%s)
+    elapsed=$((end_time - start_time))
+
+    echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
+    echo "Elapsed time: $elapsed seconds"
+        
     else
         echo -e ${LIGHT_CYAN}"No GPU detected. Running simulation on CPU..."${NC}
         sleep 3.0
