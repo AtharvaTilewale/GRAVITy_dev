@@ -122,7 +122,8 @@ fi
 
 sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
 chmod u+w /home/$(whoami)/.GRAVITy/projects
-
+chmod u+w $project_dir
+sudo chown -R $project_dir
 
 # Copy necessary files to the project directory
 echo "Copying necessary files to $project_dir..."
