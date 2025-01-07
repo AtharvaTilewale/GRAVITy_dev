@@ -312,7 +312,6 @@ check_file_exists() {
 }
 
 # Download protein structure
-# Download protein structure
 download_protein() {
     if [[ $(auto_check) == true ]]; then
         # Prepare target file path
