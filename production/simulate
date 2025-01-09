@@ -14,8 +14,8 @@ param_file=$project_dir/run_parameters.conf
 auto_check() {
     param_auto_file=$(head -n 1 "$param_file")
     if [[ "$param_auto_file" == "run_type=auto" ]]; then
-        echo true
         source $project_dir/run_parameters.conf
+        echo true
     else
         echo false
     fi
