@@ -1345,6 +1345,17 @@ EOF
     # energy_minimization
     # equilibrium
     # production_md
+
+pdb_id=$pdb_id
+force_field=$ff
+water_model=$wm
+box_type=$bt
+solvate_model=$sol_mod
+equilibration_time=$eq_time_ps
+equilibration_steps=$eq_nsteps
+simulation_time_ns=$md_time_ns
+simulation_steps=$md_steps
+
     local target_file="$project_dir/${pdb_id}.pdb"
 
         (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
