@@ -44,6 +44,7 @@ install_conda() {
 
 # Step 1: Check for Conda
 if ! command_exists conda; then
+    mkdir /home/$(whoami)/.GRAVITy/
     install_conda
 else
     echo "Conda is already installed."
