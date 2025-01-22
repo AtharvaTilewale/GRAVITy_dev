@@ -1127,7 +1127,7 @@ run_analysis() {
                 exit 1
             fi
             check_file_exists "$project_dir/temperature.xvg" || return
-            gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
+            printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
             ;;
         4)
             echo
