@@ -1155,9 +1155,9 @@ run_analysis() {
     echo
     echo "Running analysis..."
     while true; do
-        echo "---------------------------"
-        echo "       Analysis Menu"
-        echo "---------------------------"
+        echo -e "${YELLOW}---------------------------"
+        echo -e "       Analysis Menu"
+        echo -e "---------------------------${NC}"
         # echo "1) Recentering and Rewrapping Coordinates"
         echo "1) RMSD"
         echo "2) Radius of Gyration"
@@ -1165,6 +1165,8 @@ run_analysis() {
         # echo "5) Density"
         # echo "6) Potential Energy"
         echo "7) Back to Main Menu"
+        echo -e "${YELLOW}---------------------------${NC}"
+        echo
         read -p "Enter your choice [1-7]: " analysis_choice
 
         case $analysis_choice in
