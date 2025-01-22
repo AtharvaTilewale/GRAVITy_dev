@@ -1074,6 +1074,18 @@ production_md() {
             sleep 2.0
         fi
     fi
+    echo
+    echo -e "Processing files..."
+    echo
+    #Recentering and Rewrapping Coordinates...
+    echo
+    if [ ! -f "$project_dir/md.xtc" ]; then
+        echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/md_noPBC.xtc" || return
+    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
+
     # Wait for background processes to finish
     wait
 }
