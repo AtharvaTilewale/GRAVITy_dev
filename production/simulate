@@ -1093,7 +1093,16 @@ production_md() {
         exit 1
     fi
     check_file_exists "$project_dir/rmsd.xvg" || return
-    printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
+    printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+    echo
+    #Finding Radius of Gyration...
+    echo
+    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/gyrate.xvg" || return
+    printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
     echo
 #     echo "Analyzing Temperature Progression..."
 #     echo
