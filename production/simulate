@@ -1105,7 +1105,7 @@ run_analysis() {
                 exit 1
             fi
             check_file_exists "$project_dir/md_noPBC.xtc" || return
-            printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center || exit 1
+            printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
             ;;
         2)
             echo
