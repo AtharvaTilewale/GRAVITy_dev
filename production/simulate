@@ -1153,7 +1153,6 @@ production_md() {
 # Function to run analysis
 run_analysis() {
     echo
-    echo "Running analysis..."
     while true; do
         echo -e "${YELLOW}---------------------------"
         echo -e "       Analysis Menu"
