@@ -1094,7 +1094,49 @@ production_md() {
     fi
     check_file_exists "$project_dir/rmsd.xvg" || return
     printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
-
+    echo
+            echo "Analyzing Temperature Progression..."
+            echo
+            if [ ! -f "$project_dir/nvt.edr" ]; then
+                echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/temperature.xvg" || return
+            printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
+            ;;
+        4)
+            echo
+            echo "Analyzing Pressure Progression..."
+            echo
+            if [ ! -f "$project_dir/npt.edr" ]; then
+                echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/pressure.xvg" || return
+            gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
+            ;;
+        5)
+            echo
+            echo "Analyzing Density Progression..."
+            echo
+            if [ ! -f "$project_dir/npt.edr" ]; then
+                echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/density.xvg" || return
+            gmx energy -f $project_dir/npt.edr -o $project_dir/density.xvg #generate temperature.xvg file
+            ;;
+        6)
+            echo
+            echo "Calculating Potential Energy..."
+            echo
+            if [ ! -f "$project_dir/em.edr" ]; then
+                echo -e ${LIGHT_RED} "em.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/potential.xvg" || return
+            gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
+            ;;
     # Wait for background processes to finish
     wait
 }
