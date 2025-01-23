@@ -54,21 +54,23 @@ new_project() {
         sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
         sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
         sudo cp /etc/GRAVITy/protein_sim "$project_dir/"
+        mv $project_dir/protein_sim $project_dir/simulate
         sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
         chmod u+w /home/$(whoami)/.GRAVITy/projects
         chmod u+w $project_dir
         sudo chown -R $project_dir
-        bash $project_dir/protein_sim
+        bash $project_dir/simulate
         ;;
     2)
         sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
         sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
         sudo cp -r /etc/GRAVITy/core/complex/* "$project_dir/"
+        mv $project_dir/complex_sim $project_dir/simulate
         sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
         chmod u+w /home/$(whoami)/.GRAVITy/projects
         chmod u+w $project_dir
         sudo chown -R $project_dir
-        bash $project_dir/complex_sim
+        bash $project_dir/simulate
         ;;
     3)
         exit 0
@@ -104,6 +106,7 @@ load_project_dir() {
             project_dir="${project_list[$((project_number - 1))]}"
             echo "$project_dir" | sudo tee /etc/GRAVITy/current_dir.txt >/dev/null
             echo "Project directory loaded: $project_dir"
+            bash $project_dir/simulate
         else
             echo "Invalid selection. Please try again."
             load_project_dir
