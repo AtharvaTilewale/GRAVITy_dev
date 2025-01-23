@@ -142,7 +142,7 @@ check_file_exists() {
 #Retrieve Complex Molecules
 retrieve_complex(){
     check_file_exists "$project_dir/protein.pdb" || return
-    check_file_exists "$project_dir/ligand.pdb" || return
+    check_file_exists "$project_dir/ligand.pdbqt" || return
     read -p "Enter the path to your protein file (.pdb): " protein_path
     if [[ ! -f "$protein_path" ]]; then
         echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
@@ -150,15 +150,15 @@ retrieve_complex(){
     else
         cp $protein_path $project_dir/protein.pdb
     fi
-    read -p "Enter the path to your protein file (.pdb): " ligand_path
+    read -p "Enter the path to your protein file (.pdbqt): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
         return
     else
-        cp $ligand_path $project_dir/ligand.pdb
+        cp $ligand_path $project_dir/ligand.pdbqt
     fi
     if [[ -f "$project_dir/protein.pdb" ]]; then
-        if [[ -f "$project_dir/ligand.pdb" ]]; then
+        if [[ -f "$project_dir/ligand.pdbqt" ]]; then
             echo -e "${LIGHT_GREEN}Molecules retrieved successfully...${NC}"
         fi
     else
