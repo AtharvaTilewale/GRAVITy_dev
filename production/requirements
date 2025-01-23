@@ -70,5 +70,19 @@ check_and_install_gromacs
 # Uncomment and customize the following lines if needed
 # echo -e "${GREEN}Cloning a GitHub repository...${NC}"
 # git clone https://github.com/your/repository.git
-
+check_dependencies() {
+    command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. Please install GROMACS and add it to your PATH.${NC}" 
+        sleep 1.0
+        echo "Installing GROMACS..."
+        sudo apt-get install gromacs; exit 1; }
+    command -v obabel >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "OpenBabel not found. Please install OpenBabel and add it to your PATH.${NC}"
+        sleep 1.0
+        echo "Installing openbabel..."
+        sudo apt-get install openbabel; exit 1; }
+    command -v wget >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "wget not found. Please install wget to download necessary files.${NC}" 
+        sleep 1.0
+        echo "Installing wget..."
+        sudo apt-get install wget; exit 1; }
+}
+check_dependencies
 echo -e "${GREEN}Installation completed!${NC}"
