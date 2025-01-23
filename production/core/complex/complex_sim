@@ -48,6 +48,16 @@ download_loader() {
     fi
 }
 
+#check internet connection
+check_internet() {
+    if ping -c 1 -W 1 8.8.8.8 &>/dev/null; then
+        echo -e "Status [${LIGHT_GREEN}Online${NC}]"
+    else
+        echo -e "Status [${LIGHT_RED}Offline${NC}]"
+        echo -e "${LIGHT_RED}It is recommended to connect to the internet while process is going on."
+        echo -e "If any dependencies are missing then you may not able to download.${NC}"
+    fi
+}
 
 #Check dependencies
 check_dependencies() {
