@@ -1111,17 +1111,14 @@ production_md() {
     check_file_exists "$project_dir/hbdist.xvg" || return
     printf "1 11\n" |  gmx hbond -f md_noPBC.xtc -s md.tpr -num -dist #generate temperature.xvg file
 
-# 4)
-#     echo
-#     echo "Analyzing Pressure Progression..."
-#     echo
-#     if [ ! -f "$project_dir/npt.edr" ]; then
-#         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-#         exit 1
-#     fi
-#     check_file_exists "$project_dir/pressure.xvg" || return
-#     gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
-#     ;;
+    #Analyzing Pressure Progression...
+    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/rmsf.xvg" || return
+    gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
+    ;;
 # 5)
 #     echo
 #     echo "Analyzing Density Progression..."
