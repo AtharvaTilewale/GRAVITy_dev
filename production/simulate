@@ -1111,7 +1111,7 @@ production_md() {
     check_file_exists "$project_dir/hbdist.xvg" || return
     printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
 
-    #Analyzing Pressure Progression...
+    #Analyzing RMSF...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
         exit 1
@@ -1153,11 +1153,10 @@ run_analysis() {
         echo -e "${YELLOW}---------------------------"
         echo -e "       Analysis Menu"
         echo -e "---------------------------${NC}"
-        # echo "1) Recentering and Rewrapping Coordinates"
         echo "1) RMSD"
-        echo "2) Radius of Gyration"
-        # echo "4) Pressure"
-        # echo "5) Density"
+        echo "2) RMSF"
+        echo "3) Radius of Gyration"
+        echo "4) H-Bond"
         # echo "6) Potential Energy"
         echo "7) Back to Main Menu"
         echo -e "${YELLOW}---------------------------${NC}"
@@ -1177,6 +1176,16 @@ run_analysis() {
             ;;
         2)
             echo
+            echo "Analyzing RMSF..."
+            echo
+            if [ ! -f "$project_dir/rmsf.xvg" ]; then
+                echo -e ${LIGHT_RED} "rmsf.xvg does not exist.${NC}"
+                exit 1
+            fi
+            xmgrace $project_dir/rmsf.xvg
+            ;;
+        3)
+            echo
             echo "Analyzing Radius of Gyration..."
             echo
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
@@ -1185,7 +1194,7 @@ run_analysis() {
             fi
             xmgrace $project_dir/gyrate.xvg
             ;;
-        3)
+        4)
             echo
             echo "Analyzing H bonds..."
             echo
@@ -1234,17 +1243,7 @@ run_analysis() {
             check_file_exists "$project_dir/temperature.xvg" || return
             printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
             ;;
-        # 4)
-        #     echo
-        #     echo "Analyzing Pressure Progression..."
-        #     echo
-        #     if [ ! -f "$project_dir/npt.edr" ]; then
-        #         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-        #         exit 1
-        #     fi
-        #     check_file_exists "$project_dir/pressure.xvg" || return
-        #     gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
-        #     ;;
+        
         # 5)
         #     echo
         #     echo "Analyzing Density Progression..."
