@@ -1182,17 +1182,55 @@ run_analysis() {
             fi
             xmgrace $project_dir/gyrate.xvg
             ;;
-        # 3)
-        #     echo
-        #     echo "Analyzing Temperature Progression..."
-        #     echo
-        #     if [ ! -f "$project_dir/nvt.edr" ]; then
-        #         echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-        #         exit 1
-        #     fi
-        #     check_file_exists "$project_dir/temperature.xvg" || return
-        #     printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
-        #     ;;
+        3)
+            echo
+            echo "Analyzing H bonds..."
+            echo
+            echo "1) No. of H bonds"
+            echo "2) Average distance between H bonds"
+            echo "3) Back to menu"
+            echo
+            read -p "Enter your choice [1-2]: " hbond_choice
+
+            case $analysis_choice in
+            1)
+                echo
+                echo "Analyzing No. of H bonds..."
+                echo
+                if [ ! -f "$project_dir/hbnum.xvg" ]; then
+                    echo -e ${LIGHT_RED} "hbnum.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/hbnum.xvg
+                ;;
+            2)
+                echo
+                echo "Analyzing Average distance between H bonds..."
+                echo
+                if [ ! -f "$project_dir/hbdist.xvg" ]; then
+                    echo -e ${LIGHT_RED} "hbdist.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/hbdist.xvg
+                ;;
+            7)
+                echo
+                echo "Returning to Main Menu..."
+                return
+                ;;
+            *)
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 7.${NC}"
+                sleep 1.0
+                ;;
+            esac
+
+            if [ ! -f "$project_dir/nvt.edr" ]; then
+                echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+                exit 1
+            fi
+            check_file_exists "$project_dir/temperature.xvg" || return
+            printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
+            ;;
         # 4)
         #     echo
         #     echo "Analyzing Pressure Progression..."
