@@ -219,26 +219,26 @@ remove_hetatm() {
 # Function to generate protein topology
 prepare_protein_topology(){
     # Check auto_check function
-    if [[ $(auto_check) == true ]]; then
-        remove_hetatm
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-        local exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-            pdb_fixer || {
-                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
-                exit 1
-            }
+    # if [[ $(auto_check) == true ]]; then
+    #     remove_hetatm
+    #     gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+    #     local exit_status=$?
+    #     if [[ $exit_status -ne 0 ]]; then
+    #         echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+    #         pdb_fixer || {
+    #             echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+    #             exit 1
+    #         }
 
-            # Retry GROMACS pdb2gmx after fixing
-            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-            exit_status=$?
-            if [[ $exit_status -ne 0 ]]; then
-                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
-                exit 1
-            fi
-        fi
-    else
+    #         # Retry GROMACS pdb2gmx after fixing
+    #         gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+    #         exit_status=$?
+    #         if [[ $exit_status -ne 0 ]]; then
+    #             echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+    #             exit 1
+    #         fi
+    #     fi
+    # else
         # Check if protein file exists
         if [[ ! -f "$project_dir/protein.pdb" ]]; then
             echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
@@ -280,7 +280,7 @@ prepare_protein_topology(){
                 exit 1
             fi
         fi
-    fi
+    # fi
 
     # Success message
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
