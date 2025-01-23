@@ -1077,6 +1077,7 @@ production_md() {
     echo
     echo -e "Processing files..."
     echo
+
     #Recentering and Rewrapping Coordinates...
     if [ ! -f "$project_dir/md.xtc" ]; then
         echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
@@ -1084,6 +1085,7 @@ production_md() {
     fi
     check_file_exists "$project_dir/md_noPBC.xtc" || return
     printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
+    
     #Finding RMSD...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1091,6 +1093,7 @@ production_md() {
     fi
     check_file_exists "$project_dir/rmsd.xvg" || return
     printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+    
     #Finding Radius of Gyration...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1098,6 +1101,7 @@ production_md() {
     fi
     check_file_exists "$project_dir/gyrate.xvg" || return
     printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+    
     #Analyzing Hbonds...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1105,7 +1109,8 @@ production_md() {
     fi
     check_file_exists "$project_dir/hbnum.xvg" || return
     check_file_exists "$project_dir/hbdist.xvg" || return
-    printf "1 0\n" |  gmx hbond -f md_noPBC.xtc -s md.tpr -num -dist #generate temperature.xvg file
+    printf "1 11\n" |  gmx hbond -f md_noPBC.xtc -s md.tpr -num -dist #generate temperature.xvg file
+
 # 4)
 #     echo
 #     echo "Analyzing Pressure Progression..."
@@ -1190,7 +1195,7 @@ run_analysis() {
             echo "2) Average distance between H bonds"
             echo "3) Back to menu"
             echo
-            read -p "Enter your choice [1-2]: " hbond_choice
+            read -p "Enter your choice [1-3]: " hbond_choice
 
             case $analysis_choice in
             1)
@@ -1219,7 +1224,7 @@ run_analysis() {
                 return
                 ;;
             *)
-                echo "${LIGHT_RED}Invalid option! Please select between 1 and 7.${NC}"
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
                 sleep 1.0
                 ;;
             esac
