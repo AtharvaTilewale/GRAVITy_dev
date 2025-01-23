@@ -1118,19 +1118,23 @@ production_md() {
     fi
     check_file_exists "$project_dir/rmsf.xvg" || return
     printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
-    
-    ;;
-# 5)
-#     echo
-#     echo "Analyzing Density Progression..."
-#     echo
-#     if [ ! -f "$project_dir/npt.edr" ]; then
-#         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-#         exit 1
-#     fi
-#     check_file_exists "$project_dir/density.xvg" || return
-#     gmx energy -f $project_dir/npt.edr -o $project_dir/density.xvg #generate temperature.xvg file
-#     ;;
+
+    #Analyzing Temp...
+    if [ ! -f "$project_dir/nvt.edr" ]; then
+        echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/temp.xvg" || return
+    printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
+
+    #Analyzing Pressure...
+    if [ ! -f "$project_dir/npt.edr" ]; then
+        echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/pressure.xvg" || return
+    printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+
 # 6)
 #     echo
 #     echo "Calculating Potential Energy..."
@@ -1157,8 +1161,8 @@ run_analysis() {
         echo "2) RMSF"
         echo "3) Radius of Gyration"
         echo "4) H-Bond"
-        # echo "6) Potential Energy"
-        echo "7) Back to Main Menu"
+        echo "5) Energies"
+        echo "6) Back to Main Menu"
         echo -e "${YELLOW}---------------------------${NC}"
         echo
         read -p "Enter your choice [1-7]: " analysis_choice
@@ -1204,7 +1208,7 @@ run_analysis() {
             echo
             read -p "Enter your choice [1-3]: " hbond_choice
 
-            case $analysis_choice in
+            case $hbond_choice in
             1)
                 echo
                 echo "Analyzing No. of H bonds..."
@@ -1225,7 +1229,7 @@ run_analysis() {
                 fi
                 xmgrace $project_dir/hbdist.xvg
                 ;;
-            7)
+            3)
                 echo
                 echo "Returning to Main Menu..."
                 return
@@ -1235,38 +1239,50 @@ run_analysis() {
                 sleep 1.0
                 ;;
             esac
-
-            if [ ! -f "$project_dir/nvt.edr" ]; then
-                echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-                exit 1
-            fi
-            check_file_exists "$project_dir/temperature.xvg" || return
-            printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
             ;;
-        
-        # 5)
-        #     echo
-        #     echo "Analyzing Density Progression..."
-        #     echo
-        #     if [ ! -f "$project_dir/npt.edr" ]; then
-        #         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-        #         exit 1
-        #     fi
-        #     check_file_exists "$project_dir/density.xvg" || return
-        #     gmx energy -f $project_dir/npt.edr -o $project_dir/density.xvg #generate temperature.xvg file
-        #     ;;
-        # 6)
-        #     echo
-        #     echo "Calculating Potential Energy..."
-        #     echo
-        #     if [ ! -f "$project_dir/em.edr" ]; then
-        #         echo -e ${LIGHT_RED} "em.edr does not exist.${NC}"
-        #         exit 1
-        #     fi
-        #     check_file_exists "$project_dir/potential.xvg" || return
-        #     gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
-        #     ;;
-        7)
+        5)
+            echo
+            echo "Analyzing Energies..."
+            echo
+            echo "1) Temperature"
+            echo "2) Pressure"
+            echo "3) Back to menu"
+            echo
+            read -p "Enter your choice [1-3]: " energy_choice
+
+            case $energy_choice in
+            1)
+                echo
+                echo "Temperature..."
+                echo
+                if [ ! -f "$project_dir/temp.xvg" ]; then
+                    echo -e ${LIGHT_RED} "temp.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/temp.xvg
+                ;;
+            2)
+                echo
+                echo "Pressure..."
+                echo
+                if [ ! -f "$project_dir/pressure.xvg" ]; then
+                    echo -e ${LIGHT_RED} "pressure.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/pressure.xvg
+                ;;
+            3)
+                echo
+                echo "Returning to Main Menu..."
+                return
+                ;;
+            *)
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                sleep 1.0
+                ;;
+            esac
+            ;;
+        6)
             echo
             echo "Returning to Main Menu..."
             return
