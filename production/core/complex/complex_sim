@@ -140,21 +140,23 @@ retrieve_complex(){
         echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
         return
     else
-        mv $protein_path $project_dir/protein.pdbqt
+        cp $protein_path $project_dir/protein.pdbqt
     fi
     read -p "Enter the path to your protein file (.pdbqt): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
         return
     else
-        mv $ligand_path $project_dir/ligand.pdbqt
+        cp $ligand_path $project_dir/ligand.pdbqt
     fi
-    if [[ ! -f "$project_dir/protein.pdbqt" ]]; then
-        if [[ ! -f "$project_dir/ligand.pdbqt" ]]; then
+    if [[ -f "$project_dir/protein.pdbqt" ]]; then
+        if [[ -f "$project_dir/ligand.pdbqt" ]]; then
             echo -e "${LIGHT_GREEN}Molecules retrieved successfully...${NC}"
+        fi
     else
-        echo -e "${LIGHT_GREEN}Unable to fetch the molecules, please ensure you enter the correct path...${NC}"
+        echo -e "${LIGHT_RED}Unable to fetch the molecules, please ensure you enter the correct path...${NC}"
     fi
+    echo
 }
 
 # Function to prepare protein topology
@@ -563,7 +565,6 @@ echo "Please keep your docked protein and ligand complex ready in the working di
 echo "Please process your protein.pdbqt by removing water molecules or any HETATM's available"
 echo "and convert it into protein.pdb format"
 echo 
-echo "Select your actions"
 
 while true; do
     echo -e "${YELLOW}------------------------------------"
