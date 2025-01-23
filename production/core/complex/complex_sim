@@ -417,7 +417,7 @@ prepare_ligand_topology() {
                     exit 1
                 fi
                 check_file_exists "lig_fix.prm" || return
-                read -p "Enter the path to your protein file (.pdb): " lig_str_path
+                read -p "Enter the path to your lig_fix.str file (.str): " lig_str_path
                 if [[ ! -f "$lig_str_path" ]]; then
                     echo -e "${LIGHT_RED}Error: $lig_str_path file does not exist.${NC}"
                     echo -e "If stream (.str) file is not generated, you can generate it from CGenFF Webserver"
