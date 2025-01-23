@@ -142,23 +142,23 @@ check_file_exists() {
 #Retrieve Complex Molecules
 retrieve_complex(){
     check_file_exists "$project_dir/protein.pdb" || return
-    check_file_exists "$project_dir/ligand.pdbqt" || return
-    read -p "Enter the path to your protein file (.pdbqt): " protein_path
+    check_file_exists "$project_dir/ligand.pdb" || return
+    read -p "Enter the path to your protein file (.pdb): " protein_path
     if [[ ! -f "$protein_path" ]]; then
         echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
         return
     else
-        cp $protein_path $project_dir/protein.pdbqt
+        cp $protein_path $project_dir/protein.pdb
     fi
-    read -p "Enter the path to your protein file (.pdbqt): " ligand_path
+    read -p "Enter the path to your protein file (.pdb): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
         return
     else
-        cp $ligand_path $project_dir/ligand.pdbqt
+        cp $ligand_path $project_dir/ligand.pdb
     fi
-    if [[ -f "$project_dir/protein.pdbqt" ]]; then
-        if [[ -f "$project_dir/ligand.pdbqt" ]]; then
+    if [[ -f "$project_dir/protein.pdb" ]]; then
+        if [[ -f "$project_dir/ligand.pdb" ]]; then
             echo -e "${LIGHT_GREEN}Molecules retrieved successfully...${NC}"
         fi
     else
@@ -167,21 +167,111 @@ retrieve_complex(){
     echo
 }
 
-# Function to prepare protein topology
-prepare_protein_topology() {
-    echo "Preparing protein topology..."
-    if [ -f "protein.pdb" ]; then
-        check_file_exists "protein.gro" || return
-        if grep -q "HETATM" protein.pdb; then
-            # Remove lines containing HETATM and save back to the same file
-            sed -i '/^HETATM/d' protein.pdb
-        fi
-        gmx pdb2gmx -f protein.pdb -o protein.gro -ignh || { echo "Error: Failed to prepare protein topology."; exit 1; }
-    else
-        echo "protein.pdb file does not exist."
-        exit 1
-    fi
+force_field() {
+    echo -e "${LIGHT_BLUE}Select a force field:${NC}"
+    PS3="Enter your choice: "
+    forcefields=("charmm36" "amber99sb" "charmm27" "gromos54a7" "oplsaa" "Other")
+    select ff in "${forcefields[@]}"; do
+        case $ff in
+        "Other")
+            read -p "Enter custom force field: " ff
+            break
+            ;;
+        *)
+            break
+            ;;
+        esac
+    done
 }
+
+water_model() {
+    echo -e "${LIGHT_BLUE}Select a water model:${NC}"
+    PS3="Enter your choice: "
+    watermodels=("spce" "tip3p" "tip4p" "tip5p" "Other")
+    select wm in "${watermodels[@]}"; do
+        case $wm in
+        "Other")
+            read -p "Enter custom water model: " wm
+            break
+            ;;
+        *)
+            break
+            ;;
+        esac
+    done
+}
+
+# Function to generate protein topology
+prepare_protein_topology(){
+    # Check auto_check function
+    if [[ $(auto_check) == true ]]; then
+        remove_hetatm
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        local exit_status=$?
+        if [[ $exit_status -ne 0 ]]; then
+            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+            pdb_fixer || {
+                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+                exit 1
+            }
+
+            # Retry GROMACS pdb2gmx after fixing
+            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+            exit_status=$?
+            if [[ $exit_status -ne 0 ]]; then
+                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+                exit 1
+            fi
+        fi
+    else
+        # Check if protein file exists
+        if [[ ! -f "$project_dir/protein.pdb" ]]; then
+            echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
+            read -p "Do you want to download the protein structure (y/n): " response
+            if [[ "$response" == "y" ]]; then
+                download_protein || {
+                    echo -e "${LIGHT_RED}Error: Failed to download protein.${NC}"
+                    exit 1
+                }
+            else
+                echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
+                exit 1
+            fi
+        fi
+
+        # Remove HETATM entries
+        remove_hetatm
+        echo
+        force_field
+        echo
+        water_model
+
+        # Generate protein topology
+        echo "Generating Protein Topology..."
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        local exit_status=$?
+        if [[ $exit_status -ne 0 ]]; then
+            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+            pdb_fixer || {
+                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+                exit 1
+            }
+
+            # Retry GROMACS pdb2gmx after fixing
+            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+            exit_status=$?
+            if [[ $exit_status -ne 0 ]]; then
+                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+                exit 1
+            fi
+        fi
+    fi
+
+    # Success message
+    echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+    sleep 1.0
+}
+
 
 prepare_ligand_topology() {
     echo "Preparing ligand topology..."
