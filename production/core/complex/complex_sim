@@ -201,6 +201,21 @@ water_model() {
     done
 }
 
+# Function to fix PDB file using PDBFixer
+pdb_fixer() {
+    echo
+    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
+    pdbfix_loader
+}
+
+# Function to remove HETATM lines
+remove_hetatm() {
+    if grep -q "HETATM" $project_dir/protein.pdb; then
+        echo "Removing HETATM entries from protein.pdb..."
+        sed -i '/^HETATM/d' $project_dir/protein.pdb
+    fi
+}
+
 # Function to generate protein topology
 prepare_protein_topology(){
     # Check auto_check function
