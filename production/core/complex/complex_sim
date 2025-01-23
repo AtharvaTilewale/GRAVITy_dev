@@ -284,6 +284,7 @@ prepare_protein_topology(){
 
     # Success message
     echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+    echo
     sleep 1.0
 }
 
