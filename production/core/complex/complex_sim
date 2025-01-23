@@ -589,25 +589,6 @@ equilibrium() {
     done
 }
 
-# Function to run production MD
-production_md() {
-    echo "Running production MD..."
-    if [ ! -f "npt.gro" ]; then
-        echo "npt.gro does not exist."
-        exit 1
-    fi
-
-    if [ ! -f "md.mdp" ]; then
-        echo "md.mdp does not exist. Downloading..."
-        wget -nc http://www.mdtutorials.com/gmx/complex/Files/md.mdp
-    fi
-    
-    check_file_exists "md.tpr" || return
-    gmx grompp -f md.mdp -c npt.gro -p topol.top -n index.ndx -o md.tpr || { echo "Error: Failed to prepare production MD."; exit 1; }
-    check_file_exists "md.xtc" || return
-    gmx mdrun -deffnm md -v || { echo "Error: Production MD failed."; exit 1; }
-}
-
 # Update nsteps in md.mdp and regenerate md.tpr
 update_simulation_steps() {
     # Update nsteps in md.mdp
