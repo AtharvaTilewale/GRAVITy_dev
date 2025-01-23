@@ -453,6 +453,22 @@ run_analysis() {
     done
 }
 
+banner() {
+    # Main script loop
+    clear
+    echo
+    # Print the colored ASCII art
+    echo -e "${LIGHT_RED}  __________________    _________   ____.______________      ${RESET}"
+    echo -e "${LIGHT_RED} /  _____/\\______   \\  /  _  \\   \\ /   /|   \\__    ___/${RESET}__.__. "
+    echo -e "${LIGHT_RED}/   \\  ___ |       _/ /  /_\\  \\   Y   / |   | |    | ${RESET}<   |  | "
+    echo -e "${LIGHT_RED}\\    \\_\\  \\|    |   \\/    |    \\     /  |   | |    |  ${RESET}\\___  | "
+    echo -e "${LIGHT_RED} \\______  /|____|_  /\\____|__  /\\___/   |___| |____|  ${RESET}/ ____| "
+    echo -e "${LIGHT_RED}        \\/        \\/         \\/                       ${RESET}\\/      "
+    echo
+    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}apid ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
+    echo
+}
+
 # Main script loop
 echo "Welcome to the GROMACS simulation"
 echo 
