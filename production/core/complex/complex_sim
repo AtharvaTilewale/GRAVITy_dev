@@ -11,6 +11,44 @@ echo start >$project_dir/run_parameters.conf
 source $project_dir/run_parameters.conf
 param_file=$project_dir/run_parameters.conf
 
+# Function to stop the spinner if an error occurs
+stop_spinner() {
+    if [ ! -z "$spinner_pid" ]; then
+        kill $spinner_pid
+    fi
+}
+
+# Function to display a rotating loader with custom text
+show_spinner() {
+    local pid=$1      # Process ID to monitor
+    local message=$2  # Custom loading message
+    local spin='-\|/' # Spinner characters
+    local i=0
+
+    # Loop to display the spinner until the task completes
+    while kill -0 $pid 2>/dev/null; do
+        i=$(((i + 1) % 4))
+        printf "\r${spin:$i:1} %s..." "$message"
+        sleep 0.1
+    done
+    printf "\r%s...        \n" "$message"
+}
+
+#Loaders
+#Download loader
+download_loader() {
+    show_spinner $! "Downloading $file_download_name"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Download failed. Please check your internet connection and try again.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}$file_download_name "downloaded successfully!"${NC}
+        sleep 1.0
+    fi
+}
+
+
 #Check dependencies
 check_dependencies() {
     command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. Please install GROMACS and add it to your PATH.${NC}" 
