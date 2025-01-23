@@ -1078,41 +1078,34 @@ production_md() {
     echo -e "Processing files..."
     echo
     #Recentering and Rewrapping Coordinates...
-    echo
     if [ ! -f "$project_dir/md.xtc" ]; then
         echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
         exit 1
     fi
     check_file_exists "$project_dir/md_noPBC.xtc" || return
     printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
-    echo
     #Finding RMSD...
-    echo
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
         exit 1
     fi
     check_file_exists "$project_dir/rmsd.xvg" || return
     printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
-    echo
     #Finding Radius of Gyration...
-    echo
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
         exit 1
     fi
     check_file_exists "$project_dir/gyrate.xvg" || return
     printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
-    echo
-#     echo "Analyzing Temperature Progression..."
-#     echo
-#     if [ ! -f "$project_dir/nvt.edr" ]; then
-#         echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-#         exit 1
-#     fi
-#     check_file_exists "$project_dir/temperature.xvg" || return
-#     printf "1 0\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temperature.xvg #generate temperature.xvg file
-#     ;;
+    #Analyzing Temperature Progression...
+    if [ ! -f "$project_dir/nvt.edr" ]; then
+        echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/temperature.xvg" || return
+    printf "1 0\n" |  gmx hbond -f md_noPBC.xtc -s md.tpr -num -dist #generate temperature.xvg file
+    ;;
 # 4)
 #     echo
 #     echo "Analyzing Pressure Progression..."
