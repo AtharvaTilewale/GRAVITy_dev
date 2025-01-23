@@ -369,21 +369,23 @@ prepare_ligand_topology() {
                 mol_file="lig.mol2"
                 perl_sort_file="sort_mol2_bonds.pl"
                 if [ ! -f "$mol_file" ]; then
-                    echo "$mol_file does not exist."
-                    echo "Download the file?"
-                    while true; do
-                        echo "Select option"
-                        echo "1) YES"
-                        echo "2) NO"
-                        read -p "Enter your choice [1-2]: " choice
+                    if [ ! -f "$perl_sort_file" ]; then
+                        echo "$mol_file does not exist."
+                        echo "Download the file?"
+                        while true; do
+                            echo "Select option"
+                            echo "1) YES"
+                            echo "2) NO"
+                            read -p "Enter your choice [1-2]: " choice
 
-                        case $choice in
-                            1)
-                                wget http://www.mdtutorials.com/gmx/complex/Files/sort_mol2_bonds.pl
-                                ;;
-                            2) return ;;
-                        esac
-                    done
+                            case $choice in
+                                1)
+                                    wget http://www.mdtutorials.com/gmx/complex/Files/sort_mol2_bonds.pl
+                                    ;;
+                                2) return ;;
+                            esac
+                        done
+                    fi
                 fi
                 
                 if [ -f "$perl_sort_file" ]; then
