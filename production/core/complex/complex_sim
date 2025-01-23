@@ -48,6 +48,31 @@ download_loader() {
     fi
 }
 
+pdbfix_loader() {
+    show_spinner $! "Fixing PDB File"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to fix PDB file. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"PDB file fixed successfully. Restarting generating protein topology."${NC}
+        sleep 3.0
+    fi
+}
+
+#Energy minimization loader
+energy_minimization_loader() {
+    show_spinner $! "Running energy minimization"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed minimize energy. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"Energy minimized successfully"${NC}
+        sleep 1.0
+    fi
+}
+
 #check internet connection
 check_internet() {
     if ping -c 1 -W 1 8.8.8.8 &>/dev/null; then
@@ -483,9 +508,14 @@ energy_minimization() {
     fi
     
     check_file_exists "em.tpr" || return
-    gmx grompp -f em.mdp -c solv_ions.gro -p topol.top -o em.tpr || { echo "Error: Failed to prepare for energy minimization."; exit 1; }
+    gmx grompp -f $project_dir/em.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr >/dev/null 2>&1 &
+    show_spinner $! "Preparing"
+    # || { echo "Error: Failed to prepare for energy minimization."; exit 1; }
     check_file_exists "em.gro" || return
-    gmx mdrun -v -deffnm em || { echo "Error: Energy minimization failed."; exit 1; }
+    gmx mdrun -v -deffnm $project_dir/em >/dev/null 2>&1 &
+    energy_minimization_loader
+    echo
+    # || { echo "Error: Energy minimization failed."; exit 1; }
 }
 
 # Function to run equilibrium
