@@ -129,11 +129,11 @@ sudo chown -R $project_dir
 echo "Copying necessary files to $project_dir..."
 sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
 sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
-sudo cp /etc/GRAVITy/simulate "$project_dir/"
+sudo cp /etc/GRAVITy/protein_sim "$project_dir/"
 
 # Run the GRAVITy simulation
 echo "Running GRAVITy simulation..."
-bash $project_dir/simulate
+bash $project_dir/protein_sim
 
 echo "Simulation completed. Check the results in $project_dir."
 exit 0
