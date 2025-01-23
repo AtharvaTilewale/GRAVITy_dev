@@ -526,19 +526,20 @@ echo
 echo "Select your actions"
 
 while true; do
-    echo "---------------------------"
-    echo "       Main Menu"
-    echo "---------------------------"
-    echo "1) Prepare Protein Topology"
-    echo "2) Prepare Ligand Topology"
-    echo "3) Define box and solvate the system"
-    echo "4) Add ions"
-    echo "5) Energy minimization"
-    echo "6) Equilibrium"
-    echo "7) Production MD"
-    echo "8) Analysis"
-    echo "9) Exit"
-    echo "---------------------------"
+    echo -e "${YELLOW}------------------------------------"
+    echo -e "             Main Menu"
+    echo -e "------------------------------------${NC}"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Retrieve Complex Molecules"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Prepare Protein Topology"
+    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Prepare Ligand Topology"
+    echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Define box and solvate the system"
+    echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Add ions"
+    echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Energy minimization"
+    echo -e "${LIGHT_PURPLE}[${NC}07${LIGHT_PURPLE}]${NC} Equilibrium"
+    echo -e "${LIGHT_PURPLE}[${NC}08${LIGHT_PURPLE}]${NC} Production MD"
+    echo -e "${LIGHT_PURPLE}[${NC}09${LIGHT_PURPLE}]${NC} Analysis"
+    echo -e "${LIGHT_PURPLE}[${NC}10${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
+    echo -e "${YELLOW}------------------------------------${NC}"
 
     choice=$(prompt_user "Enter your choice [1-9]: ")
 
