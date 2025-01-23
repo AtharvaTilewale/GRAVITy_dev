@@ -608,6 +608,182 @@ production_md() {
     gmx mdrun -deffnm md -v || { echo "Error: Production MD failed."; exit 1; }
 }
 
+# Update nsteps in md.mdp and regenerate md.tpr
+update_simulation_steps() {
+    # Update nsteps in md.mdp
+    sed -i "s/^nsteps.*/nsteps = $md_nsteps/" $project_dir/md.mdp
+
+    # Clear old .tpr file (optional but recommended)
+    rm -f $project_dir/md.tpr
+
+    # Regenerate md.tpr using the updated md.mdp
+    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/md.tp >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
+        exit 1
+    }
+}
+
+# Function to run production MD
+production_md() {
+    echo
+    # Check for required files
+    if [ ! -f "$project_dir/npt.gro" ]; then
+        echo -e ${LIGHT_RED} "npt.gro does not exist.${NC}"
+        sleep 2.0
+        exit 1
+    fi
+
+    if [ ! -f "$project_dir/md.mdp" ]; then
+        echo "md.mdp does not exist. Downloading..."
+        file_download_name="md.mdp"
+        (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/md.mdp") &
+        download_loader
+    fi
+
+    check_file_exists "$project_dir/md.xtc" || return
+
+    #User input simulation time
+    echo -e ${YELLOW}"Do you want to continue with default simulation time (10ns)?"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value"
+    echo
+    read -p "Enter your choice [1-2]: " simulation_time
+    echo -e ${NC}
+
+    case $simulation_time in
+        1) md_nsteps=5000000 ;;
+        2)
+            read -p "Set simulation time (ns): " md_time_ns
+            md_time_ps=$(echo "$md_time_ns * 1000" | bc)
+            md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 2.0
+            return
+            ;;
+        esac
+
+    # Update nsteps and generate new md.tpr file
+    update_simulation_steps
+
+    echo -e ${LIGHT_GREEN}"Preparation DONE!${NC}"
+
+    # Check for any GPU using lspci
+    gpu_info=$(lspci | grep -i vga)
+
+    if [[ -n "$gpu_info" ]]; then
+        echo "GPU detected:"
+        echo "$gpu_info"
+
+        # Check if the GPU is an NVIDIA card and if nvidia-smi is available
+        if command -v nvidia-smi &>/dev/null; then
+            echo -e ${LIGHT_CYAN} "NVIDIA GPU detected. Running nvidia-smi for details:${NC}"
+            nvidia-smi
+            sleep 3.0
+
+            # Measure and show time while running the simulation, suppress output
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v -nb gpu >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+            echo "Elapsed time: $elapsed seconds"
+            show_spinner $! "Running MD Simulation on GPU"
+
+        else
+            echo -e ${LIGHT_CYAN} "NVIDIA GPU not detected or nvidia-smi command not found. Running simulation on CPU...${NC}"
+            sleep 3.0
+
+            # Measure and show time while running the simulation, suppress output
+            start_time=$(date +%s) # Get start time
+            gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+            show_spinner $! "Running MD Simulation"
+            end_time=$(date +%s) # Get end time
+
+            elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+            echo "Elapsed time: $elapsed seconds"
+            show_spinner $! "Running MD Simulation on CPU"
+        fi
+    else
+        echo -e ${LIGHT_CYAN}"No GPU detected. Running simulation on CPU..."${NC}
+        sleep 3.0
+
+        # Measure and show time while running the simulation, suppress output
+        start_time=$(date +%s) # Get start time
+        gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+        show_spinner $! "Running MD Simulation"
+        end_time=$(date +%s) # Get end time
+
+        elapsed=$((end_time - start_time)) # Calculate elapsed time in seconds
+        echo "Elapsed time: $elapsed seconds"
+        sleep 2.0
+    fi
+echo
+echo -e "Processing files..."
+echo
+
+#Recentering and Rewrapping Coordinates...
+if [ ! -f "$project_dir/md.xtc" ]; then
+    echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/md_noPBC.xtc" || return
+printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
+
+#Finding RMSD...
+if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/rmsd.xvg" || return
+printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+
+#Finding Radius of Gyration...
+if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/gyrate.xvg" || return
+printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+
+#Analyzing Hbonds...
+if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/hbnum.xvg" || return
+check_file_exists "$project_dir/hbdist.xvg" || return
+printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+
+#Analyzing RMSF...
+if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/rmsf.xvg" || return
+printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+
+#Analyzing Temp...
+if [ ! -f "$project_dir/nvt.edr" ]; then
+    echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/temp.xvg" || return
+printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
+
+#Analyzing Pressure...
+if [ ! -f "$project_dir/npt.edr" ]; then
+    echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/pressure.xvg" || return
+printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+
+wait
+}
+
 # Function to run analysis
 run_analysis() {
     echo "Running analysis..."
