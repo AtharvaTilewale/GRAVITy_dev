@@ -315,6 +315,7 @@ prepare_protein_topology(){
 
 
 prepare_ligand_topology() {
+    echo
     echo -e "${YELLOW}------------------------------------"
     echo -e "       Prepare Ligand Topology"
     echo -e "------------------------------------${NC}"
@@ -972,6 +973,7 @@ echo "and convert it into protein.pdb format"
 echo 
 
 while true; do
+    echo
     echo -e "${YELLOW}------------------------------------"
     echo -e "             Main Menu"
     echo -e "------------------------------------${NC}"
