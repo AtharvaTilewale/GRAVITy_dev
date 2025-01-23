@@ -130,7 +130,13 @@ echo "Copying necessary files to $project_dir..."
 sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
 sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
 sudo cp /etc/GRAVITy/protein_sim "$project_dir/"
-
+echo
+echo -e "Select simulation type"
+echo "1) Protein in Water"
+echo "2) Protein-Ligand Complex"
+echo "3) Exit"
+echo 
+read -p "Enter project name: " project_name
 # Run the GRAVITy simulation
 echo "Running GRAVITy simulation..."
 bash $project_dir/protein_sim
