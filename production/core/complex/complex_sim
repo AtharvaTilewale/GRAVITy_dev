@@ -729,8 +729,9 @@ if [ ! -f "$project_dir/md.xtc" ]; then
     echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
     exit 1
 fi
-check_file_exists "$project_dir/md_noPBC.xtc" || return
-printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
+check_file_exists "$project_dir/md_center.xtc" || return
+printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_center.xtc -pbc mol -center -ur compact >/dev/null 2>&1 || exit 1 
+printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/md_fit.xtc -fit rot+trans >/dev/null 2>&1 || exit 1 
 
 #Finding RMSD...
 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
