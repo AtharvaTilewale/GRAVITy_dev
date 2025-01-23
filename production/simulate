@@ -1109,7 +1109,7 @@ production_md() {
     fi
     check_file_exists "$project_dir/hbnum.xvg" || return
     check_file_exists "$project_dir/hbdist.xvg" || return
-    printf "1 11\n" |  gmx hbond -f md_noPBC.xtc -s md.tpr -num -dist #generate temperature.xvg file
+    printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
 
     #Analyzing Pressure Progression...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
@@ -1117,7 +1117,8 @@ production_md() {
         exit 1
     fi
     check_file_exists "$project_dir/rmsf.xvg" || return
-    gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg #generate temperature.xvg file
+    printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+    
     ;;
 # 5)
 #     echo
