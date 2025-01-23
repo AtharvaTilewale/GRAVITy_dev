@@ -312,11 +312,11 @@ prepare_ligand_topology() {
                 fi
                 if command -v obabel &> /dev/null 
                 then
-                    check_file_exists "lig.pdbqt" || return
+                    check_file_exists "lig.pdb" || return
                     obabel lig.pdbqt -O lig.pdb
                     if [ -f "lig.pdb" ]; then
                         obabel lig.pdb -O lig.mol2 -h
-                        return
+                        prepare_ligand_topology
                     else
                         echo "lig.pdb file does not exits. Please ensure the OpenBabel is properly installed and try again"
                         exit 1
@@ -336,7 +336,7 @@ prepare_ligand_topology() {
                             2) return ;;
                         esac
                     done
-                    exit 1
+                    return
                 fi
                 ;;
             2)
