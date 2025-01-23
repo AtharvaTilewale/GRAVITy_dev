@@ -290,17 +290,20 @@ prepare_protein_topology(){
 
 
 prepare_ligand_topology() {
-    echo "Preparing ligand topology..."
+    echo -e "${YELLOW}------------------------------------"
+    echo -e "       Prepare Ligand Topology"
+    echo -e "------------------------------------${NC}"
     while true; do
-        echo "Select actions"
-        echo "1) Prepare .mol2 file"
-        echo "2) Fix .mol2 file"
-        echo "3) Prepare ligand parameter file"
-        echo "4) Generate ligand gro file"
-        echo "5) Generate complex.gro file and edit topol.top"
-        read -p "Enter your choice [1-4]: " choice
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Prepare .mol2 file"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Fix .mol2 file"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Prepare ligand parameter file"
+        echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Generate ligand gro file"
+        echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Generate complex.gro file and edit topol.top"
+        echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Back to Main Menu"
+        echo -e "${YELLOW}------------------------------------"
+        read -p "Enter your choice [1-6]: " lig_top_choice
 
-        case $choice in
+        case $lig_top_choice in
             1) 
                 lig_pdbqt_file="lig.pdbqt"
                 if [ ! -f "$lig_pdbqt_file" ]; then
@@ -422,6 +425,9 @@ prepare_ligand_topology() {
                 echo "topol.top file updated successfully."
                 
                 # Return to main menu after successful processing
+                return
+                ;;
+            6)
                 return
                 ;;
             *)
