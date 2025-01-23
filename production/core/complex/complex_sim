@@ -123,6 +123,12 @@ check_file_exists() {
     return 0
 }
 
+#Retrieve Complex Molecules
+retrieve_complex(){
+    echo -e "Enter the path to your protein file (.pdbqt): "
+    echo -e "Enter the path to your protein file (.pdbqt): "
+}
+
 # Function to prepare protein topology
 prepare_protein_topology() {
     echo "Preparing protein topology..."
@@ -516,6 +522,12 @@ banner() {
     echo
 }
 
+banner
+check_internet
+echo
+check_dependencies
+echo -e "${LIGHT_CYAN}Simulation type: Protein-Ligand Complex${NC}"
+echo
 # Main script loop
 echo "Welcome to the GROMACS simulation"
 echo 
