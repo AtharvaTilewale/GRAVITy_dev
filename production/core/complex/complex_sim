@@ -119,14 +119,20 @@ prompt_user() {
 check_file_exists() {
     local file=$1
     if [ -f "$file" ]; then
-        echo "File '$file' already exists."
+        echo -e ${LIGHT_CYAN}"File '$file' already exists."
         while true; do
-            echo "Do you want to continue and overwrite the file? (y/n)"
-            read -p "Enter your choice [y/n]: " choice
+            read -p "Do you want to continue and overwrite the file? (y/n): " choice
+            echo -e ${NC}
             case $choice in
-                [Yy]* ) echo "Proceeding with overwriting the file."; return 0 ;;
-                [Nn]* ) echo "Aborting process."; return 1 ;;
-                * ) echo "Please answer yes or no." ;;
+            [Yy]*)
+                echo "Proceeding with overwriting the file."
+                return 0
+                ;;
+            [Nn]*)
+                echo "Aborting process."
+                return 1
+                ;;
+            *) echo "Please answer yes or no." ;;
             esac
         done
     fi
@@ -135,6 +141,8 @@ check_file_exists() {
 
 #Retrieve Complex Molecules
 retrieve_complex(){
+    check_file_exists "$project_dir/protein.pdb" || return
+    check_file_exists "$project_dir/ligand.pdbqt" || return
     read -p "Enter the path to your protein file (.pdbqt): " protein_path
     if [[ ! -f "$protein_path" ]]; then
         echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
