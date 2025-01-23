@@ -787,48 +787,145 @@ wait
 
 # Function to run analysis
 run_analysis() {
-    echo "Running analysis..."
+    echo
     while true; do
-        echo "---------------------------"
-        echo "       Analysis Menu"
-        echo "---------------------------"
-        echo "1) Recentering and Rewrapping Coordinates"
-        echo "2) Find RMSD"
-        echo "3) Protein-Ligand Interaction Energy"
-        echo "4) Back to Main Menu"
-        read -p "Enter your choice [1-4]: " analysis_choice
+        echo -e "${YELLOW}---------------------------"
+        echo -e "       Analysis Menu"
+        echo -e "---------------------------${NC}"
+        echo "1) RMSD"
+        echo "2) RMSF"
+        echo "3) Radius of Gyration"
+        echo "4) H-Bond"
+        echo "5) Energies"
+        echo "6) Back to Main Menu"
+        echo -e "${YELLOW}---------------------------${NC}"
+        echo
+        read -p "Enter your choice [1-7]: " analysis_choice
 
         case $analysis_choice in
+        1)
+            echo
+            echo "Analyzing RMSD values..."
+            echo
+            if [ ! -f "$project_dir/rmsd.xvg" ]; then
+                echo -e ${LIGHT_RED} "rmsd.xvg does not exist.${NC}"
+                exit 1
+            fi
+            xmgrace $project_dir/rmsd.xvg
+            ;;
+        2)
+            echo
+            echo "Analyzing RMSF..."
+            echo
+            if [ ! -f "$project_dir/rmsf.xvg" ]; then
+                echo -e ${LIGHT_RED} "rmsf.xvg does not exist.${NC}"
+                exit 1
+            fi
+            xmgrace $project_dir/rmsf.xvg
+            ;;
+        3)
+            echo
+            echo "Analyzing Radius of Gyration..."
+            echo
+            if [ ! -f "$project_dir/gyrate.xvg" ]; then
+                echo -e ${LIGHT_RED} "gyrate.xvg does not exist.${NC}"
+                exit 1
+            fi
+            xmgrace $project_dir/gyrate.xvg
+            ;;
+        4)
+            echo
+            echo "Analyzing H bonds..."
+            echo
+            echo "1) No. of H bonds"
+            echo "2) Average distance between H bonds"
+            echo "3) Back to menu"
+            echo
+            read -p "Enter your choice [1-3]: " hbond_choice
+
+            case $hbond_choice in
             1)
-                echo "Recentering and Rewrapping Coordinates..."
-                check_file_exists "md_0_10_center.xtc" || return
-                gmx trjconv -s md.tpr -f md.xtc -o md_center.xtc -center -pbc mol -ur compact || exit 1
-                check_file_exists "start.pdb" || return
-                gmx trjconv -s md.tpr -f md_center.xtc -o start.pdb -dump 0 || exit 1
-                check_file_exists "md_0_10_fit.xtc" || return
-                gmx trjconv -s md.tpr -f md_center.xtc -o md_fit.xtc -fit rot+trans || exit 1
+                echo
+                echo "Analyzing No. of H bonds..."
+                echo
+                if [ ! -f "$project_dir/hbnum.xvg" ]; then
+                    echo -e ${LIGHT_RED} "hbnum.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/hbnum.xvg
                 ;;
             2)
-                echo "Finding RMSD..."
-                check_file_exists "rmsd_jz4.xvg" || return
-                gmx rms -s em.tpr -f md_center.xtc -n index.ndx -tu ns -o rmsd_lig.xvg || exit 1
+                echo
+                echo "Analyzing Average distance between H bonds..."
+                echo
+                if [ ! -f "$project_dir/hbdist.xvg" ]; then
+                    echo -e ${LIGHT_RED} "hbdist.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/hbdist.xvg
                 ;;
             3)
-                echo "Calculating Protein-Ligand Interaction Energy..."
-                check_file_exists "interaction_energy.xvg" || return
-                gmx grompp -f ie.mdp -c npt.gro -t npt.cpt -p topol.top -n index.ndx -o ie.tpr || exit 1
-                check_file_exists "ie.edr" || return
-                gmx mdrun -deffnm ie -rerun md.xtc -nb cpu || exit 1
-                check_file_exists "interaction_energy.xvg" || return
-                gmx energy -f ie.edr -o interaction_energy.xvg || exit 1
-                ;;
-            4)
+                echo
                 echo "Returning to Main Menu..."
                 return
                 ;;
             *)
-                echo "Invalid option! Please select between 1 and 4."
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                sleep 1.0
                 ;;
+            esac
+            ;;
+        5)
+            echo
+            echo "Analyzing Energies..."
+            echo
+            echo "1) Temperature"
+            echo "2) Pressure"
+            echo "3) Back to menu"
+            echo
+            read -p "Enter your choice [1-3]: " energy_choice
+
+            case $energy_choice in
+            1)
+                echo
+                echo "Temperature..."
+                echo
+                if [ ! -f "$project_dir/temp.xvg" ]; then
+                    echo -e ${LIGHT_RED} "temp.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/temp.xvg
+                ;;
+            2)
+                echo
+                echo "Pressure..."
+                echo
+                if [ ! -f "$project_dir/pressure.xvg" ]; then
+                    echo -e ${LIGHT_RED} "pressure.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/pressure.xvg
+                ;;
+            3)
+                echo
+                echo "Returning to Main Menu..."
+                return
+                ;;
+            *)
+                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                sleep 1.0
+                ;;
+            esac
+            ;;
+        6)
+            echo
+            echo "Returning to Main Menu..."
+            return
+            ;;
+        *)
+            echo "${LIGHT_RED}Invalid option! Please select between 1 and 7.${NC}"
+            sleep 1.0
+            ;;
         esac
     done
 }
