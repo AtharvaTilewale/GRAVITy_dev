@@ -544,16 +544,25 @@ while true; do
     choice=$(prompt_user "Enter your choice [1-9]: ")
 
     case $choice in
-        1) prepare_protein_topology ;;
-        2) prepare_ligand_topology ;;
-        3) define_box_and_solvate ;;
-        4) add_ions ;;
-        5) energy_minimization ;;
-        6) equilibrium ;;
-        7) production_md ;;
-        8) run_analysis ;;
-        9) echo "Exiting..."; exit 0 ;;
-        *) echo "Invalid option! Please select between 1 and 9." ;;
+        1) retrieve_complex;;
+        2) prepare_protein_topology ;;
+        3) prepare_ligand_topology ;;
+        4) define_box_and_solvate ;;
+        5) add_ions ;;
+        6) energy_minimization ;;
+        7) equilibrium ;;
+        8) production_md ;;
+        9) run_analysis ;;
+        10)
+            echo -e "${LIGHT_YELLOW}Thanks for using GRAVITy!${NC}"
+            echo "Exiting..."
+            echo
+            exit 0
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 11.${NC}"
+            sleep 1.0
+            ;;
     esac
 done
 
