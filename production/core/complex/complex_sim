@@ -1207,7 +1207,6 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
-                    check_file_exists "$project_dir/hbdist.xvg" || return
                     printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbnum.xvg
                 fi
@@ -1222,7 +1221,6 @@ run_analysis() {
                         echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                         exit 1
                     fi
-                    check_file_exists "$project_dir/hbnum.xvg" || return
                     check_file_exists "$project_dir/hbdist.xvg" || return
                     printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbdist.xvg
