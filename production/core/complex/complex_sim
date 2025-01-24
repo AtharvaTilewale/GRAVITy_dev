@@ -718,7 +718,7 @@ fi
 
 # Function to run energy minimization
 energy_minimization() {
-    echo "Running energy minimization..."
+    # echo "Running energy minimization..."
     if [ ! -f "solv_ions.gro" ]; then
         echo "solv_ions.gro does not exist."
         exit 1

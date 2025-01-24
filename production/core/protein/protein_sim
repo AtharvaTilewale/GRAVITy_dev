@@ -668,7 +668,7 @@ energy_minimization() {
         echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
 
         # Run energy minimization
-        echo "Running energy minimization..."
+        # echo "Running energy minimization..."
         gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
         if [[ $? -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
@@ -687,7 +687,7 @@ energy_minimization() {
 
         # case $choice in
         echo
-        echo "Running energy minimization..."
+        # echo "Running energy minimization..."
         printf "\n"
         if [ ! -f "$project_dir/solv_ions.gro" ]; then
             echo -e ${LIGHT_RED} "solv_ions.gro does not exist." ${NC}
