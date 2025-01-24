@@ -1061,9 +1061,10 @@ run_analysis() {
             echo
             echo "1) Temperature"
             echo "2) Pressure"
-            echo "3) Back to menu"
+            echo "3) Interaction Energy"
+            echo "4) Back to menu"
             echo
-            read -p "Enter your choice [1-3]: " energy_choice
+            read -p "Enter your choice [1-4]: " energy_choice
 
             case $energy_choice in
             1)
@@ -1087,6 +1088,16 @@ run_analysis() {
                 xmgrace $project_dir/pressure.xvg
                 ;;
             3)
+                echo
+                echo "Interaction Energies..."
+                echo
+                if [ ! -f "$project_dir/interaction_energy.xvg" ]; then
+                    echo -e ${LIGHT_RED} "interaction_energy.xvg does not exist.${NC}"
+                    exit 1
+                fi
+                xmgrace $project_dir/interaction_energy.xvg
+                ;;
+            4)
                 echo
                 echo "Returning to Main Menu..."
                 return
