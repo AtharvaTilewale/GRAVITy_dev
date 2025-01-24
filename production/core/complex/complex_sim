@@ -597,7 +597,7 @@ echo -e ${YELLOW}
 read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
 echo -e ${NC}
 if [ $select_solvate_box == "y" ]; then
-    gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
+    gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
     box_loader
     echo
     gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
@@ -1219,7 +1219,7 @@ run_analysis() {
                 echo "Analyzing Average distance between H bonds..."
                 echo
                 if [ ! -f "$project_dir/hbdist.xvg" ]; then
-                   if [ ! -f "$project_dir/md_center.xtc" ]; then
+                    if [ ! -f "$project_dir/md_center.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                         exit 1
                     fi
