@@ -573,7 +573,7 @@ prepare_ligand_topology() {
                 prepare_ligand_topology
                 ;;
             6)
-                return
+                main_menu
                 ;;
             *)
                 echo "Invalid option! Please select between 1 and 4."
@@ -1339,20 +1339,7 @@ banner() {
     echo
 }
 
-banner
-check_internet
-echo
-check_dependencies
-echo -e "${LIGHT_CYAN}Simulation type: Protein-Ligand Complex${NC}"
-echo
-# Main script loop
-echo "Welcome to the GROMACS simulation"
-echo 
-echo "Please keep your docked protein and ligand complex ready in the working directory."
-echo "Please process your protein.pdbqt by removing water molecules or any HETATM's available"
-echo "and convert it into protein.pdb format"
-echo 
-
+main_menu() {
 while true; do
     echo
     echo -e "${YELLOW}------------------------------------"
@@ -1394,4 +1381,19 @@ while true; do
             ;;
     esac
 done
+}
 
+banner
+check_internet
+echo
+check_dependencies
+echo -e "${LIGHT_CYAN}Simulation type: Protein-Ligand Complex${NC}"
+echo
+# Main script loop
+echo "Welcome to the GROMACS simulation"
+echo 
+echo "Please keep your docked protein and ligand complex ready in the working directory."
+echo "Please process your protein.pdbqt by removing water molecules or any HETATM's available"
+echo "and convert it into protein.pdb format"
+echo 
+main_menu
