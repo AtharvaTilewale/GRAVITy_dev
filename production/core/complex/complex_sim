@@ -602,6 +602,46 @@ NPT_equilibration() {
     echo
 }
 
+update_eq_steps() {
+    #User input simulation time
+    echo -e ${YELLOW}"Do you want to continue with default equilibration time (100ps)?"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Yes, continue"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} No, enter custom value (in ps)"
+    echo
+    read -p "Enter your choice [1-2]: " eq_time
+    echo -e ${NC}
+    case $eq_time in
+    1) eq_nsteps=50000 ;;
+    2)
+        # Custom equilibration time in ps
+        read -p "Set simulation time in picoseconds (ps): " eq_time_ps
+        if [[ "$eq_time_ps" =~ ^[0-9]+$ && "$eq_time_ps" -gt 0 ]]; then
+            eq_nsteps=$(echo "$eq_time_ps / 0.002" | bc)
+            echo "Custom equilibration time of ${eq_time_ps} ps selected (${eq_nsteps} steps)."
+        else
+            echo -e "${LIGHT_RED}Invalid input! Please enter a positive numeric value for time in ps.${NC}"
+            sleep 2.0
+            return
+        fi
+        ;;
+    *)
+        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        sleep 2.0
+        return
+        ;;
+    esac
+
+    # Update nsteps in nvt.mdp and npt.mdp
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/nvt.mdp
+    sed -i "s/^nsteps.*/nsteps = $eq_nsteps/" $project_dir/npt.mdp
+    # echo "Updated nsteps in nvt and npt.mdp:"
+    # grep "nsteps" nvt.mdp and npt.mdp  # Verify the update in nvt and npt.mdp
+
+    # Clear old .tpr file (optional but recommended)
+    rm -f $project_dir/nvt.tpr
+    rm -f $project_dir/npt.tpr
+}
+
 # Function to run equilibrium
 equilibrium() {
     while true; do
@@ -747,7 +787,7 @@ update_simulation_steps() {
     rm -f $project_dir/md.tpr
 
     # Regenerate md.tpr using the updated md.mdp
-    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/md.tp >/dev/null 2>&1 || {
+    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/md.tpr >/dev/null 2>&1 || {
         echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
         exit 1
     }
