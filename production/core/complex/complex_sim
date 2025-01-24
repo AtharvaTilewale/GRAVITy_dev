@@ -175,7 +175,7 @@ retrieve_complex(){
     else
         cp $protein_path $project_dir/protein.pdb
     fi
-    read -p "Enter the path to your protein file (.pdbqt): " ligand_path
+    read -p "Enter the path to your ligand file (.pdbqt): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
         return
@@ -437,7 +437,7 @@ prepare_ligand_topology() {
                 else
                     cp $lig_str_path $project_dir/lig_fix.str
                 fi
-                python3 cgenff_charmm2gmx_py3_nx2.py LIG lig_fix.mol2 lig_fix.str charmm36-jul2022.ff || { echo "Error: Failed to prepare ligand parameter file."; exit 1; }
+                python3 cgenff_charmm2gmx_py3_nx2.py LIG lig_fix.mol2 lig_fix.str charmm36.ff || { echo "Error: Failed to prepare ligand parameter file."; exit 1; }
                 ;;
             4)
                 if [ ! -f "lig_ini.pdb" ]; then
