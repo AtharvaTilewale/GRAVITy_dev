@@ -904,37 +904,37 @@ printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $p
 printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/md_fit.xtc -fit rot+trans >/dev/null 2>&1 || exit 1 
 
 #Finding RMSD...
-if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+if [ ! -f "$project_dir/md_center.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
     exit 1
 fi
 check_file_exists "$project_dir/rmsd.xvg" || return
-printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+printf "4 4\n" | gmx rms -s $project_dir/em.tpr -f $project_dir/md_center.xtc -n $project_dir/index.ndx -tu ns -o $project_dir/rmsd.xvg >/dev/null 2>&1 || exit 1
 
 #Finding Radius of Gyration...
-if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+if [ ! -f "$project_dir/md_center.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
     exit 1
 fi
 check_file_exists "$project_dir/gyrate.xvg" || return
-printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
 
 #Analyzing Hbonds...
-if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+if [ ! -f "$project_dir/md_center.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
     exit 1
 fi
 check_file_exists "$project_dir/hbnum.xvg" || return
 check_file_exists "$project_dir/hbdist.xvg" || return
-printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
 
 #Analyzing RMSF...
-if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+if [ ! -f "$project_dir/md_center.xtc" ]; then
+    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
     exit 1
 fi
 check_file_exists "$project_dir/rmsf.xvg" || return
-printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+printf "1\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
 
 #Analyzing Temp...
 if [ ! -f "$project_dir/nvt.edr" ]; then
@@ -951,6 +951,16 @@ if [ ! -f "$project_dir/npt.edr" ]; then
 fi
 check_file_exists "$project_dir/pressure.xvg" || return
 printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+
+#Interaction energy
+if [ ! -f "$project_dir/ie.mdp" ]; then
+    echo -e ${LIGHT_RED} "ie.mdp does not exist.${NC}"
+    exit 1
+fi
+check_file_exists "$project_dir/ie.tpr" || return
+gmx grompp -f $project_dir/ie.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/ie.tpr >/dev/null 2>&1 || exit 1
+gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/dev/null 2>&1 || exit 1
+printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
 
 wait
 }
