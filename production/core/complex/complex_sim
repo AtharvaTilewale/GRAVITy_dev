@@ -99,6 +99,20 @@ equilibration_loader() {
     fi
 }
 
+
+#Box loader
+box_loader() {
+    show_spinner $! "Preparing Box"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: Failed to define the box. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"Box prepared successfully!"${NC}
+        sleep 1.0
+    fi
+}
+
 #Solvate model loader
 solvate_loader() {
     show_spinner $! "Solvating the system"
@@ -669,7 +683,7 @@ echo -e ${LIGHT_YELLOW}
 read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
 echo -e ${NC}
 if [ $select_ion_addition == "y" ]; then
-    printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
+    printf "15\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
     ion_add_loader
 else
     echo -e ${YELLOW}"Select box type from the following${NC}"

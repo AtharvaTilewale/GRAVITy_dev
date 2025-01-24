@@ -1148,6 +1148,7 @@ production_md() {
 #     ;;
     # Wait for background processes to finish
     wait
+    manual_run
 }
 
 # Function to run analysis
