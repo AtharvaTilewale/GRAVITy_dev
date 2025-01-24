@@ -1095,45 +1095,45 @@ production_md() {
     printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
     
     #Finding Radius of Gyration...
-    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/gyrate.xvg" || return
-    printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+    # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/gyrate.xvg" || return
+    # printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
     
-    #Analyzing Hbonds...
-    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/hbnum.xvg" || return
-    check_file_exists "$project_dir/hbdist.xvg" || return
-    printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+    # #Analyzing Hbonds...
+    # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/hbnum.xvg" || return
+    # check_file_exists "$project_dir/hbdist.xvg" || return
+    # printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
 
-    #Analyzing RMSF...
-    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/rmsf.xvg" || return
-    printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing RMSF...
+    # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/rmsf.xvg" || return
+    # printf "1\n" | gmx rmsf -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
 
-    #Analyzing Temp...
-    if [ ! -f "$project_dir/nvt.edr" ]; then
-        echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/temp.xvg" || return
-    printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing Temp...
+    # if [ ! -f "$project_dir/nvt.edr" ]; then
+    #     echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/temp.xvg" || return
+    # printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
 
-    #Analyzing Pressure...
-    if [ ! -f "$project_dir/npt.edr" ]; then
-        echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/pressure.xvg" || return
-    printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing Pressure...
+    # if [ ! -f "$project_dir/npt.edr" ]; then
+    #     echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/pressure.xvg" || return
+    # printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
 
 # 6)
 #     echo
