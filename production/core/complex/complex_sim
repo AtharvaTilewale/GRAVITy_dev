@@ -666,9 +666,9 @@ equilibrium() {
                     exit 1
                 fi
                 check_file_exists "index_lig.ndx" || return
-                echo -e "0 & ! a H*\nq" | gmx make_ndx -f "lig.gro" -o "index_lig.ndx" || { echo "Error: Failed to create index file."; exit 1; }
+                echo -e "0 & ! a H*\nq" | gmx make_ndx -f "lig.gro" -o "index_lig.ndx" >/dev/null 2>&1 || { echo "Error: Failed to create index file."; exit 1; }
                 check_file_exists "posre_lig.itp" || return
-                printf "3" | gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 || { echo "Error: Failed to generate position restraints."; exit 1; }
+                printf "3" | gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 >/dev/null 2>&1 || { echo "Error: Failed to generate position restraints."; exit 1; }
                 echo "Ligand restraining completed."
                 
                 # Integrate program 2 to edit topol.top file
@@ -697,7 +697,7 @@ equilibrium() {
                     exit 1
                 fi
                 check_file_exists "index.ndx" || return
-                echo -e "1 | 13 \nq" | gmx make_ndx -f em.gro -o index.ndx || { echo "Error: Failed to create index file for thermostats."; exit 1; }
+                echo -e "1 | 13 \nq" | gmx make_ndx -f em.gro -o index.ndx >/dev/null 2>&1 || { echo "Error: Failed to create index file for thermostats."; exit 1; }
                 echo "Thermostats setup completed."
                 ;;
             3)
