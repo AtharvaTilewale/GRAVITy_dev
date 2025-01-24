@@ -73,6 +73,32 @@ energy_minimization_loader() {
     fi
 }
 
+#Equilibration preparation loader
+equilibration_preparation_loader() {
+    show_spinner $! "Preparing for $equilibration_step_name"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: $equilibration_step_name preparation failed. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"$equilibration_step_name preparation successful"${NC}
+        sleep 1.0
+    fi
+}
+
+#Equilibration loader
+equilibration_loader() {
+    show_spinner $! "Running $equilibration_step_name"
+    wait $!
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: $equilibration_step_name failed. See log file for more info.${NC}"
+        exit 1
+    else
+        echo -e ${LIGHT_GREEN}"$equilibration_step_name done successfully"${NC}
+        sleep 1.0
+    fi
+}
+
 #check internet connection
 check_internet() {
     if ping -c 1 -W 1 8.8.8.8 &>/dev/null; then
@@ -529,7 +555,7 @@ add_ions() {
     check_file_exists "ions.tpr" || return
     gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr || { echo "Error: Failed to prepare ions."; exit 1; }
     check_file_exists "solv_ions.gro" || return
-    gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo "Error: Failed to add ions."; exit 1; }
+    printf "15\n" | gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo "Error: Failed to add ions."; exit 1; }
 }
 
 # Function to run energy minimization
@@ -556,19 +582,40 @@ energy_minimization() {
     # || { echo "Error: Energy minimization failed."; exit 1; }
 }
 
+NVT_equilibration() {
+    equilibration_step_name="NVT equilibration"
+    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/nvt.tpr  >/dev/null 2>&1 &
+    equilibration_preparation_loader
+    echo
+    gmx mdrun -deffnm $project_dir/nvt -v  >/dev/null 2>&1 &
+    equilibration_loader
+    echo
+}
+
+NPT_equilibration() {
+    equilibration_step_name="NPT equilibration"
+    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/npt.tpr >/dev/null 2>&1 &
+    equilibration_preparation_loader
+    echo
+    gmx mdrun -deffnm $project_dir/npt -v >/dev/null 2>&1 &
+    equilibration_loader
+    echo
+}
+
 # Function to run equilibrium
 equilibrium() {
     echo "Running equilibrium..."
     while true; do
-        echo "---------------------------"
-        echo "   Equilibrium Menu"
-        echo "---------------------------"
-        echo "1) Ligand Restraining"
-        echo "2) Thermostats"
-        echo "3) NVT Equilibration"
-        echo "4) NPT Equilibration"
-        echo "5) Back to Main Menu"
-        read -p "Enter your choice [1-5]: " equil_choice
+        echo -e "${YELLOW}--------------------------"
+        echo -e "      Equilibrium Menu"
+        echo -e "--------------------------${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Ligand Restraining"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Thermostats"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} NVT Equilibration"
+        echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} NPT Equilibration"
+        echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Both NVT & NPT"
+        echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Back to Main Menu"
+        read -p "Enter your choice [1-6]: " equil_choice
 
         case $equil_choice in
             1)
@@ -578,9 +625,9 @@ equilibrium() {
                     exit 1
                 fi
                 check_file_exists "index_lig.ndx" || return
-                gmx make_ndx -f "lig.gro" -o "index_lig.ndx" || { echo "Error: Failed to create index file."; exit 1; }
+                echo -e "0 & ! a H*\nq" | gmx make_ndx -f "lig.gro" -o "index_lig.ndx" || { echo "Error: Failed to create index file."; exit 1; }
                 check_file_exists "posre_lig.itp" || return
-                gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 || { echo "Error: Failed to generate position restraints."; exit 1; }
+                printf "3" | gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 || { echo "Error: Failed to generate position restraints."; exit 1; }
                 echo "Ligand restraining completed."
                 
                 # Integrate program 2 to edit topol.top file
@@ -609,44 +656,77 @@ equilibrium() {
                     exit 1
                 fi
                 check_file_exists "index.ndx" || return
-                gmx make_ndx -f em.gro -o index.ndx || { echo "Error: Failed to create index file for thermostats."; exit 1; }
+                echo -e "1 | 13 \nq" | gmx make_ndx -f em.gro -o index.ndx || { echo "Error: Failed to create index file for thermostats."; exit 1; }
                 echo "Thermostats setup completed."
                 ;;
             3)
-                echo "Running NVT equilibration..."
-                if [ ! -f "em.gro" ]; then
-                    echo "em.gro does not exist."
+                if [ ! -f "$project_dir/em.gro" ]; then
+                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                    sleep 2.0
                     exit 1
                 fi
-                
-                if [ ! -f "nvt.mdp" ]; then
+
+                if [ ! -f "$project_dir/nvt.mdp" ]; then
                     echo "nvt.mdp does not exist. Downloading..."
-                    wget -nc http://www.mdtutorials.com/gmx/complex/Files/nvt.mdp
+                    file_download_name="nvt.mdp"
+                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                    download_loader
                 fi
-                
-                check_file_exists "nvt.tpr" || return
-                gmx grompp -f nvt.mdp -c em.gro -r em.gro -p topol.top -n index.ndx -o nvt.tpr || { echo "Error: Failed to prepare NVT equilibration."; exit 1; }
-                check_file_exists "nvt.gro" || return
-                gmx mdrun -deffnm nvt -v || { echo "Error: NVT equilibration failed."; exit 1; }
+
+                check_file_exists "$project_dir/nvt.gro" || return
+
+                update_eq_steps
+                NVT_equilibration
                 ;;
             4)
-                echo "Running NPT equilibration..."
-                if [ ! -f "nvt.gro" ]; then
-                    echo "nvt.gro does not exist."
+                if [ ! -f "$project_dir/nvt.gro" ]; then
+                    echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
                     exit 1
                 fi
-                
-                if [ ! -f "npt.mdp" ]; then
+
+                if [ ! -f "$project_dir/npt.mdp" ]; then
                     echo "npt.mdp does not exist. Downloading..."
-                    wget -nc http://www.mdtutorials.com/gmx/complex/Files/npt.mdp
+                    file_download_name="npt.mdp"
+                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                    download_loader
                 fi
-                
-                check_file_exists "npt.tpr" || return
-                gmx grompp -f npt.mdp -c nvt.gro -r nvt.gro -p topol.top -n index.ndx -o npt.tpr || { echo "Error: Failed to prepare NPT equilibration."; exit 1; }
-                check_file_exists "npt.gro" || return
-                gmx mdrun -deffnm npt -v || { echo "Error: NPT equilibration failed."; exit 1; }
+
+                check_file_exists "$project_dir/npt.gro" || return
+
+                update_eq_steps
+                NPT_equilibration
                 ;;
             5)
+                if [ ! -f "$project_dir/em.gro" ]; then
+                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                    sleep 2.0
+                    exit 1
+                fi
+
+                if [ ! -f "$project_dir/nvt.mdp" ]; then
+                    echo "nvt.mdp does not exist. Downloading..."
+                    file_download_name="nvt.mdp"
+                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                    download_loader
+                fi
+                if [ ! -f "$project_dir/npt.mdp" ]; then
+                    echo "npt.mdp does not exist. Downloading..."
+                    file_download_name="npt.mdp"
+                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                    download_loader
+                fi
+
+                # Run NVT and NPT in the background, suppress both stdout and stderr
+                # Run NVT and NPT in the background, suppressing output, but show loader
+                update_eq_steps
+                NVT_equilibration
+                NPT_equilibration
+                sleep 1.0
+                # Wait for both NVT and NPT processes to finish
+                wait
+                manual_run
+                ;;
+            6)
                 echo "Returning to main menu..."
                 return
                 ;;
