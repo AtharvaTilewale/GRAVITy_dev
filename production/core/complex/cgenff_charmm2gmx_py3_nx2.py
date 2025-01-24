@@ -59,14 +59,14 @@ def check_versions(str_filename,ffdoc_filename):
 	f = open(str_filename, 'r')
 	for line in f.readlines():
 		if line.startswith("* For use with CGenFF version"):
-			entry = re.split('\s+', line.lstrip())
+			entry = re.split(r'\s+', line.lstrip())
 			strver = entry[6]
 			print("--Version of CGenFF detected in ",str_filename,":",strver)
 	f.close()
 	f = open(ffdoc_filename, 'r')
 	for line in f.readlines():
 		if line.startswith("Parameters taken from CHARMM36 and CGenFF"):
-			entry = re.split('\s+', line.lstrip())
+			entry = re.split(r'\s+', line.lstrip())
 			ffver = entry[6]
 			print("--Version of CGenFF detected in ",ffdoc_filename,":",ffver)
 	f.close()
@@ -129,7 +129,7 @@ def read_gmx_atomtypes(filename):
 			continue
 		if line == '\n':
 			continue
-		entry = re.split('\s+', line.lstrip())
+		entry = re.split(r'\s+', line.lstrip())
 		var = [entry[0],entry[1]]
 		atomtypes.append(var)
 	f.close()
@@ -140,7 +140,7 @@ def get_filelist_from_gmx_forcefielditp(ffdir,ffparentfile):
 	f = open(ffdir+"/"+ffparentfile, 'r')
 	for line in f.readlines():
 		if line.startswith("#include"):
-			entry = re.split('\s+', line.lstrip())
+			entry = re.split(r'\s+', line.lstrip())
 			filename = ffdir + "/" + entry[1].replace("\"","")
 			filelist.append(filename)
 	return filelist
@@ -165,7 +165,7 @@ def read_gmx_anglpars(filename):
 	anglpars = []
 	anglpar = {}
 	for line in angllines:
-		entry = re.split('\s+', line.lstrip())
+		entry = re.split(r'\s+', line.lstrip())
 		ai, aj, ak, eq = entry[0],entry[1],entry[2],float(entry[4])
 		anglpars.append([ai,aj,ak,eq])
 
@@ -182,7 +182,7 @@ def get_charmm_rtp_lines(filename,molname):
 			store=0
 
 		if line.startswith("RESI"):
-			entry = re.split('\s+', line.lstrip())
+			entry = re.split(r'\s+', line.lstrip())
 			rtfmolname=entry[1]
 			if(rtfmolname == molname):
 				store=1
@@ -578,11 +578,11 @@ class atomgroup:
 				line = line[:line.find('!')]
 
 				if line.startswith("RESI"):
-					entry = re.split('\s+', line.lstrip())
+					entry = re.split(r'\s+', line.lstrip())
 					self.name=entry[1]
 
 				if line.startswith("ATOM"):
-					entry = re.split('\s+', line.lstrip())
+					entry = re.split(r'\s+', line.lstrip())
 					atm[self.natoms] = {'type':entry[2], 'resname':self.name, 'name':entry[1],
 						  'charge':float(entry[3]),'mass':float(0.00), 'beta':float(0.0),
 							'x':float(9999.9999),'y':float(9999.9999),'z':float(9999.9999),'segid':self.name, 'resid':'1' }
@@ -602,8 +602,8 @@ class atomgroup:
 
 				## jal - adding lone pair support
 				if line.startswith("LONE"):
-					#entry = re.split('\s+', line.rstrip(line.lstrip()))
-					entry = re.split('\s+', line.lstrip())
+					#entry = re.split(r'\s+', line.rstrip(line.lstrip()))
+					entry = re.split(r'\s+', line.lstrip())
 					atm[self.nvsites] = {'vsite':entry[2], 'at1':entry[3], 'at2':entry[4],
 							'dist':(float(entry[6])*0.1),
 							'x':float(9999.9999),'y':float(9999.9999),'z':float(9999.9999) }
@@ -618,8 +618,8 @@ class atomgroup:
 					self.nvsites=self.nvsites+1
 
 				if line.startswith("BOND") or line.startswith("DOUB"):
-					#entry = re.split('\s+', line.rstrip(line.lstrip()))
-					entry = re.split('\s+', line.lstrip())
+					#entry = re.split(r'\s+', line.rstrip(line.lstrip()))
+					entry = re.split(r'\s+', line.lstrip())
 					numbonds = int((len(entry)-1)/2)
 					for bondi in range(0,numbonds):
 						found1 = False
@@ -643,7 +643,7 @@ class atomgroup:
 							self.nbonds=self.nbonds+1
 
 				if line.startswith("IMP"):
-					entry = re.split('\s+', line.lstrip())
+					entry = re.split(r'\s+', line.lstrip())
 					numimpr = int((len(entry)-2)/4)
 					for impi in range(0,numimpr):
 						for i in range(0,self.natoms):
@@ -866,7 +866,7 @@ class atomgroup:
 				section="NONE"
 
 			if((section=="NATO") and (not secflag)):
-				entry = re.split('\s+', line.lstrip())
+				entry = re.split(r'\s+', line.lstrip())
 				check_natoms=int(entry[0])
 				check_nbonds=int(entry[1])
 				if(check_natoms != self.natoms):
@@ -893,7 +893,7 @@ class atomgroup:
 				section="NATO" #next line after @<TRIPOS>MOLECULE contains atom, bond numbers
 
 			if((section=="ATOM") and (not secflag)):
-				entry = re.split('\s+', line.lstrip())
+				entry = re.split(r'\s+', line.lstrip())
 				## guard against blank lines
 				if (len(entry) > 1):
 					## jal - if there are lone pairs, these are not in mol2
