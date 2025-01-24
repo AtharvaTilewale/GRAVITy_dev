@@ -604,8 +604,8 @@ NPT_equilibration() {
 
 # Function to run equilibrium
 equilibrium() {
-    echo "Running equilibrium..."
     while true; do
+        echo
         echo -e "${YELLOW}--------------------------"
         echo -e "      Equilibrium Menu"
         echo -e "--------------------------${NC}"
@@ -615,6 +615,7 @@ equilibrium() {
         echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} NPT Equilibration"
         echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Both NVT & NPT"
         echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Back to Main Menu"
+        echo -e "--------------------------${NC}"
         read -p "Enter your choice [1-6]: " equil_choice
 
         case $equil_choice in
