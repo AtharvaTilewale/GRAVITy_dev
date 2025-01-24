@@ -206,7 +206,7 @@ retrieve_complex(){
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
         return
     else
-        cp $ligand_path $project_dir/ligand.pdbqt
+        cp $ligand_path $project_dir/lig.pdbqt
     fi
     if [[ -f "$project_dir/protein.pdb" ]]; then
         if [[ -f "$project_dir/ligand.pdbqt" ]]; then
