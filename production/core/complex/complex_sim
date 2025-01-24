@@ -963,6 +963,7 @@ gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/de
 printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
 
 wait
+return
 }
 
 # Function to run analysis
@@ -988,8 +989,13 @@ run_analysis() {
             echo "Analyzing RMSD values..."
             echo
             if [ ! -f "$project_dir/rmsd.xvg" ]; then
-                echo -e ${LIGHT_RED} "rmsd.xvg does not exist.${NC}"
-                exit 1
+                if [ ! -f "$project_dir/md_center.xtc" ]; then
+                    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+                    exit 1
+                fi
+                check_file_exists "$project_dir/rmsd.xvg" || return
+                printf "4 4\n" | gmx rms -s $project_dir/em.tpr -f $project_dir/md_center.xtc -n $project_dir/index.ndx -tu ns -o $project_dir/rmsd.xvg >/dev/null 2>&1 || exit 1
+                xmgrace $project_dir/rmsd.xvg
             fi
             xmgrace $project_dir/rmsd.xvg
             ;;
@@ -998,8 +1004,13 @@ run_analysis() {
             echo "Analyzing RMSF..."
             echo
             if [ ! -f "$project_dir/rmsf.xvg" ]; then
-                echo -e ${LIGHT_RED} "rmsf.xvg does not exist.${NC}"
-                exit 1
+                if [ ! -f "$project_dir/md_center.xtc" ]; then
+                    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+                    exit 1
+                fi
+                check_file_exists "$project_dir/rmsf.xvg" || return
+                printf "1\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+                xmgrace $project_dir/rmsf.xvg
             fi
             xmgrace $project_dir/rmsf.xvg
             ;;
@@ -1008,8 +1019,13 @@ run_analysis() {
             echo "Analyzing Radius of Gyration..."
             echo
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
-                echo -e ${LIGHT_RED} "gyrate.xvg does not exist.${NC}"
+                if [ ! -f "$project_dir/md_center.xtc" ]; then
+                echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                 exit 1
+            fi
+            check_file_exists "$project_dir/gyrate.xvg" || return
+            printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+            xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace $project_dir/gyrate.xvg
             ;;
@@ -1029,8 +1045,14 @@ run_analysis() {
                 echo "Analyzing No. of H bonds..."
                 echo
                 if [ ! -f "$project_dir/hbnum.xvg" ]; then
-                    echo -e ${LIGHT_RED} "hbnum.xvg does not exist.${NC}"
-                    exit 1
+                    if [ ! -f "$project_dir/md_center.xtc" ]; then
+                        echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+                        exit 1
+                    fi
+                    check_file_exists "$project_dir/hbnum.xvg" || return
+                    check_file_exists "$project_dir/hbdist.xvg" || return
+                    printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace $project_dir/hbnum.xvg
                 ;;
@@ -1039,8 +1061,14 @@ run_analysis() {
                 echo "Analyzing Average distance between H bonds..."
                 echo
                 if [ ! -f "$project_dir/hbdist.xvg" ]; then
-                    echo -e ${LIGHT_RED} "hbdist.xvg does not exist.${NC}"
-                    exit 1
+                   if [ ! -f "$project_dir/md_center.xtc" ]; then
+                        echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+                        exit 1
+                    fi
+                    check_file_exists "$project_dir/hbnum.xvg" || return
+                    check_file_exists "$project_dir/hbdist.xvg" || return
+                    printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace $project_dir/hbdist.xvg
                 ;;
@@ -1072,8 +1100,13 @@ run_analysis() {
                 echo "Temperature..."
                 echo
                 if [ ! -f "$project_dir/temp.xvg" ]; then
-                    echo -e ${LIGHT_RED} "temp.xvg does not exist.${NC}"
+                    if [ ! -f "$project_dir/nvt.edr" ]; then
+                    echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
                     exit 1
+                    fi
+                    check_file_exists "$project_dir/temp.xvg" || return
+                    printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
+                    xmgrace $project_dir/temp.xvg
                 fi
                 xmgrace $project_dir/temp.xvg
                 ;;
@@ -1082,8 +1115,13 @@ run_analysis() {
                 echo "Pressure..."
                 echo
                 if [ ! -f "$project_dir/pressure.xvg" ]; then
-                    echo -e ${LIGHT_RED} "pressure.xvg does not exist.${NC}"
-                    exit 1
+                    if [ ! -f "$project_dir/npt.edr" ]; then
+                        echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+                        exit 1
+                    fi
+                    check_file_exists "$project_dir/pressure.xvg" || return
+                    printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+                    xmgrace $project_dir/pressure.xvg
                 fi
                 xmgrace $project_dir/pressure.xvg
                 ;;
@@ -1092,8 +1130,15 @@ run_analysis() {
                 echo "Interaction Energies..."
                 echo
                 if [ ! -f "$project_dir/interaction_energy.xvg" ]; then
-                    echo -e ${LIGHT_RED} "interaction_energy.xvg does not exist.${NC}"
-                    exit 1
+                    if [ ! -f "$project_dir/ie.mdp" ]; then
+                        echo -e ${LIGHT_RED} "ie.mdp does not exist.${NC}"
+                        exit 1
+                    fi
+                    check_file_exists "$project_dir/ie.tpr" || return
+                    gmx grompp -f $project_dir/ie.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/ie.tpr >/dev/null 2>&1 || exit 1
+                    gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/dev/null 2>&1 || exit 1
+                    printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
+                    xmgrace $project_dir/interaction_energy.xvg
                 fi
                 xmgrace $project_dir/interaction_energy.xvg
                 ;;
