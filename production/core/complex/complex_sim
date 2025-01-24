@@ -743,7 +743,7 @@ energy_minimization() {
 
 NVT_equilibration() {
     equilibration_step_name="NVT equilibration"
-    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/nvt.tpr  >/dev/null 2>&1 &
+    gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/nvt.tpr -maxwarn 1 >/dev/null 2>&1 &
     equilibration_preparation_loader
     echo
     gmx mdrun -deffnm $project_dir/nvt -v  >/dev/null 2>&1 &
@@ -753,7 +753,7 @@ NVT_equilibration() {
 
 NPT_equilibration() {
     equilibration_step_name="NPT equilibration"
-    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -t $project_dir/nvt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/npt.tpr >/dev/null 2>&1 &
+    gmx grompp -f $project_dir/npt.mdp -c $project_dir/nvt.gro -r $project_dir/nvt.gro -t $project_dir/nvt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/npt.tpr -maxwarn 1 >/dev/null 2>&1 &
     equilibration_preparation_loader
     echo
     gmx mdrun -deffnm $project_dir/npt -v >/dev/null 2>&1 &
