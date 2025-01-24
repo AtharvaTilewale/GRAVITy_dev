@@ -649,21 +649,55 @@ fi
 
 # Function to add ions
 add_ions() {
-    echo "Adding ions..."
-    if [ ! -f "solv.gro" ]; then
-        echo "solv.gro does not exist."
-        exit 1
-    fi
-    
-    if [ ! -f "ions.mdp" ]; then
-        echo "ions.mdp does not exist. Downloading..."
-        wget -nc http://www.mdtutorials.com/gmx/complex/Files/ions.mdp
-    fi
-    
-    check_file_exists "ions.tpr" || return
-    gmx grompp -f ions.mdp -c solv.gro -p topol.top -o ions.tpr || { echo "Error: Failed to prepare ions."; exit 1; }
-    check_file_exists "solv_ions.gro" || return
-    printf "15\n" | gmx genion -s ions.tpr -o solv_ions.gro -p topol.top -pname NA -nname CL -neutral || { echo "Error: Failed to add ions."; exit 1; }
+if [ ! -f "$project_dir/solv.gro" ]; then
+    echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
+    sleep 2.0
+    exit 1
+fi
+
+if [ ! -f "$project_dir/ions.mdp" ]; then
+    echo "ions.mdp file does not exist."
+    file_download_name="ions.mdp"
+    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" >/dev/null 2>&1) &
+    download_loader
+fi
+echo
+check_file_exists "$project_dir/solv_ions.gro" || return
+gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
+ion_tpr_loader
+echo -e ${LIGHT_YELLOW}
+read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
+echo -e ${NC}
+if [ $select_ion_addition == "y" ]; then
+    printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
+    ion_add_loader
+else
+    echo -e ${YELLOW}"Select box type from the following${NC}"
+    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
+    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Add only Na+ ions"
+    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Add only Cl- ions"
+    choice=$(prompt_user "Enter your choice [1-3]: ")
+    echo -e ${NC}
+
+    case $choice in
+    1)
+        printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
+        ion_add_loader
+        ;;
+    2)
+        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA >/dev/null 2>&1 &
+        ion_add_loader
+        ;;
+    3)
+        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL >/dev/null 2>&1 &
+        ion_add_loader
+        ;;
+    *)
+        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        sleep 1.0
+        ;;
+    esac
+fi  
 }
 
 # Function to run energy minimization
