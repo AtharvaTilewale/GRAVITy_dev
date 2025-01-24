@@ -587,8 +587,8 @@ define_box_and_solvate() {
 echo
 echo "Defining box and solvating system..."
 echo
-if [ ! -f "$project_dir/protein.gro" ]; then
-    echo -e ${LIGHT_RED} "protein.gro does not exist.${NC}"
+if [ ! -f "$project_dir/complex.gro" ]; then
+    echo -e ${LIGHT_RED} "complex.gro does not exist.${NC}"
     sleep 2.0
     exit 1
 fi
@@ -613,17 +613,17 @@ else
 
     case $choice in
     1)
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
+        gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
         box_loader
         ;;
     #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
     #sleep 2.0; exit 1; } ;;
     2)
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron >/dev/null 2>&1 &
+        gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron >/dev/null 2>&1 &
         box_loader
         ;;
     3)
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic >/dev/null 2>&1 &
+        gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic >/dev/null 2>&1 &
         box_loader
         ;;
     *)
