@@ -51,9 +51,9 @@ new_project() {
 
     case $sim_type in
     1)
-        sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
+        sudo cp -r /etc/GRAVITy/core/prm/protein/* "$project_dir/"
         sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
-        sudo cp /etc/GRAVITy/protein_sim "$project_dir/"
+        sudo cp /etc/GRAVITy/core/protein/* "$project_dir/"
         mv $project_dir/protein_sim $project_dir/simulate
         sudo chown -R $(whoami):$(whoami) /home/$(whoami)/.GRAVITy
         chmod u+w /home/$(whoami)/.GRAVITy/projects
@@ -63,7 +63,7 @@ new_project() {
         exit 0
         ;;
     2)
-        sudo cp -r /etc/GRAVITy/core/prm/* "$project_dir/"
+        sudo cp -r /etc/GRAVITy/core/prm/complex/* "$project_dir/"
         sudo cp -r /etc/GRAVITy/charmm36.ff "$project_dir/"
         sudo cp -r /etc/GRAVITy/core/complex/* "$project_dir/"
         mv $project_dir/complex_sim $project_dir/simulate

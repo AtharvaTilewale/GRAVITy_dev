@@ -710,7 +710,8 @@ energy_minimization() {
     
     if [ ! -f "em.mdp" ]; then
         echo "em.mdp does not exist. Downloading..."
-        wget -nc http://www.mdtutorials.com/gmx/complex/Files/em.mdp
+        ( wget -nc http://www.mdtutorials.com/gmx/complex/Files/em.mdp ) &
+        download_loader
     fi
     
     check_file_exists "em.tpr" || return
