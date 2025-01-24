@@ -765,7 +765,7 @@ equilibrium() {
                 sleep 1.0
                 # Wait for both NVT and NPT processes to finish
                 wait
-                manual_run
+                return
                 ;;
             6)
                 echo "Returning to main menu..."
