@@ -52,20 +52,30 @@ show_spinner() {
     printf "\r%s...        \n" "$message"
 }
 
+# Function to display a spinning loader during a task, marking success or failure
 auto_task_spinner() {
     local pid=$1
     local task=$2
     local symbols=("|" "/" "-" "\\")
     local i=0
 
+    # Show the spinning loader while the process is running
     while kill -0 $pid 2>/dev/null; do
-        printf "%-50s [${symbols[$((i % 4))]}]\r" "$task "
+        printf "%-50s [${symbols[$((i % 4))]}]\r" "$task"
         sleep 0.1
         ((i++))
     done
 
-    # On success, change box to green
-    printf "%-50s [${LIGHT_GREEN}✓${NC}]\n" "$task"
+    # Check if the task failed (non-zero exit status)
+    if wait $pid; then
+        # Task succeeded, mark with a green check
+        printf "%-50s [${LIGHT_GREEN}✓${NC}]\n" "$task"
+    else
+        # Task failed, exit and print error message
+        printf "%-50s [${LIGHT_RED}✗${NC}]\n" "$task"
+        echo
+        exit 1  # Exit the script if the task fails
+    fi
 }
 
 #Loaders
@@ -1572,7 +1582,7 @@ EOF
     simulation_time_ns=$md_time_ns
     simulation_steps=$md_steps
 
-    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 0f 7: Download Protein Structure"
+    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 0f 7: Download Protein Structure" 
     generate_protein_topology >/dev/null 2>&1 & auto_task_spinner $! "Step 2 0f 7: Generate Protein Topology"
     define_box_and_solvate >/dev/null 2>&1 & auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
     add_ions >/dev/null 2>&1 & auto_task_spinner $! "Step 4 0f 7: Add ions to system"
