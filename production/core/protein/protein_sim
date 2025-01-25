@@ -1903,7 +1903,8 @@ main_menu() {
         echo -e "${LIGHT_PURPLE}[${NC}1${LIGHT_PURPLE}]${NC} ${WHITE}Manual run${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}2${LIGHT_PURPLE}]${NC} ${WHITE}Automatic run${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}3${LIGHT_PURPLE}]${NC} ${WHITE}Test run (10ps)${NC}"
-        echo -e "${LIGHT_PURPLE}[${NC}4${LIGHT_PURPLE}]${NC} ${WHITE}Advanced Options${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}4${LIGHT_PURPLE}]${NC} ${WHITE}Analyze Results${NC}"
+        # echo -e "${LIGHT_PURPLE}[${NC}5${LIGHT_PURPLE}]${NC} ${WHITE}Advanced Options${NC}"
         echo -e "${LIGHT_PURPLE}[${NC}5${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
         echo -e "${YELLOW}--------------------------${NC}"
         echo -e ${LIGHT_YELLOW}
@@ -1918,7 +1919,7 @@ main_menu() {
             ;;
         2) automatic_run ;;
         3) test_run ;;
-        4) advanced_options ;;
+        4) run_analysis ;;
         5)
             echo -e "${YELLOW}Thanks for using GRAVITy!${NC}"
             echo "Exiting..."
