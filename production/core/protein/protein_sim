@@ -52,12 +52,17 @@ show_spinner() {
     printf "\r%s...        \n" "$message"
 }
 
-# Function to display a spinning loader during a task, marking success or failure
 auto_task_spinner() {
     local pid=$1
     local task=$2
     local symbols=("|" "/" "-" "\\")
     local i=0
+
+    # Check if the PID is valid before attempting to wait
+    if ! kill -0 $pid 2>/dev/null; then
+        echo "Error: Invalid PID $pid"
+        return 1
+    fi
 
     # Show the spinning loader while the process is running
     while kill -0 $pid 2>/dev/null; do
@@ -66,17 +71,18 @@ auto_task_spinner() {
         ((i++))
     done
 
-    # Check if the task failed (non-zero exit status)
+    # Check the exit status of the background process
     if wait $pid; then
         # Task succeeded, mark with a green check
         printf "%-50s [${LIGHT_GREEN}✓${NC}]\n" "$task"
     else
         # Task failed, exit and print error message
         printf "%-50s [${LIGHT_RED}✗${NC}]\n" "$task"
-        echo
-        exit 1  # Exit the script if the task fails
+        # echo
+        # exit 1  # Exit the script if the task fails
     fi
 }
+
 
 #Loaders
 #Download loader
@@ -355,7 +361,8 @@ download_protein() {
         local target_file="$project_dir/${pdb_id}.pdb"
 
         (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-        # auto_task_spinner $! "Downloading protein structure"
+        $pid=$!
+        wait $pid
         if [[ -s "$target_file" ]]; then
             # echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
             mv $target_file $project_dir/protein.pdb
@@ -439,7 +446,7 @@ pdb_fixer() {
 # Function to remove HETATM lines
 remove_hetatm() {
     if grep -q "HETATM" $project_dir/protein.pdb; then
-        echo "Removing HETATM entries from protein.pdb..."
+        # echo "Removing HETATM entries from protein.pdb..."
         sed -i '/^HETATM/d' $project_dir/protein.pdb
     fi
 }
@@ -448,24 +455,51 @@ remove_hetatm() {
 generate_protein_topology() {
     # Check auto_check function
     if [[ $(auto_check) == true ]]; then
+        # Remove hetatm if needed
         remove_hetatm
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-        local exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            # echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-            pdb_fixer || {
-                # echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
-                exit 1
-            }
 
-            # Retry GROMACS pdb2gmx after fixing
-            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        # Run GROMACS pdb2gmx in the background and track it with a spinner
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
+        pid_gmx=$!  # Store PID of the background task
+        auto_task_spinner $pid_gmx "Step 2 of 7: Generating Protein Topology"
+
+        # Check the exit status of pdb2gmx
+        wait $pid_gmx
+        local exit_status=$?
+
+        if [[ $exit_status -ne 0 ]]; then
+            # If pdb2gmx failed, try fixing the PDB with pdbfixer
+            # echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+            pdb_fixer >/dev/null 2>&1 &
+            pid_fixer=$!  # Store PID of the background task
+            auto_task_spinner $pid_fixer "Step 2 of 7: Fixing PDB file"
+
+            # Check if pdbfixer was successful
+            wait $pid_fixer
+            local fixer_exit_status=$?
+            if [[ $fixer_exit_status -ne 0 ]]; then
+                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+                exit 1
+            fi
+
+            # Retry GROMACS pdb2gmx after fixing the PDB
+            # echo -e "${CYAN}Retrying topology generation with fixed PDB...${NC}"
+            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
+            pid_retry_gmx=$!  # Store PID for retry
+            auto_task_spinner $pid_retry_gmx "Step 2 of 7: Regenerating Protein Topology"
+
+            # Check if the retry was successful
+            wait $pid_retry_gmx
             exit_status=$?
             if [[ $exit_status -ne 0 ]]; then
-                # echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing PDB.${NC}"
                 exit 1
             fi
         fi
+
+        # If we reach here, the topology generation was successful
+        # echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+
     else
         # Check if protein file exists
         if [[ ! -f "$project_dir/protein.pdb" ]]; then
@@ -508,11 +542,10 @@ generate_protein_topology() {
                 exit 1
             fi
         fi
+        # Success message
+        echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
+        sleep 1.0
     fi
-
-    # Success message
-    echo -e "${LIGHT_GREEN}Protein topology generated successfully.${NC}"
-    sleep 1.0
 }
 
 # sudo cp topol.top $project_dir/
@@ -1041,6 +1074,8 @@ production_md() {
         # echo -e "${LIGHT_GREEN}Starting MD simulation on $run_mode...${NC}"
         
         eval "$run_cmd >/dev/null 2>&1 &"
+        $pid=$!
+        wait $pid
         # show_spinner $! "Running MD Simulation on $run_mode"
         #Recentering and Rewrapping Coordinates...
         if [ ! -f "$project_dir/md.xtc" ]; then
@@ -1582,8 +1617,8 @@ EOF
     simulation_time_ns=$md_time_ns
     simulation_steps=$md_steps
 
-    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 0f 7: Download Protein Structure" 
-    generate_protein_topology >/dev/null 2>&1 & auto_task_spinner $! "Step 2 0f 7: Generate Protein Topology"
+    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 of 7: Downloading protein structure"
+    generate_protein_topology
     define_box_and_solvate >/dev/null 2>&1 & auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
     add_ions >/dev/null 2>&1 & auto_task_spinner $! "Step 4 0f 7: Add ions to system"
     energy_minimization >/dev/null 2>&1 & auto_task_spinner $! "Step 5 0f 7: Minimize energy"
