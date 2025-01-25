@@ -194,6 +194,17 @@ check_internet() {
     fi
 }
 
+# Check if pdbid variable is set and not empty
+check_pdbid() {
+    if [[ -z "$pdb_id" ]]; then
+        echo -e "${LIGHT_RED}No PDB ID provided.${NC}"
+        return 1  # PDB ID is not set
+    else
+        echo -e "PDB ID: ${LIGHT_GREEN}$pdb_id${NC}"
+        return 0  # PDB ID is set
+    fi
+}
+
 #Check dependencies
 check_dependencies() {
     command -v gmx >/dev/null 2>&1 || {
@@ -362,8 +373,15 @@ download_protein() {
 # Function to fix PDB file using PDBFixer
 pdb_fixer() {
     echo
-    pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
-    pdbfix_loader
+    if check_internet && check_pdbid; then
+        pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
+        pdbfix_loader
+    elif [[ -f "$project_dir/protein.pdb" ]]
+        pdbfixer protein.pdb --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
+        pdbfix_loader
+    else
+        echo -e "${LIGHT_RED}Neither protein.pdb file found nor PDBID provided${NC}"
+    fi
 }
 
 # Function to remove HETATM lines
