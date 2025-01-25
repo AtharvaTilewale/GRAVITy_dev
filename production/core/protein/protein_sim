@@ -52,6 +52,22 @@ show_spinner() {
     printf "\r%s...        \n" "$message"
 }
 
+auto_task_spinner() {
+    local pid=$1
+    local task=$2
+    local symbols=("|" "/" "-" "\\")
+    local i=0
+
+    while kill -0 $pid 2>/dev/null; do
+        printf "%-50s [${symbols[$((i % 4))]}]\r" "$task "
+        sleep 0.1
+        ((i++))
+    done
+
+    # On success, change box to green
+    printf "%-50s [${LIGHT_GREEN}✓${NC}]\n" "$task"
+}
+
 #Loaders
 #Download loader
 download_loader() {
@@ -329,12 +345,12 @@ download_protein() {
         local target_file="$project_dir/${pdb_id}.pdb"
 
         (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-        show_spinner $! "Downloading protein structure"
+        # auto_task_spinner $! "Downloading protein structure"
         if [[ -s "$target_file" ]]; then
-            echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+            # echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
             mv $target_file $project_dir/protein.pdb
         else
-            echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+            # echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
             rm -f "$target_file" # Clean up incomplete file
             return 1
         fi
@@ -426,9 +442,9 @@ generate_protein_topology() {
         gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
         local exit_status=$?
         if [[ $exit_status -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+            # echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
             pdb_fixer || {
-                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+                # echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
                 exit 1
             }
 
@@ -436,7 +452,7 @@ generate_protein_topology() {
             gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
             exit_status=$?
             if [[ $exit_status -ne 0 ]]; then
-                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+                # echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
                 exit 1
             fi
         fi
@@ -495,24 +511,24 @@ generate_protein_topology() {
 # Function to define box and solvate the system
 define_box_and_solvate() {
     if [[ $(auto_check) == true ]]; then
-        echo "Auto mode: Defining box and solvating system..."
-        echo "Box type: $bt, Solvation model: $sol_mod.gro"
+        # echo "Auto mode: Defining box and solvating system..."
+        # echo "Box type: $bt, Solvation model: $sol_mod.gro"
 
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1 &
-        box_loader
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1
+        # box_loader
         if [ $? -ne 0 ]; then
             echo "Error in gmx editconf. Check editconf.log for details."
             exit 1
         fi
 
-        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
-        solvate_loader
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 
+        # solvate_loader
         if [ $? -ne 0 ]; then
             echo "Error in gmx solvate. Check solvate.log for details."
             exit 1
         fi
 
-        echo "Box defined and system solvated successfully."
+        # echo "Box defined and system solvated successfully."
     else
         echo
         echo "Defining box and solvating system..."
@@ -612,29 +628,29 @@ add_ions() {
         fi
 
         # Run grompp and debug potential issues
-        echo -e "${LIGHT_GREEN}Running grompp...${NC}"
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1 &
-        ion_tpr_loader
+        # echo -e "${LIGHT_GREEN}Running grompp...${NC}"
+        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1 
+        # ion_tpr_loader
 
         if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
-            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug >/dev/null 2>&1 &
-            ion_tpr_loader
-            echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
+            # echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
+            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug >/dev/null 2>&1 
+            # ion_tpr_loader
+            # echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
             exit 1
         fi
 
         # Run genion to add ions
-        echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
-        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1 &
-        ion_add_loader
+        # echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
+        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1 
+        # ion_add_loader
 
         if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
+            # echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
             exit 1
         fi
 
-        echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
+        # echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
     else
         if [ ! -f "$project_dir/solv.gro" ]; then
             echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
@@ -691,7 +707,7 @@ add_ions() {
 # Function to run energy minimization
 energy_minimization() {
     if [[ $(auto_check) == true ]]; then
-        echo "Starting energy minimization process..."
+        # echo "Starting energy minimization process..."
 
         # Check if necessary files exist
         if [[ ! -f "$project_dir/minim.mdp" ]]; then
@@ -708,24 +724,24 @@ energy_minimization() {
         fi
 
         # Prepare the system for energy minimization
-        echo "Preparing input files for energy minimization..."
-        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" >/dev/null 2>&1 &
-        show_spinner $! "Preparing"
+        # echo "Preparing input files for energy minimization..."
+        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" >/dev/null 2>&1 
+        # show_spinner $! "Preparing"
         if [[ $? -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
+            # echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
             exit 1
         fi
-        echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
+        # echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
 
         # Run energy minimization
         # echo "Running energy minimization..."
-        gmx mdrun -v -deffnm "$project_dir/em" >/dev/null 2>&1 &
-        energy_minimization_loader
+        gmx mdrun -v -deffnm "$project_dir/em" >/dev/null 2>&1 
+        # energy_minimization_loader
         if [[ $? -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
             exit 1
         fi
-        echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
+        # echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
     else
         # energy_minimization() {
         # echo -e "${YELLOW}Perform Energy Minimization${NC}"
@@ -990,52 +1006,45 @@ update_simulation_steps() {
 production_md() {
     if [[ $(auto_check) == true ]]; then
         if [[ -n "$gpu_info" ]]; then
-            echo "GPU detected: $gpu_info"
+            # echo "GPU detected: $gpu_info"
 
             # Check for NVIDIA GPU and nvidia-smi
             if command -v nvidia-smi &>/dev/null; then
-                echo -e "${LIGHT_CYAN}NVIDIA GPU detected. Displaying details:${NC}"
+                # echo -e "${LIGHT_CYAN}NVIDIA GPU detected. Displaying details:${NC}"
                 nvidia-smi
                 sleep 3
 
                 run_mode="GPU"
                 run_cmd="gmx mdrun -deffnm $project_dir/md -v -nb gpu"
             else
-                echo -e "${LIGHT_YELLOW}NVIDIA GPU not detected or nvidia-smi unavailable. Falling back to CPU...${NC}"
+                # echo -e "${LIGHT_YELLOW}NVIDIA GPU not detected or nvidia-smi unavailable. Falling back to CPU...${NC}"
                 run_mode="CPU"
                 run_cmd="gmx mdrun -deffnm $project_dir/md -v"
             fi
         else
-            echo -e "${LIGHT_YELLOW}No GPU information found. Running simulation on CPU...${NC}"
+            # echo -e "${LIGHT_YELLOW}No GPU information found. Running simulation on CPU...${NC}"
             run_mode="CPU"
             run_cmd="gmx mdrun -deffnm $project_dir/md -v"
         fi
-
+        gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr
         # Measure and show elapsed time
-        echo -e "${LIGHT_GREEN}Starting MD simulation on $run_mode...${NC}"
-        start_time=$(date +%s)
-
+        # echo -e "${LIGHT_GREEN}Starting MD simulation on $run_mode...${NC}"
+        
         eval "$run_cmd >/dev/null 2>&1 &"
-        show_spinner $! "Running MD Simulation on $run_mode"
-
-        end_time=$(date +%s)
-        elapsed=$((end_time - start_time))
-
-        echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
-        echo "Elapsed time: $elapsed seconds"
+        # show_spinner $! "Running MD Simulation on $run_mode"
         #Recentering and Rewrapping Coordinates...
         if [ ! -f "$project_dir/md.xtc" ]; then
-            echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+            # echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
             exit 1
         fi
-        printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1
+        printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center || exit 1
 
         #Finding RMSD...
         if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-            echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+            # echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
             exit 1
         fi
-        printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+        printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns || exit 1
     else
 
         echo
@@ -1153,6 +1162,8 @@ production_md() {
         fi
         check_file_exists "$project_dir/rmsd.xvg" || return
         printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+        wait
+        manual_run
     fi
     
 
@@ -1210,7 +1221,6 @@ production_md() {
     #     ;;
     # Wait for background processes to finish
     wait
-    manual_run
 }
 
 # Function to run analysis
@@ -1549,6 +1559,7 @@ simulation_steps=$md_steps
 EOF
 
     echo -e "${LIGHT_GREEN}Parameters saved. Starting the setup and run process...${NC}"
+    echo
     sleep 1.0
 
     pdb_id=$pdb_id
@@ -1561,15 +1572,21 @@ EOF
     simulation_time_ns=$md_time_ns
     simulation_steps=$md_steps
 
-    download_protein
-    generate_protein_topology
-    define_box_and_solvate
-    add_ions
-    energy_minimization
-    equilibrium
-    production_md
-
-    local target_file="$project_dir/${pdb_id}.pdb"
+    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 0f 7: Download Protein Structure"
+    generate_protein_topology >/dev/null 2>&1 & auto_task_spinner $! "Step 2 0f 7: Generate Protein Topology"
+    define_box_and_solvate >/dev/null 2>&1 & auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
+    add_ions >/dev/null 2>&1 & auto_task_spinner $! "Step 4 0f 7: Add ions to system"
+    energy_minimization >/dev/null 2>&1 & auto_task_spinner $! "Step 5 0f 7: Minimize energy"
+    equilibrium >/dev/null 2>&1 & auto_task_spinner $! "Step 6 0f 7: Equilibrate system"
+    start_time=$(date +%s)
+    production_md >/dev/null 2>&1 & auto_task_spinner $! "Step 7 0f 7: Run MD Simulation"
+    end_time=$(date +%s)
+    elapsed=$((end_time - start_time))
+    echo
+    echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
+    echo "Elapsed time: $elapsed seconds"
+    echo
+    # local target_file="$project_dir/${pdb_id}.pdb"
 
     # (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
     # show_spinner $! "Downloading protein structure"
