@@ -99,7 +99,6 @@ equilibration_loader() {
     fi
 }
 
-
 #Box loader
 box_loader() {
     show_spinner $! "Preparing Box"
@@ -167,27 +166,36 @@ check_internet() {
 check_pdbid() {
     if [[ -z "$pdb_id" ]]; then
         echo -e "${LIGHT_RED}No PDB ID provided.${NC}"
-        return 1  # PDB ID is not set
+        return 1 # PDB ID is not set
     else
         echo -e "PDB ID: ${LIGHT_GREEN}$pdb_id${NC}"
-        return 0  # PDB ID is set
+        return 0 # PDB ID is set
     fi
 }
 
 #Check dependencies
 check_dependencies() {
-    command -v gmx >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "GROMACS not found. Please install GROMACS and add it to your PATH.${NC}" 
+    command -v gmx >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "GROMACS not found. Please install GROMACS and add it to your PATH.${NC}" >&2
         sleep 1.0
         echo "Installing GROMACS..."
-        sudo apt-get install gromacs; exit 1; }
-    command -v obabel >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "OpenBabel not found. Please install OpenBabel and add it to your PATH.${NC}"
+        sudo apt-get install gromacs
+        exit 1
+    }
+    command -v obabel >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "OpenBabel not found. Please install OpenBabel and add it to your PATH.${NC}" >&2
         sleep 1.0
         echo "Installing openbabel..."
-        sudo apt-get install openbabel; exit 1; }
-    command -v wget >/dev/null 2>&1 || { echo -e ${LIGHT_RED} >&2 "wget not found. Please install wget to download necessary files.${NC}" 
+        sudo apt-get install openbabel
+        exit 1
+    }
+    command -v wget >/dev/null 2>&1 || {
+        echo -e ${LIGHT_RED} "wget not found. Please install wget to download necessary files.${NC}" >&2
         sleep 1.0
         echo "Installing wget..."
-        sudo apt-get install wget; exit 1; }
+        sudo apt-get install wget
+        exit 1
+    }
 }
 
 # Function to check if a command exists
@@ -256,41 +264,41 @@ check_file_exists() {
 
 # Download protein structure
 download_protein() {
-echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
-read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+    echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
+    read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
 
-# Validate PDB ID format
-if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
-    echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
-    return 1
-fi
+    # Validate PDB ID format
+    if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+        echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+        return 1
+    fi
 
-# Prepare target file path
-local target_file="$project_dir/${pdb_id}.pdb"
+    # Prepare target file path
+    local target_file="$project_dir/${pdb_id}.pdb"
 
-# Attempt download
-echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
-(wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-show_spinner $! "Downloading protein structure"
+    # Attempt download
+    echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
+    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+    show_spinner $! "Downloading protein structure"
 
-# Check download success
-if [[ -s "$target_file" ]]; then
-    echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
-    mv $target_file $project_dir/protein.pdb
-else
-    echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
-    rm -f "$target_file" # Clean up incomplete file
-    return 1
-fi
-sleep 1.0
-return 0
+    # Check download success
+    if [[ -s "$target_file" ]]; then
+        echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+        mv $target_file $project_dir/protein.pdb
+    else
+        echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+        rm -f "$target_file" # Clean up incomplete file
+        return 1
+    fi
+    sleep 1.0
+    return 0
 }
 
 #Retrieve Complex Molecules
-retrieve_complex(){
+retrieve_complex() {
     check_file_exists "$project_dir/protein.pdb" || return
     check_file_exists "$project_dir/ligand.pdbqt" || return
-    echo 
+    echo
     echo -e "Would you like to download the protein structure or enter the path?"
     echo -e "1) Download using PDB ID"
     echo -e "2) Enter the path to the protein structure"
@@ -298,22 +306,22 @@ retrieve_complex(){
     read -p "Enter your choice [1-3]: " retrieval_choice
 
     case $retrieval_choice in
-        1) download_protein ;;
-        2) 
-            read -p "Enter the path to your protein file (.pdb): " protein_path
-            if [[ ! -f "$protein_path" ]]; then
-                echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
-                return
-            else
-                cp $protein_path $project_dir/protein.pdb
-            fi
-            ;;
-        3) main_menu ;;
-        *)
-            echo "Invalid option! Please select between 1 and 4."
-            ;;
+    1) download_protein ;;
+    2)
+        read -p "Enter the path to your protein file (.pdb): " protein_path
+        if [[ ! -f "$protein_path" ]]; then
+            echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
+            return
+        else
+            cp $protein_path $project_dir/protein.pdb
+        fi
+        ;;
+    3) main_menu ;;
+    *)
+        echo "Invalid option! Please select between 1 and 4."
+        ;;
     esac
-    
+
     read -p "Enter the path to your ligand file (.pdbqt): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
@@ -371,7 +379,7 @@ pdb_fixer() {
     if check_internet && check_pdbid; then
         pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
         pdbfix_loader
-    elif [[ -f "$project_dir/protein.pdb" ]]
+    elif [[ -f "$project_dir/protein.pdb" ]]; then
         pdbfixer protein.pdb --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
         pdbfix_loader
     else
@@ -388,7 +396,7 @@ remove_hetatm() {
 }
 
 # Function to generate protein topology
-prepare_protein_topology(){
+prepare_protein_topology() {
     # Check auto_check function
     # if [[ $(auto_check) == true ]]; then
     #     remove_hetatm
@@ -410,47 +418,47 @@ prepare_protein_topology(){
     #         fi
     #     fi
     # else
-        # Check if protein file exists
-        if [[ ! -f "$project_dir/protein.pdb" ]]; then
-            echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
-            read -p "Do you want to download the protein structure (y/n): " response
-            if [[ "$response" == "y" ]]; then
-                download_protein || {
-                    echo -e "${LIGHT_RED}Error: Failed to download protein.${NC}"
-                    exit 1
-                }
-            else
-                echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
-                exit 1
-            fi
-        fi
-
-        # Remove HETATM entries
-        remove_hetatm
-        echo
-        force_field
-        echo
-        water_model
-
-        # Generate protein topology
-        echo "Generating Protein Topology..."
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-        local exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-            pdb_fixer || {
-                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+    # Check if protein file exists
+    if [[ ! -f "$project_dir/protein.pdb" ]]; then
+        echo -e "${LIGHT_RED}Error: protein.pdb file does not exist.${NC}"
+        read -p "Do you want to download the protein structure (y/n): " response
+        if [[ "$response" == "y" ]]; then
+            download_protein || {
+                echo -e "${LIGHT_RED}Error: Failed to download protein.${NC}"
                 exit 1
             }
-
-            # Retry GROMACS pdb2gmx after fixing
-            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-            exit_status=$?
-            if [[ $exit_status -ne 0 ]]; then
-                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
-                exit 1
-            fi
+        else
+            echo -e "${LIGHT_RED}Aborting: No PDB file provided.${NC}"
+            exit 1
         fi
+    fi
+
+    # Remove HETATM entries
+    remove_hetatm
+    echo
+    force_field
+    echo
+    water_model
+
+    # Generate protein topology
+    echo "Generating Protein Topology..."
+    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+    local exit_status=$?
+    if [[ $exit_status -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+        pdb_fixer || {
+            echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+            exit 1
+        }
+
+        # Retry GROMACS pdb2gmx after fixing
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        exit_status=$?
+        if [[ $exit_status -ne 0 ]]; then
+            echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+            exit 1
+        fi
+    fi
     # fi
 
     # Success message
@@ -458,7 +466,6 @@ prepare_protein_topology(){
     echo
     sleep 1.0
 }
-
 
 prepare_ligand_topology() {
     echo
@@ -476,25 +483,47 @@ prepare_ligand_topology() {
         read -p "Enter your choice [1-6]: " lig_top_choice
 
         case $lig_top_choice in
-            1) 
-                lig_pdbqt_file="lig.pdbqt"
-                if [ ! -f "$lig_pdbqt_file" ]; then
-                    echo "$lig_pdbqt_file does not exist."
+        1)
+            lig_pdbqt_file="lig.pdbqt"
+            if [ ! -f "$lig_pdbqt_file" ]; then
+                echo "$lig_pdbqt_file does not exist."
+                exit 1
+            fi
+            if command -v obabel &>/dev/null; then
+                check_file_exists "lig.pdb" || return
+                obabel lig.pdbqt -O lig.pdb
+                if [ -f "lig.pdb" ]; then
+                    obabel lig.pdb -O lig.mol2 -h
+                    prepare_ligand_topology
+                else
+                    echo "lig.pdb file does not exits. Please ensure the OpenBabel is properly installed and try again"
                     exit 1
                 fi
-                if command -v obabel &> /dev/null 
-                then
-                    check_file_exists "lig.pdb" || return
-                    obabel lig.pdbqt -O lig.pdb
-                    if [ -f "lig.pdb" ]; then
-                        obabel lig.pdb -O lig.mol2 -h
-                        prepare_ligand_topology
-                    else
-                        echo "lig.pdb file does not exits. Please ensure the OpenBabel is properly installed and try again"
-                        exit 1
-                    fi
-                else
-                    echo "Open Babel is not installed. Would you like to install?"
+            else
+                echo "Open Babel is not installed. Would you like to install?"
+                while true; do
+                    echo "Select option"
+                    echo "1) YES"
+                    echo "2) NO"
+                    read -p "Enter your choice [1-2]: " choice
+
+                    case $choice in
+                    1)
+                        sudo apt-get install obabel
+                        ;;
+                    2) return ;;
+                    esac
+                done
+                return
+            fi
+            ;;
+        2)
+            mol_file="lig.mol2"
+            perl_sort_file="sort_mol2_bonds.pl"
+            if [ ! -f "$mol_file" ]; then
+                if [ ! -f "$perl_sort_file" ]; then
+                    echo "$mol_file does not exist."
+                    echo "Download the file?"
                     while true; do
                         echo "Select option"
                         echo "1) YES"
@@ -502,285 +531,271 @@ prepare_ligand_topology() {
                         read -p "Enter your choice [1-2]: " choice
 
                         case $choice in
-                            1)
-                                sudo apt-get install obabel
-                                ;;
-                            2) return ;;
+                        1)
+                            wget http://www.mdtutorials.com/gmx/complex/Files/sort_mol2_bonds.pl
+                            ;;
+                        2) return ;;
                         esac
                     done
-                    return
                 fi
-                ;;
-            2)
-                mol_file="lig.mol2"
-                perl_sort_file="sort_mol2_bonds.pl"
-                if [ ! -f "$mol_file" ]; then
-                    if [ ! -f "$perl_sort_file" ]; then
-                        echo "$mol_file does not exist."
-                        echo "Download the file?"
-                        while true; do
-                            echo "Select option"
-                            echo "1) YES"
-                            echo "2) NO"
-                            read -p "Enter your choice [1-2]: " choice
+            fi
 
-                            case $choice in
-                                1)
-                                    wget http://www.mdtutorials.com/gmx/complex/Files/sort_mol2_bonds.pl
-                                    ;;
-                                2) return ;;
-                            esac
-                        done
-                    fi
-                fi
-                
-                if [ -f "$perl_sort_file" ]; then
-                    check_file_exists "lig_fix.mol2" || return
-                    perl sort_mol2_bonds.pl lig.mol2 lig_fix.mol2
-                    sed -i 's/lig\.pdb/LIG/g' lig_fix.mol2
-                else
-                    echo "$perl_sort_file does not exist."
-                    exit 1
-                fi
-                echo
-                echo "Before proceeding to the next step, generate lig_fix.str file from CGenFF server"
+            if [ -f "$perl_sort_file" ]; then
+                check_file_exists "lig_fix.mol2" || return
+                perl sort_mol2_bonds.pl lig.mol2 lig_fix.mol2
+                sed -i 's/lig\.pdb/LIG/g' lig_fix.mol2
+            else
+                echo "$perl_sort_file does not exist."
+                exit 1
+            fi
+            echo
+            echo "Before proceeding to the next step, generate lig_fix.str file from CGenFF server"
+            echo "Login to the server > upload lig_fix.mol2 file > downlaod results lig_fix.str"
+            echo
+            read -p "Redirecting to the CGenFF webpage. Are you ready? [Y/n] " redirect_check
+            case $redirect_check in
+            [Yy]*)
+                nohup xdg-open "https://app.cgenff.com/homepage" >/dev/null 2>&1 &
+                ;;
+            [Nn]*)
+                echo "Aborting process."
+                prepare_ligand_topology
+                ;;
+            *) echo "Please answer yes or no." ;;
+            esac
+            ;;
+        3)
+            if [ ! -f "lig_fix.mol2" ]; then
+                echo "lig_fix.mol2 does not exist. Please prepare it first."
+                exit 1
+            fi
+            check_file_exists "lig_fix.prm" || return
+            read -p "Enter the path to your lig_fix.str file (.str): " lig_str_path
+            if [[ ! -f "$lig_str_path" ]]; then
+                echo -e "${LIGHT_RED}Error: $lig_str_path file does not exist.${NC}"
+                echo -e "If stream (.str) file is not generated, you can generate it from CGenFF Webserver"
                 echo "Login to the server > upload lig_fix.mol2 file > downlaod results lig_fix.str"
                 echo
                 read -p "Redirecting to the CGenFF webpage. Are you ready? [Y/n] " redirect_check
                 case $redirect_check in
-                    [Yy]*)
-                        nohup xdg-open "https://app.cgenff.com/homepage" >/dev/null 2>&1 &
-                        ;;
-                    [Nn]*)
-                        echo "Aborting process."
-                        prepare_ligand_topology
-                        ;;
-                    *) echo "Please answer yes or no." ;;
+                [Yy]*)
+                    nohup xdg-open "https://app.cgenff.com/homepage" >/dev/null 2>&1 &
+                    ;;
+                [Nn]*)
+                    echo "Aborting process."
+                    prepare_ligand_topology
+                    ;;
+                *) echo "Please answer yes or no." ;;
                 esac
-                ;;
-            3)
-                if [ ! -f "lig_fix.mol2" ]; then
-                    echo "lig_fix.mol2 does not exist. Please prepare it first."
-                    exit 1
-                fi
-                check_file_exists "lig_fix.prm" || return
-                read -p "Enter the path to your lig_fix.str file (.str): " lig_str_path
-                if [[ ! -f "$lig_str_path" ]]; then
-                    echo -e "${LIGHT_RED}Error: $lig_str_path file does not exist.${NC}"
-                    echo -e "If stream (.str) file is not generated, you can generate it from CGenFF Webserver"
-                    echo "Login to the server > upload lig_fix.mol2 file > downlaod results lig_fix.str"
-                    echo
-                    read -p "Redirecting to the CGenFF webpage. Are you ready? [Y/n] " redirect_check
-                    case $redirect_check in
-                        [Yy]*)
-                            nohup xdg-open "https://app.cgenff.com/homepage" >/dev/null 2>&1 &
-                            ;;
-                        [Nn]*)
-                            echo "Aborting process."
-                            prepare_ligand_topology
-                            ;;
-                        *) echo "Please answer yes or no." ;;
-                    esac
-                else
-                    cp $lig_str_path $project_dir/lig_fix.str
-                fi
-                python3 cgenff_charmm2gmx_py3_nx2.py LIG lig_fix.mol2 lig_fix.str charmm36.ff || { echo "Error: Failed to prepare ligand parameter file."; exit 1; }
-                prepare_ligand_topology
-                ;;
-            4)
-                if [ ! -f "lig_ini.pdb" ]; then
-                    echo "lig_ini.pdb does not exist."
-                    exit 1
-                fi
-                check_file_exists "lig.gro" || return
-                gmx editconf -f lig_ini.pdb -o lig.gro || { echo "Error: Failed to prepare ligand topology."; exit 1; }
-                prepare_ligand_topology
-                ;;
-            5)
-                echo "Generating complex.gro file..."
-                if [ ! -f "protein.gro" ]; then
-                    echo "protein.gro does not exist. Please prepare it first."
-                    exit 1
-                fi
-                if [ ! -f "lig.gro" ]; then
-                    echo "lig.gro does not exist. Please prepare it first."
-                    exit 1
-                fi
-                python3 merge.py || { echo "Error: Failed to generate complex.gro."; exit 1; }
-                echo "complex.gro generated successfully."
+            else
+                cp $lig_str_path $project_dir/lig_fix.str
+            fi
+            python3 cgenff_charmm2gmx_py3_nx2.py LIG lig_fix.mol2 lig_fix.str charmm36.ff || {
+                echo "Error: Failed to prepare ligand parameter file."
+                exit 1
+            }
+            prepare_ligand_topology
+            ;;
+        4)
+            if [ ! -f "lig_ini.pdb" ]; then
+                echo "lig_ini.pdb does not exist."
+                exit 1
+            fi
+            check_file_exists "lig.gro" || return
+            gmx editconf -f lig_ini.pdb -o lig.gro || {
+                echo "Error: Failed to prepare ligand topology."
+                exit 1
+            }
+            prepare_ligand_topology
+            ;;
+        5)
+            echo "Generating complex.gro file..."
+            if [ ! -f "protein.gro" ]; then
+                echo "protein.gro does not exist. Please prepare it first."
+                exit 1
+            fi
+            if [ ! -f "lig.gro" ]; then
+                echo "lig.gro does not exist. Please prepare it first."
+                exit 1
+            fi
+            python3 merge.py || {
+                echo "Error: Failed to generate complex.gro."
+                exit 1
+            }
+            echo "complex.gro generated successfully."
 
-                # Integrate program 2 to edit topol.top file
-                echo "Editing topol.top file..."
-                
-                if [ ! -f "topol.top" ]; then
-                    echo "topol.top does not exist."
-                    exit 1
-                fi
+            # Integrate program 2 to edit topol.top file
+            echo "Editing topol.top file..."
 
-                # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
-                sed -i '/#include "posre.itp"/{n;a\
+            if [ ! -f "topol.top" ]; then
+                echo "topol.top does not exist."
+                exit 1
+            fi
+
+            # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
+            sed -i '/#include "posre.itp"/{n;a\
 \
 ; Include ligand topology\
 #include "lig.itp"
 }' topol.top
 
-                # Add ligand parameters inclusion
-                sed -i '/; Include forcefield parameters/{n;a\
+            # Add ligand parameters inclusion
+            sed -i '/; Include forcefield parameters/{n;a\
 \
 ; Include ligand parameters\
 #include "lig.prm"
 }' topol.top
 
-                # Add ligand entry at the end
-                echo "LIG                 1" >> topol.top
+            # Add ligand entry at the end
+            echo "LIG                 1" >>topol.top
 
-                echo "topol.top file updated successfully."
-                
-                # Return to main menu after successful processing
-                prepare_ligand_topology
-                ;;
-            6)
-                main_menu
-                ;;
-            *)
-                echo "Invalid option! Please select between 1 and 4."
-                ;;
+            echo "topol.top file updated successfully."
+
+            # Return to main menu after successful processing
+            prepare_ligand_topology
+            ;;
+        6)
+            main_menu
+            ;;
+        *)
+            echo "Invalid option! Please select between 1 and 4."
+            ;;
         esac
     done
 }
 
 # Function to define box and solvate the system
 define_box_and_solvate() {
-echo
-echo "Defining box and solvating system..."
-echo
-if [ ! -f "$project_dir/complex.gro" ]; then
-    echo -e ${LIGHT_RED} "complex.gro does not exist.${NC}"
-    sleep 2.0
-    exit 1
-fi
-check_file_exists "$project_dir/solv.gro" || return
-echo -e ${YELLOW}
-read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
-echo -e ${NC}
-if [ $select_solvate_box == "y" ]; then
-    gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
-    box_loader
     echo
-    gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
-    solvate_loader
-else
-    echo -e ${YELLOW}"Select box type from the following${NC}"
-    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
-    #echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Octahedral"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Dodecahedron"
-    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Triclinic"
-    choice=$(prompt_user "Enter your choice [1-3]: ")
+    echo "Defining box and solvating system..."
+    echo
+    if [ ! -f "$project_dir/complex.gro" ]; then
+        echo -e ${LIGHT_RED} "complex.gro does not exist.${NC}"
+        sleep 2.0
+        exit 1
+    fi
+    check_file_exists "$project_dir/solv.gro" || return
+    echo -e ${YELLOW}
+    read -p "Do you want to continue with the default box type and solvation model (Cubic/SPC)? (y/n): " select_solvate_box
     echo -e ${NC}
-
-    case $choice in
-    1)
+    if [ $select_solvate_box == "y" ]; then
         gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
         box_loader
-        ;;
-    #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
-    #sleep 2.0; exit 1; } ;;
-    2)
-        gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron >/dev/null 2>&1 &
-        box_loader
-        ;;
-    3)
-        gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic >/dev/null 2>&1 &
-        box_loader
-        ;;
-    *)
-        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-        sleep 1.0
-        ;;
-    esac
-    echo
-    echo -e ${YELLOW}"Select solvation model from the following${NC}"
-    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} SPC"
-    #echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} SPC/E"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} TIP3P"
-    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} TIP4P"
-    choice=$(prompt_user "Enter your choice [1-3]: ")
-    echo -e ${NC}
-
-    case $choice in
-    1)
+        echo
         gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
         solvate_loader
-        ;;
-    #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
-    #sleep 2.0; exit 1; } ;;
-    2)
-        gmx solvate -cp $project_dir/newbox.gro -cs tip3p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
-        solvate_loader
-        ;;
-    3)
-        gmx solvate -cp $project_dir/newbox.gro -cs tip4p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
-        solvate_loader
-        ;;
-    *)
-        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-        sleep 1.0
-        ;;
-    esac
-fi
+    else
+        echo -e ${YELLOW}"Select box type from the following${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Cubic"
+        #echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Octahedral"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Dodecahedron"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Triclinic"
+        choice=$(prompt_user "Enter your choice [1-3]: ")
+        echo -e ${NC}
+
+        case $choice in
+        1)
+            gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt cubic >/dev/null 2>&1 &
+            box_loader
+            ;;
+        #2) gmx editconf -f protein.gro -o newbox.gro -c -d 1.0 -bt octahedral || { echo -e ${LIGHT_RED} "Error: Failed to define the box.${NC}"
+        #sleep 2.0; exit 1; } ;;
+        2)
+            gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt dodecahedron >/dev/null 2>&1 &
+            box_loader
+            ;;
+        3)
+            gmx editconf -f $project_dir/complex.gro -o $project_dir/newbox.gro -c -d 1.0 -bt triclinic >/dev/null 2>&1 &
+            box_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0
+            ;;
+        esac
+        echo
+        echo -e ${YELLOW}"Select solvation model from the following${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} SPC"
+        #echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} SPC/E"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} TIP3P"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} TIP4P"
+        choice=$(prompt_user "Enter your choice [1-3]: ")
+        echo -e ${NC}
+
+        case $choice in
+        1)
+            gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        #2) gmx solvate -cp newbox.gro -cs spce216.gro -p topol.top -o solv.gro || { echo -e ${LIGHT_RED} "Error: Failed to solvate the system.${NC}"
+        #sleep 2.0; exit 1; } ;;
+        2)
+            gmx solvate -cp $project_dir/newbox.gro -cs tip3p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        3)
+            gmx solvate -cp $project_dir/newbox.gro -cs tip4p.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+            solvate_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0
+            ;;
+        esac
+    fi
 }
 
 # Function to add ions
 add_ions() {
-if [ ! -f "$project_dir/solv.gro" ]; then
-    echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
-    sleep 2.0
-    exit 1
-fi
+    if [ ! -f "$project_dir/solv.gro" ]; then
+        echo -e ${LIGHT_RED} "solv.gro does not exist."${NC}
+        sleep 2.0
+        exit 1
+    fi
 
-if [ ! -f "$project_dir/ions.mdp" ]; then
-    echo "ions.mdp file does not exist."
-    file_download_name="ions.mdp"
-    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" >/dev/null 2>&1) &
-    download_loader
-fi
-echo
-check_file_exists "$project_dir/solv_ions.gro" || return
-gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
-ion_tpr_loader
-echo -e ${LIGHT_YELLOW}
-read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
-echo -e ${NC}
-if [ $select_ion_addition == "y" ]; then
-    printf "15\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
-    ion_add_loader
-else
-    echo -e ${YELLOW}"Select box type from the following${NC}"
-    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Add only Na+ ions"
-    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Add only Cl- ions"
-    choice=$(prompt_user "Enter your choice [1-3]: ")
+    if [ ! -f "$project_dir/ions.mdp" ]; then
+        echo "ions.mdp file does not exist."
+        file_download_name="ions.mdp"
+        (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" >/dev/null 2>&1) &
+        download_loader
+    fi
+    echo
+    check_file_exists "$project_dir/solv_ions.gro" || return
+    gmx grompp -f $project_dir/ions.mdp -c $project_dir/solv.gro -p $project_dir/topol.top -o $project_dir/ions.tpr >/dev/null 2>&1 &
+    ion_tpr_loader
+    echo -e ${LIGHT_YELLOW}
+    read -p "Do you want to continue with the default ions (Both Na+ and Cl-)? (y/n): " select_ion_addition
     echo -e ${NC}
+    if [ $select_ion_addition == "y" ]; then
+        printf "15\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
+        ion_add_loader
+    else
+        echo -e ${YELLOW}"Select box type from the following${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Add Na+ and Cl- ions to neutralize the system"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Add only Na+ ions"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Add only Cl- ions"
+        choice=$(prompt_user "Enter your choice [1-3]: ")
+        echo -e ${NC}
 
-    case $choice in
-    1)
-        printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
-        ion_add_loader
-        ;;
-    2)
-        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA >/dev/null 2>&1 &
-        ion_add_loader
-        ;;
-    3)
-        gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL >/dev/null 2>&1 &
-        ion_add_loader
-        ;;
-    *)
-        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-        sleep 1.0
-        ;;
-    esac
-fi  
+        case $choice in
+        1)
+            printf "13\n" | gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA -nname CL -neutral >/dev/null 2>&1 &
+            ion_add_loader
+            ;;
+        2)
+            gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -pname NA >/dev/null 2>&1 &
+            ion_add_loader
+            ;;
+        3)
+            gmx genion -s $project_dir/ions.tpr -o $project_dir/solv_ions.gro -p $project_dir/topol.top -nname CL >/dev/null 2>&1 &
+            ion_add_loader
+            ;;
+        *)
+            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+            sleep 1.0
+            ;;
+        esac
+    fi
 }
 
 # Function to run energy minimization
@@ -790,13 +805,13 @@ energy_minimization() {
         echo "solv_ions.gro does not exist."
         exit 1
     fi
-    
+
     if [ ! -f "em.mdp" ]; then
         echo "em.mdp does not exist. Downloading..."
-        ( wget -nc http://www.mdtutorials.com/gmx/complex/Files/em.mdp ) &
+        (wget -nc http://www.mdtutorials.com/gmx/complex/Files/em.mdp) &
         download_loader
     fi
-    
+
     check_file_exists "em.tpr" || return
     gmx grompp -f $project_dir/em.mdp -c $project_dir/solv_ions.gro -p $project_dir/topol.top -o $project_dir/em.tpr >/dev/null 2>&1 &
     show_spinner $! "Preparing"
@@ -813,7 +828,7 @@ NVT_equilibration() {
     gmx grompp -f $project_dir/nvt.mdp -c $project_dir/em.gro -r $project_dir/em.gro -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/nvt.tpr -maxwarn 1 >/dev/null 2>&1 &
     equilibration_preparation_loader
     echo
-    gmx mdrun -deffnm $project_dir/nvt -v  >/dev/null 2>&1 &
+    gmx mdrun -deffnm $project_dir/nvt -v >/dev/null 2>&1 &
     equilibration_loader
     echo
 }
@@ -885,121 +900,130 @@ equilibrium() {
         read -p "Enter your choice [1-6]: " equil_choice
 
         case $equil_choice in
-            1)
-                echo "Ligand restraining..."
-                if [ ! -f "lig.gro" ]; then
-                    echo "lig.gro does not exist."
-                    exit 1
-                fi
-                check_file_exists "index_lig.ndx" || return
-                echo -e "0 & ! a H*\nq" | gmx make_ndx -f "lig.gro" -o "index_lig.ndx" >/dev/null 2>&1 || { echo "Error: Failed to create index file."; exit 1; }
-                check_file_exists "posre_lig.itp" || return
-                printf "3" | gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 >/dev/null 2>&1 || { echo "Error: Failed to generate position restraints."; exit 1; }
-                echo "Ligand restraining completed."
-                
-                # Integrate program 2 to edit topol.top file
-                echo "Editing topol.top file..."
-                
-                if [ ! -f "topol.top" ]; then
-                    echo "topol.top does not exist."
-                    exit 1
-                fi
+        1)
+            echo "Ligand restraining..."
+            if [ ! -f "lig.gro" ]; then
+                echo "lig.gro does not exist."
+                exit 1
+            fi
+            check_file_exists "index_lig.ndx" || return
+            echo -e "0 & ! a H*\nq" | gmx make_ndx -f "lig.gro" -o "index_lig.ndx" >/dev/null 2>&1 || {
+                echo "Error: Failed to create index file."
+                exit 1
+            }
+            check_file_exists "posre_lig.itp" || return
+            printf "3" | gmx genrestr -f "lig.gro" -n "index_lig.ndx" -o "posre_lig.itp" -fc 1000 1000 1000 >/dev/null 2>&1 || {
+                echo "Error: Failed to generate position restraints."
+                exit 1
+            }
+            echo "Ligand restraining completed."
 
-                # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
-                sed -i '/#include "lig.itp"/{n;a\
+            # Integrate program 2 to edit topol.top file
+            echo "Editing topol.top file..."
+
+            if [ ! -f "topol.top" ]; then
+                echo "topol.top does not exist."
+                exit 1
+            fi
+
+            # Add an empty line and 'lig.itp' after two lines following 'posre.itp'
+            sed -i '/#include "lig.itp"/{n;a\
 ; Ligand position restraints\
 #ifdef POSRES_LIG\
 #include "posre_lig.itp"\
 #endif
 }' topol.top
 
-                echo "topol.top file updated successfully."
-                ;;
+            echo "topol.top file updated successfully."
+            ;;
 
-            2)
-                echo "Setting up thermostats..."
-                if [ ! -f "em.gro" ]; then
-                    echo "em.gro does not exist."
-                    exit 1
-                fi
-                check_file_exists "index.ndx" || return
-                echo -e "1 | 13 \nq" | gmx make_ndx -f em.gro -o index.ndx >/dev/null 2>&1 || { echo "Error: Failed to create index file for thermostats."; exit 1; }
-                echo "Thermostats setup completed."
-                ;;
-            3)
-                if [ ! -f "$project_dir/em.gro" ]; then
-                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
-                    sleep 2.0
-                    exit 1
-                fi
+        2)
+            echo "Setting up thermostats..."
+            if [ ! -f "em.gro" ]; then
+                echo "em.gro does not exist."
+                exit 1
+            fi
+            check_file_exists "index.ndx" || return
+            echo -e "1 | 13 \nq" | gmx make_ndx -f em.gro -o index.ndx >/dev/null 2>&1 || {
+                echo "Error: Failed to create index file for thermostats."
+                exit 1
+            }
+            echo "Thermostats setup completed."
+            ;;
+        3)
+            if [ ! -f "$project_dir/em.gro" ]; then
+                echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                sleep 2.0
+                exit 1
+            fi
 
-                if [ ! -f "$project_dir/nvt.mdp" ]; then
-                    echo "nvt.mdp does not exist. Downloading..."
-                    file_download_name="nvt.mdp"
-                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
-                    download_loader
-                fi
+            if [ ! -f "$project_dir/nvt.mdp" ]; then
+                echo "nvt.mdp does not exist. Downloading..."
+                file_download_name="nvt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                download_loader
+            fi
 
-                check_file_exists "$project_dir/nvt.gro" || return
+            check_file_exists "$project_dir/nvt.gro" || return
 
-                update_eq_steps
-                NVT_equilibration
-                ;;
-            4)
-                if [ ! -f "$project_dir/nvt.gro" ]; then
-                    echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
-                    exit 1
-                fi
+            update_eq_steps
+            NVT_equilibration
+            ;;
+        4)
+            if [ ! -f "$project_dir/nvt.gro" ]; then
+                echo -e ${LIGHT_RED} "nvt.gro does not exist."${NC}
+                exit 1
+            fi
 
-                if [ ! -f "$project_dir/npt.mdp" ]; then
-                    echo "npt.mdp does not exist. Downloading..."
-                    file_download_name="npt.mdp"
-                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
-                    download_loader
-                fi
+            if [ ! -f "$project_dir/npt.mdp" ]; then
+                echo "npt.mdp does not exist. Downloading..."
+                file_download_name="npt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                download_loader
+            fi
 
-                check_file_exists "$project_dir/npt.gro" || return
+            check_file_exists "$project_dir/npt.gro" || return
 
-                update_eq_steps
-                NPT_equilibration
-                ;;
-            5)
-                if [ ! -f "$project_dir/em.gro" ]; then
-                    echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
-                    sleep 2.0
-                    exit 1
-                fi
+            update_eq_steps
+            NPT_equilibration
+            ;;
+        5)
+            if [ ! -f "$project_dir/em.gro" ]; then
+                echo -e ${LIGHT_RED} "em.gro does not exist."${NC}
+                sleep 2.0
+                exit 1
+            fi
 
-                if [ ! -f "$project_dir/nvt.mdp" ]; then
-                    echo "nvt.mdp does not exist. Downloading..."
-                    file_download_name="nvt.mdp"
-                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
-                    download_loader
-                fi
-                if [ ! -f "$project_dir/npt.mdp" ]; then
-                    echo "npt.mdp does not exist. Downloading..."
-                    file_download_name="npt.mdp"
-                    (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
-                    download_loader
-                fi
+            if [ ! -f "$project_dir/nvt.mdp" ]; then
+                echo "nvt.mdp does not exist. Downloading..."
+                file_download_name="nvt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/nvt.mdp") &
+                download_loader
+            fi
+            if [ ! -f "$project_dir/npt.mdp" ]; then
+                echo "npt.mdp does not exist. Downloading..."
+                file_download_name="npt.mdp"
+                (wget -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/npt.mdp") &
+                download_loader
+            fi
 
-                # Run NVT and NPT in the background, suppress both stdout and stderr
-                # Run NVT and NPT in the background, suppressing output, but show loader
-                update_eq_steps
-                NVT_equilibration
-                NPT_equilibration
-                sleep 1.0
-                # Wait for both NVT and NPT processes to finish
-                wait
-                return
-                ;;
-            6)
-                echo "Returning to main menu..."
-                return
-                ;;
-            *)
-                echo "Invalid option! Please select between 1 and 5."
-                ;;
+            # Run NVT and NPT in the background, suppress both stdout and stderr
+            # Run NVT and NPT in the background, suppressing output, but show loader
+            update_eq_steps
+            NVT_equilibration
+            NPT_equilibration
+            sleep 1.0
+            # Wait for both NVT and NPT processes to finish
+            wait
+            return
+            ;;
+        6)
+            echo "Returning to main menu..."
+            return
+            ;;
+        *)
+            echo "Invalid option! Please select between 1 and 5."
+            ;;
         esac
     done
 }
@@ -1047,18 +1071,18 @@ production_md() {
     echo -e ${NC}
 
     case $simulation_time in
-        1) md_nsteps=5000000 ;;
-        2)
-            read -p "Set simulation time (ns): " md_time_ns
-            md_time_ps=$(echo "$md_time_ns * 1000" | bc)
-            md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
-            ;;
-        *)
-            echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
-            sleep 2.0
-            return
-            ;;
-        esac
+    1) md_nsteps=5000000 ;;
+    2)
+        read -p "Set simulation time (ns): " md_time_ns
+        md_time_ps=$(echo "$md_time_ns * 1000" | bc)
+        md_nsteps=$(echo "$md_time_ps / 0.002" | bc)
+        ;;
+    *)
+        echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+        sleep 2.0
+        return
+        ;;
+    esac
 
     # Update nsteps and generate new md.tpr file
     update_simulation_steps
@@ -1116,80 +1140,80 @@ production_md() {
         echo "Elapsed time: $elapsed seconds"
         sleep 2.0
     fi
-echo
-echo -e "Processing files..."
-echo
+    echo
+    echo -e "Processing files..."
+    echo
 
-#Recentering and Rewrapping Coordinates...
-if [ ! -f "$project_dir/md.xtc" ]; then
-    echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
-    exit 1
-fi
-check_file_exists "$project_dir/md_center.xtc" || return
-printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_center.xtc -pbc mol -center -ur compact >/dev/null 2>&1 || exit 1 
-printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/md_fit.xtc -fit rot+trans >/dev/null 2>&1 || exit 1 
+    #Recentering and Rewrapping Coordinates...
+    if [ ! -f "$project_dir/md.xtc" ]; then
+        echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/md_center.xtc" || return
+    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_center.xtc -pbc mol -center -ur compact >/dev/null 2>&1 || exit 1
+    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/md_fit.xtc -fit rot+trans >/dev/null 2>&1 || exit 1
 
-#Finding RMSD...
-if [ ! -f "$project_dir/md_center.xtc" ]; then
-    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
-    exit 1
-fi
-check_file_exists "$project_dir/rmsd.xvg" || return
-printf "4 4\n" | gmx rms -s $project_dir/em.tpr -f $project_dir/md_center.xtc -n $project_dir/index.ndx -tu ns -o $project_dir/rmsd.xvg >/dev/null 2>&1 || exit 1
+    #Finding RMSD...
+    if [ ! -f "$project_dir/md_center.xtc" ]; then
+        echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+        exit 1
+    fi
+    check_file_exists "$project_dir/rmsd.xvg" || return
+    printf "4 4\n" | gmx rms -s $project_dir/em.tpr -f $project_dir/md_center.xtc -n $project_dir/index.ndx -tu ns -o $project_dir/rmsd.xvg >/dev/null 2>&1 || exit 1
 
-#Finding Radius of Gyration...
-# if [ ! -f "$project_dir/md_center.xtc" ]; then
-#     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/gyrate.xvg" || return
-# printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+    #Finding Radius of Gyration...
+    # if [ ! -f "$project_dir/md_center.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/gyrate.xvg" || return
+    # printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
 
-# #Analyzing Hbonds...
-# if [ ! -f "$project_dir/md_center.xtc" ]; then
-#     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/hbnum.xvg" || return
-# check_file_exists "$project_dir/hbdist.xvg" || return
-# printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+    # #Analyzing Hbonds...
+    # if [ ! -f "$project_dir/md_center.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/hbnum.xvg" || return
+    # check_file_exists "$project_dir/hbdist.xvg" || return
+    # printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
 
-# #Analyzing RMSF...
-# if [ ! -f "$project_dir/md_center.xtc" ]; then
-#     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/rmsf.xvg" || return
-# printf "1\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing RMSF...
+    # if [ ! -f "$project_dir/md_center.xtc" ]; then
+    #     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/rmsf.xvg" || return
+    # printf "1\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
 
-# #Analyzing Temp...
-# if [ ! -f "$project_dir/nvt.edr" ]; then
-#     echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/temp.xvg" || return
-# printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing Temp...
+    # if [ ! -f "$project_dir/nvt.edr" ]; then
+    #     echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/temp.xvg" || return
+    # printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
 
-# #Analyzing Pressure...
-# if [ ! -f "$project_dir/npt.edr" ]; then
-#     echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/pressure.xvg" || return
-# printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
+    # #Analyzing Pressure...
+    # if [ ! -f "$project_dir/npt.edr" ]; then
+    #     echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/pressure.xvg" || return
+    # printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
 
-# #Interaction energy
-# if [ ! -f "$project_dir/ie.mdp" ]; then
-#     echo -e ${LIGHT_RED} "ie.mdp does not exist.${NC}"
-#     exit 1
-# fi
-# check_file_exists "$project_dir/ie.tpr" || return
-# gmx grompp -f $project_dir/ie.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/ie.tpr >/dev/null 2>&1 || exit 1
-# gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/dev/null 2>&1 || exit 1
-# printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
+    # #Interaction energy
+    # if [ ! -f "$project_dir/ie.mdp" ]; then
+    #     echo -e ${LIGHT_RED} "ie.mdp does not exist.${NC}"
+    #     exit 1
+    # fi
+    # check_file_exists "$project_dir/ie.tpr" || return
+    # gmx grompp -f $project_dir/ie.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/ie.tpr >/dev/null 2>&1 || exit 1
+    # gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/dev/null 2>&1 || exit 1
+    # printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
 
-wait
-return
+    wait
+    return
 }
 
 # Function to run analysis
@@ -1246,12 +1270,12 @@ run_analysis() {
             echo
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
                 if [ ! -f "$project_dir/md_center.xtc" ]; then
-                echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
-                exit 1
-            fi
-            check_file_exists "$project_dir/gyrate.xvg" || return
-            printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
-            xmgrace $project_dir/gyrate.xvg
+                    echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
+                    exit 1
+                fi
+                check_file_exists "$project_dir/gyrate.xvg" || return
+                printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
+                xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace $project_dir/gyrate.xvg
             ;;
@@ -1276,7 +1300,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
-                    printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    printf "1 11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace $project_dir/hbnum.xvg
@@ -1291,7 +1315,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbdist.xvg" || return
-                    printf "1 11\n" |  gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    printf "1 11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace $project_dir/hbdist.xvg
@@ -1325,8 +1349,8 @@ run_analysis() {
                 echo
                 if [ ! -f "$project_dir/temp.xvg" ]; then
                     if [ ! -f "$project_dir/nvt.edr" ]; then
-                    echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
-                    exit 1
+                        echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
+                        exit 1
                     fi
                     check_file_exists "$project_dir/temp.xvg" || return
                     printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
@@ -1407,27 +1431,27 @@ banner() {
 }
 
 main_menu() {
-while true; do
-    echo
-    echo -e "${YELLOW}------------------------------------"
-    echo -e "             Main Menu"
-    echo -e "------------------------------------${NC}"
-    echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Retrieve Complex Molecules"
-    echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Prepare Protein Topology"
-    echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Prepare Ligand Topology"
-    echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Define box and solvate the system"
-    echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Add ions"
-    echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Energy minimization"
-    echo -e "${LIGHT_PURPLE}[${NC}07${LIGHT_PURPLE}]${NC} Equilibrium"
-    echo -e "${LIGHT_PURPLE}[${NC}08${LIGHT_PURPLE}]${NC} Production MD"
-    echo -e "${LIGHT_PURPLE}[${NC}09${LIGHT_PURPLE}]${NC} Analysis"
-    echo -e "${LIGHT_PURPLE}[${NC}10${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
-    echo -e "${YELLOW}------------------------------------${NC}"
+    while true; do
+        echo
+        echo -e "${YELLOW}------------------------------------"
+        echo -e "             Main Menu"
+        echo -e "------------------------------------${NC}"
+        echo -e "${LIGHT_PURPLE}[${NC}01${LIGHT_PURPLE}]${NC} Retrieve Complex Molecules"
+        echo -e "${LIGHT_PURPLE}[${NC}02${LIGHT_PURPLE}]${NC} Prepare Protein Topology"
+        echo -e "${LIGHT_PURPLE}[${NC}03${LIGHT_PURPLE}]${NC} Prepare Ligand Topology"
+        echo -e "${LIGHT_PURPLE}[${NC}04${LIGHT_PURPLE}]${NC} Define box and solvate the system"
+        echo -e "${LIGHT_PURPLE}[${NC}05${LIGHT_PURPLE}]${NC} Add ions"
+        echo -e "${LIGHT_PURPLE}[${NC}06${LIGHT_PURPLE}]${NC} Energy minimization"
+        echo -e "${LIGHT_PURPLE}[${NC}07${LIGHT_PURPLE}]${NC} Equilibrium"
+        echo -e "${LIGHT_PURPLE}[${NC}08${LIGHT_PURPLE}]${NC} Production MD"
+        echo -e "${LIGHT_PURPLE}[${NC}09${LIGHT_PURPLE}]${NC} Analysis"
+        echo -e "${LIGHT_PURPLE}[${NC}10${LIGHT_PURPLE}]${NC} ${LIGHT_RED}Exit${NC}"
+        echo -e "${YELLOW}------------------------------------${NC}"
 
-    choice=$(prompt_user "Enter your choice [1-9]: ")
+        choice=$(prompt_user "Enter your choice [1-9]: ")
 
-    case $choice in
-        1) retrieve_complex;;
+        case $choice in
+        1) retrieve_complex ;;
         2) prepare_protein_topology ;;
         3) prepare_ligand_topology ;;
         4) define_box_and_solvate ;;
@@ -1446,8 +1470,8 @@ while true; do
             echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 11.${NC}"
             sleep 1.0
             ;;
-    esac
-done
+        esac
+    done
 }
 
 banner
@@ -1458,9 +1482,9 @@ echo -e "${LIGHT_CYAN}Simulation type: Protein-Ligand Complex${NC}"
 echo
 # Main script loop
 echo "Welcome to the GROMACS simulation"
-echo 
+echo
 echo "Please keep your docked protein and ligand complex ready in the working directory."
 echo "Please process your protein.pdbqt by removing water molecules or any HETATM's available"
 echo "and convert it into protein.pdb format"
-echo 
+echo
 main_menu

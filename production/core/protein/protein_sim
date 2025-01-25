@@ -198,10 +198,10 @@ check_internet() {
 check_pdbid() {
     if [[ -z "$pdb_id" ]]; then
         echo -e "${LIGHT_RED}No PDB ID provided.${NC}"
-        return 1  # PDB ID is not set
+        return 1 # PDB ID is not set
     else
         echo -e "PDB ID: ${LIGHT_GREEN}$pdb_id${NC}"
-        return 0  # PDB ID is set
+        return 0 # PDB ID is set
     fi
 }
 
@@ -339,34 +339,60 @@ download_protein() {
             return 1
         fi
     else
-        echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
-        read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+        echo
+        echo -e "Would you like to download the protein structure or enter the path?"
+        echo -e "1) Download using PDB ID"
+        echo -e "2) Enter the path to the protein structure"
+        echo -e "3) Back to main menu"
+        read -p "Enter your choice [1-3]: " retrieval_choice
 
-        # Validate PDB ID format
-        if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
-            echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
-            return 1
-        fi
+        case $retrieval_choice in
+        1)
+            echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
+            read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
 
-        # Prepare target file path
-        local target_file="$project_dir/${pdb_id}.pdb"
+            # Validate PDB ID format
+            if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+                echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+                return 1
+            fi
 
-        # Attempt download
-        echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
-        (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-        show_spinner $! "Downloading protein structure"
+            # Prepare target file path
+            local target_file="$project_dir/${pdb_id}.pdb"
 
-        # Check download success
-        if [[ -s "$target_file" ]]; then
-            echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
-            mv $target_file $project_dir/protein.pdb
-        else
-            echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
-            rm -f "$target_file" # Clean up incomplete file
-            return 1
-        fi
-        sleep 1.0
-        return 0
+            # Attempt download
+            echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
+            (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+            show_spinner $! "Downloading protein structure"
+
+            # Check download success
+            if [[ -s "$target_file" ]]; then
+                echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+                mv $target_file $project_dir/protein.pdb
+            else
+                echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+                rm -f "$target_file" # Clean up incomplete file
+                return 1
+            fi
+            sleep 1.0
+            return 0
+            ;;
+        2)
+            read -p "Enter the path to your protein file (.pdb): " protein_path
+            if [[ ! -f "$protein_path" ]]; then
+                echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
+                return
+            else
+                cp $protein_path $project_dir/protein.pdb
+            fi
+            ;;
+        3)
+            manual_run
+            ;;
+        *)
+            echo "Invalid option! Please select between 1 and 4."
+            ;;
+        esac
     fi
 }
 
@@ -376,7 +402,7 @@ pdb_fixer() {
     if check_internet && check_pdbid; then
         pdbfixer --pdbid="$pdb_id" --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
         pdbfix_loader
-    elif [[ -f "$project_dir/protein.pdb" ]]
+    elif [[ -f "$project_dir/protein.pdb" ]]; then
         pdbfixer protein.pdb --keep-heterogens=none --add-residues --replace-nonstandard --add-atoms=all --ph=7.0 --output=$project_dir/protein.pdb --verbose >/dev/null 2>&1 &
         pdbfix_loader
     else
@@ -1102,8 +1128,8 @@ production_md() {
         exit 1
     fi
     check_file_exists "$project_dir/md_noPBC.xtc" || return
-    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1 
-    
+    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1
+
     #Finding RMSD...
     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1111,7 +1137,7 @@ production_md() {
     fi
     check_file_exists "$project_dir/rmsd.xvg" || return
     printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
-    
+
     #Finding Radius of Gyration...
     # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
     #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1119,7 +1145,7 @@ production_md() {
     # fi
     # check_file_exists "$project_dir/gyrate.xvg" || return
     # printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
-    
+
     # #Analyzing Hbonds...
     # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
     #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1153,17 +1179,17 @@ production_md() {
     # check_file_exists "$project_dir/pressure.xvg" || return
     # printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
 
-# 6)
-#     echo
-#     echo "Calculating Potential Energy..."
-#     echo
-#     if [ ! -f "$project_dir/em.edr" ]; then
-#         echo -e ${LIGHT_RED} "em.edr does not exist.${NC}"
-#         exit 1
-#     fi
-#     check_file_exists "$project_dir/potential.xvg" || return
-#     gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
-#     ;;
+    # 6)
+    #     echo
+    #     echo "Calculating Potential Energy..."
+    #     echo
+    #     if [ ! -f "$project_dir/em.edr" ]; then
+    #         echo -e ${LIGHT_RED} "em.edr does not exist.${NC}"
+    #         exit 1
+    #     fi
+    #     check_file_exists "$project_dir/potential.xvg" || return
+    #     gmx energy -f $project_dir/em.edr -o $project_dir/potential.xvg #generate temperature.xvg file
+    #     ;;
     # Wait for background processes to finish
     wait
     manual_run
@@ -1248,7 +1274,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
-                    printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace $project_dir/hbnum.xvg
@@ -1263,7 +1289,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbdist.xvg" || return
-                    printf "1 11\n" |  gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist > /dev/null 2>&1 || exit 1
+                    printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace $project_dir/hbdist.xvg
@@ -1515,124 +1541,124 @@ EOF
     equilibrium
     production_md
 
-pdb_id=$pdb_id
-force_field=$ff
-water_model=$wm
-box_type=$bt
-solvate_model=$sol_mod
-equilibration_time=$eq_time_ps
-equilibration_steps=$eq_nsteps
-simulation_time_ns=$md_time_ns
-simulation_steps=$md_steps
+    pdb_id=$pdb_id
+    force_field=$ff
+    water_model=$wm
+    box_type=$bt
+    solvate_model=$sol_mod
+    equilibration_time=$eq_time_ps
+    equilibration_steps=$eq_nsteps
+    simulation_time_ns=$md_time_ns
+    simulation_steps=$md_steps
 
     local target_file="$project_dir/${pdb_id}.pdb"
 
-        (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-        show_spinner $! "Downloading protein structure"
+    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+    show_spinner $! "Downloading protein structure"
 
     gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-        local exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-            pdb_fixer || {
-                echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
-                exit 1
-            }
+    local exit_status=$?
+    if [[ $exit_status -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+        pdb_fixer || {
+            echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+            exit 1
+        }
 
-            # Retry GROMACS pdb2gmx after fixing
-            gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-            exit_status=$?
-            if [[ $exit_status -ne 0 ]]; then
-                echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
-                exit 1
-            fi
+        # Retry GROMACS pdb2gmx after fixing
+        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+        exit_status=$?
+        if [[ $exit_status -ne 0 ]]; then
+            echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+            exit 1
         fi
+    fi
 
     echo "Auto mode: Defining box and solvating system..."
-        echo "Box type: $bt, Solvation model: $sol_mod.gro"
+    echo "Box type: $bt, Solvation model: $sol_mod.gro"
 
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2>$project_dir/editconf.log
-        if [ $? -ne 0 ]; then
-            echo "Error in gmx editconf. Check editconf.log for details."
-            exit 1
-        fi
+    gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2>$project_dir/editconf.log
+    if [ $? -ne 0 ]; then
+        echo "Error in gmx editconf. Check editconf.log for details."
+        exit 1
+    fi
 
-        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2>$project_dir/solvate.log
-        if [ $? -ne 0 ]; then
-            echo "Error in gmx solvate. Check solvate.log for details."
-            exit 1
-        fi
+    gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2>$project_dir/solvate.log
+    if [ $? -ne 0 ]; then
+        echo "Error in gmx solvate. Check solvate.log for details."
+        exit 1
+    fi
 
-        echo "Box defined and system solvated successfully."
-    
+    echo "Box defined and system solvated successfully."
+
     if [ ! -f "$project_dir/solv.gro" ]; then
-            echo -e "${LIGHT_RED}Error: solv.gro file does not exist. Exiting.${NC}"
-            exit 1
-        fi
-        if [ ! -f "$project_dir/ions.mdp" ]; then
-            echo -e "${LIGHT_RED}Error: ions.mdp file does not exist. Downloading...${NC}"
-            wget -q -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" -O "$project_dir/ions.mdp"
-            if [ $? -ne 0 ]; then
-                echo -e "${LIGHT_RED}Error: Failed to download ions.mdp. Exiting.${NC}"
-                exit 1
-            fi
-        fi
-
-        # Run grompp and debug potential issues
-        echo -e "${LIGHT_GREEN}Running grompp...${NC}"
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
-
+        echo -e "${LIGHT_RED}Error: solv.gro file does not exist. Exiting.${NC}"
+        exit 1
+    fi
+    if [ ! -f "$project_dir/ions.mdp" ]; then
+        echo -e "${LIGHT_RED}Error: ions.mdp file does not exist. Downloading...${NC}"
+        wget -q -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" -O "$project_dir/ions.mdp"
         if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
-            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
-            echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
+            echo -e "${LIGHT_RED}Error: Failed to download ions.mdp. Exiting.${NC}"
             exit 1
         fi
+    fi
 
-        # Run genion to add ions
-        echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
-        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
+    # Run grompp and debug potential issues
+    echo -e "${LIGHT_GREEN}Running grompp...${NC}"
+    gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
 
-        if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
-            exit 1
-        fi
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
+        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
+        echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
+        exit 1
+    fi
 
-        echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
+    # Run genion to add ions
+    echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
+    printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
+
+    if [ $? -ne 0 ]; then
+        echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
+        exit 1
+    fi
+
+    echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
 
     echo "Starting energy minimization process..."
 
-        # Check if necessary files exist
-        if [[ ! -f "$project_dir/minim.mdp" ]]; then
-            echo -e "${LIGHT_RED}Error: minim.mdp not found in $project_dir.${NC}"
-            exit 1
-        fi
-        if [[ ! -f "$project_dir/solv_ions.gro" ]]; then
-            echo -e "${LIGHT_RED}Error: solv_ions.gro not found in $project_dir.${NC}"
-            exit 1
-        fi
-        if [[ ! -f "$project_dir/topol.top" ]]; then
-            echo -e "${LIGHT_RED}Error: topol.top not found in $project_dir.${NC}"
-            exit 1
-        fi
+    # Check if necessary files exist
+    if [[ ! -f "$project_dir/minim.mdp" ]]; then
+        echo -e "${LIGHT_RED}Error: minim.mdp not found in $project_dir.${NC}"
+        exit 1
+    fi
+    if [[ ! -f "$project_dir/solv_ions.gro" ]]; then
+        echo -e "${LIGHT_RED}Error: solv_ions.gro not found in $project_dir.${NC}"
+        exit 1
+    fi
+    if [[ ! -f "$project_dir/topol.top" ]]; then
+        echo -e "${LIGHT_RED}Error: topol.top not found in $project_dir.${NC}"
+        exit 1
+    fi
 
-        # Prepare the system for energy minimization
-        echo "Preparing input files for energy minimization..."
-        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2>"$project_dir/grompp.log"
-        if [[ $? -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
-            exit 1
-        fi
-        echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
+    # Prepare the system for energy minimization
+    echo "Preparing input files for energy minimization..."
+    gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2>"$project_dir/grompp.log"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
 
-        # Run energy minimization
-        echo "Running energy minimization..."
-        gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
-        if [[ $? -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
-            exit 1
-        fi
-        echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
+    # Run energy minimization
+    echo "Running energy minimization..."
+    gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
+    if [[ $? -ne 0 ]]; then
+        echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
+        exit 1
+    fi
+    echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
 
     echo "Run type is set to auto. Proceeding with equilibration steps..."
 
