@@ -981,7 +981,7 @@ update_simulation_steps() {
 
 # Function to run production MD
 production_md() {
-    if [[ "$param_auto_file" == "run_type=auto" ]]; then
+    if [[ $(auto_check) == true ]]; then
         if [[ -n "$gpu_info" ]]; then
             echo "GPU detected: $gpu_info"
 
@@ -1016,7 +1016,19 @@ production_md() {
 
         echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
         echo "Elapsed time: $elapsed seconds"
+        #Recentering and Rewrapping Coordinates...
+        if [ ! -f "$project_dir/md.xtc" ]; then
+            echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+            exit 1
+        fi
+        printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1
 
+        #Finding RMSD...
+        if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+            echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+            exit 1
+        fi
+        printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
     else
 
         echo
@@ -1552,140 +1564,140 @@ EOF
 
     local target_file="$project_dir/${pdb_id}.pdb"
 
-    (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
-    show_spinner $! "Downloading protein structure"
+    # (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+    # show_spinner $! "Downloading protein structure"
 
-    gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-    local exit_status=$?
-    if [[ $exit_status -ne 0 ]]; then
-        echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
-        pdb_fixer || {
-            echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
-            exit 1
-        }
+    # gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+    # local exit_status=$?
+    # if [[ $exit_status -ne 0 ]]; then
+    #     echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
+    #     pdb_fixer || {
+    #         echo -e "${LIGHT_RED}Error: PDB fixer failed. Exiting.${NC}"
+    #         exit 1
+    #     }
 
-        # Retry GROMACS pdb2gmx after fixing
-        gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
-        exit_status=$?
-        if [[ $exit_status -ne 0 ]]; then
-            echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
-            exit 1
-        fi
-    fi
+    #     # Retry GROMACS pdb2gmx after fixing
+    #     gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1
+    #     exit_status=$?
+    #     if [[ $exit_status -ne 0 ]]; then
+    #         echo -e "${LIGHT_RED}Error: Topology generation failed after fixing.${NC}"
+    #         exit 1
+    #     fi
+    # fi
 
-    echo "Auto mode: Defining box and solvating system..."
-    echo "Box type: $bt, Solvation model: $sol_mod.gro"
+    # echo "Auto mode: Defining box and solvating system..."
+    # echo "Box type: $bt, Solvation model: $sol_mod.gro"
 
-    gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2>$project_dir/editconf.log
-    if [ $? -ne 0 ]; then
-        echo "Error in gmx editconf. Check editconf.log for details."
-        exit 1
-    fi
+    # gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2>$project_dir/editconf.log
+    # if [ $? -ne 0 ]; then
+    #     echo "Error in gmx editconf. Check editconf.log for details."
+    #     exit 1
+    # fi
 
-    gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2>$project_dir/solvate.log
-    if [ $? -ne 0 ]; then
-        echo "Error in gmx solvate. Check solvate.log for details."
-        exit 1
-    fi
+    # gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2>$project_dir/solvate.log
+    # if [ $? -ne 0 ]; then
+    #     echo "Error in gmx solvate. Check solvate.log for details."
+    #     exit 1
+    # fi
 
-    echo "Box defined and system solvated successfully."
+    # echo "Box defined and system solvated successfully."
 
-    if [ ! -f "$project_dir/solv.gro" ]; then
-        echo -e "${LIGHT_RED}Error: solv.gro file does not exist. Exiting.${NC}"
-        exit 1
-    fi
-    if [ ! -f "$project_dir/ions.mdp" ]; then
-        echo -e "${LIGHT_RED}Error: ions.mdp file does not exist. Downloading...${NC}"
-        wget -q -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" -O "$project_dir/ions.mdp"
-        if [ $? -ne 0 ]; then
-            echo -e "${LIGHT_RED}Error: Failed to download ions.mdp. Exiting.${NC}"
-            exit 1
-        fi
-    fi
+    # if [ ! -f "$project_dir/solv.gro" ]; then
+    #     echo -e "${LIGHT_RED}Error: solv.gro file does not exist. Exiting.${NC}"
+    #     exit 1
+    # fi
+    # if [ ! -f "$project_dir/ions.mdp" ]; then
+    #     echo -e "${LIGHT_RED}Error: ions.mdp file does not exist. Downloading...${NC}"
+    #     wget -q -nc "http://www.mdtutorials.com/gmx/lysozyme/Files/ions.mdp" -O "$project_dir/ions.mdp"
+    #     if [ $? -ne 0 ]; then
+    #         echo -e "${LIGHT_RED}Error: Failed to download ions.mdp. Exiting.${NC}"
+    #         exit 1
+    #     fi
+    # fi
 
-    # Run grompp and debug potential issues
-    echo -e "${LIGHT_GREEN}Running grompp...${NC}"
-    gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
+    # # Run grompp and debug potential issues
+    # echo -e "${LIGHT_GREEN}Running grompp...${NC}"
+    # gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
 
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
-        echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
-        exit 1
-    fi
+    # if [ $? -ne 0 ]; then
+    #     echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
+    #     gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
+    #     echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
+    #     exit 1
+    # fi
 
-    # Run genion to add ions
-    echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
-    printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
+    # # Run genion to add ions
+    # echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
+    # printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
 
-    if [ $? -ne 0 ]; then
-        echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
-        exit 1
-    fi
+    # if [ $? -ne 0 ]; then
+    #     echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
+    #     exit 1
+    # fi
 
-    echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
+    # echo -e "${LIGHT_GREEN}Ionization step completed successfully.${NC}"
 
-    echo "Starting energy minimization process..."
+    # echo "Starting energy minimization process..."
 
-    # Check if necessary files exist
-    if [[ ! -f "$project_dir/minim.mdp" ]]; then
-        echo -e "${LIGHT_RED}Error: minim.mdp not found in $project_dir.${NC}"
-        exit 1
-    fi
-    if [[ ! -f "$project_dir/solv_ions.gro" ]]; then
-        echo -e "${LIGHT_RED}Error: solv_ions.gro not found in $project_dir.${NC}"
-        exit 1
-    fi
-    if [[ ! -f "$project_dir/topol.top" ]]; then
-        echo -e "${LIGHT_RED}Error: topol.top not found in $project_dir.${NC}"
-        exit 1
-    fi
+    # # Check if necessary files exist
+    # if [[ ! -f "$project_dir/minim.mdp" ]]; then
+    #     echo -e "${LIGHT_RED}Error: minim.mdp not found in $project_dir.${NC}"
+    #     exit 1
+    # fi
+    # if [[ ! -f "$project_dir/solv_ions.gro" ]]; then
+    #     echo -e "${LIGHT_RED}Error: solv_ions.gro not found in $project_dir.${NC}"
+    #     exit 1
+    # fi
+    # if [[ ! -f "$project_dir/topol.top" ]]; then
+    #     echo -e "${LIGHT_RED}Error: topol.top not found in $project_dir.${NC}"
+    #     exit 1
+    # fi
 
-    # Prepare the system for energy minimization
-    echo "Preparing input files for energy minimization..."
-    gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2>"$project_dir/grompp.log"
-    if [[ $? -ne 0 ]]; then
-        echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
-        exit 1
-    fi
-    echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
+    # # Prepare the system for energy minimization
+    # echo "Preparing input files for energy minimization..."
+    # gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2>"$project_dir/grompp.log"
+    # if [[ $? -ne 0 ]]; then
+    #     echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
+    #     exit 1
+    # fi
+    # echo -e "${LIGHT_GREEN}Input preparation completed successfully.${NC}"
 
-    # Run energy minimization
-    echo "Running energy minimization..."
-    gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
-    if [[ $? -ne 0 ]]; then
-        echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
-        exit 1
-    fi
-    echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
+    # # Run energy minimization
+    # echo "Running energy minimization..."
+    # gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
+    # if [[ $? -ne 0 ]]; then
+    #     echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
+    #     exit 1
+    # fi
+    # echo -e "${LIGHT_GREEN}Energy minimization completed successfully.${NC}"
 
-    echo "Run type is set to auto. Proceeding with equilibration steps..."
+    # echo "Run type is set to auto. Proceeding with equilibration steps..."
 
-    # NVT Equilibration
-    echo "Starting NVT equilibration..."
-    NVT_equilibration
-    if [[ $? -ne 0 ]]; then
-        echo -e "${LIGHT_RED}Error: NVT equilibration failed.${NC}"
-        exit 1
-    fi
-    echo -e "${LIGHT_GREEN}NVT equilibration completed successfully.${NC}"
+    # # NVT Equilibration
+    # echo "Starting NVT equilibration..."
+    # NVT_equilibration
+    # if [[ $? -ne 0 ]]; then
+    #     echo -e "${LIGHT_RED}Error: NVT equilibration failed.${NC}"
+    #     exit 1
+    # fi
+    # echo -e "${LIGHT_GREEN}NVT equilibration completed successfully.${NC}"
 
-    # NPT Equilibration
-    echo "Starting NPT equilibration..."
-    NPT_equilibration
-    if [[ $? -ne 0 ]]; then
-        echo -e "${LIGHT_RED}Error: NPT equilibration failed.${NC}"
-        exit 1
-    fi
-    echo -e "${LIGHT_GREEN}NPT equilibration completed successfully.${NC}"
+    # # NPT Equilibration
+    # echo "Starting NPT equilibration..."
+    # NPT_equilibration
+    # if [[ $? -ne 0 ]]; then
+    #     echo -e "${LIGHT_RED}Error: NPT equilibration failed.${NC}"
+    #     exit 1
+    # fi
+    # echo -e "${LIGHT_GREEN}NPT equilibration completed successfully.${NC}"
 
-    gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr >/dev/null 2>&1 || {
-        echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
-        exit 1
-    }
+    # gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr >/dev/null 2>&1 || {
+    #     echo -e ${LIGHT_RED} "Error: Failed to prepare production MD.${NC}"
+    #     exit 1
+    # }
 
-    gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
-    show_spinner $! "Running MD Simulation"
+    # gmx mdrun -deffnm $project_dir/md -v >/dev/null 2>&1 &
+    # show_spinner $! "Running MD Simulation"
 
 }
 
