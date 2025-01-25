@@ -498,13 +498,15 @@ define_box_and_solvate() {
         echo "Auto mode: Defining box and solvating system..."
         echo "Box type: $bt, Solvation model: $sol_mod.gro"
 
-        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt 2>$project_dir/editconf.log
+        gmx editconf -f $project_dir/protein.gro -o $project_dir/newbox.gro -c -d 1.0 -bt $bt >/dev/null 2>&1 &
+        box_loader
         if [ $? -ne 0 ]; then
             echo "Error in gmx editconf. Check editconf.log for details."
             exit 1
         fi
 
-        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro 2>$project_dir/solvate.log
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 &
+        solvate_loader
         if [ $? -ne 0 ]; then
             echo "Error in gmx solvate. Check solvate.log for details."
             exit 1
@@ -611,18 +613,21 @@ add_ions() {
 
         # Run grompp and debug potential issues
         echo -e "${LIGHT_GREEN}Running grompp...${NC}"
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr"
+        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1 &
+        ion_tpr_loader
 
         if [ $? -ne 0 ]; then
             echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
-            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug
+            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug >/dev/null 2>&1 &
+            ion_tpr_loader
             echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
             exit 1
         fi
 
         # Run genion to add ions
         echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
-        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral
+        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1 &
+        ion_add_loader
 
         if [ $? -ne 0 ]; then
             echo -e "${LIGHT_RED}Error: genion failed. Check your ionization parameters.${NC}"
@@ -704,7 +709,8 @@ energy_minimization() {
 
         # Prepare the system for energy minimization
         echo "Preparing input files for energy minimization..."
-        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" 2>"$project_dir/grompp.log"
+        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" >/dev/null 2>&1 &
+        show_spinner $! "Preparing"
         if [[ $? -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
             exit 1
@@ -713,7 +719,8 @@ energy_minimization() {
 
         # Run energy minimization
         # echo "Running energy minimization..."
-        gmx mdrun -v -deffnm "$project_dir/em" 2>"$project_dir/mdrun.log"
+        gmx mdrun -v -deffnm "$project_dir/em" >/dev/null 2>&1 &
+        energy_minimization_loader
         if [[ $? -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
             exit 1
@@ -1128,26 +1135,26 @@ production_md() {
             echo "Elapsed time: $elapsed seconds"
             sleep 2.0
         fi
-    fi
-    echo
-    echo -e "Processing files..."
-    echo
+        echo
+        echo -e "Processing files..."
+        echo
+        #Recentering and Rewrapping Coordinates...
+        if [ ! -f "$project_dir/md.xtc" ]; then
+            echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
+            exit 1
+        fi
+        check_file_exists "$project_dir/md_noPBC.xtc" || return
+        printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1
 
-    #Recentering and Rewrapping Coordinates...
-    if [ ! -f "$project_dir/md.xtc" ]; then
-        echo -e ${LIGHT_RED} "md.xtc does not exist.${NC}"
-        exit 1
+        #Finding RMSD...
+        if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+            echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+            exit 1
+        fi
+        check_file_exists "$project_dir/rmsd.xvg" || return
+        printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
     fi
-    check_file_exists "$project_dir/md_noPBC.xtc" || return
-    printf "1 0\n" | gmx trjconv -s $project_dir/md.tpr -f $project_dir/md.xtc -o $project_dir/md_noPBC.xtc -pbc mol -center >/dev/null 2>&1 || exit 1
-
-    #Finding RMSD...
-    if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
-        echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
-        exit 1
-    fi
-    check_file_exists "$project_dir/rmsd.xvg" || return
-    printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+    
 
     #Finding Radius of Gyration...
     # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
@@ -1553,7 +1560,7 @@ EOF
     equilibration_steps=$eq_nsteps
     simulation_time_ns=$md_time_ns
     simulation_steps=$md_steps
-    
+
     download_protein
     generate_protein_topology
     define_box_and_solvate

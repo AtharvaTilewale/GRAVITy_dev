@@ -1396,7 +1396,7 @@ run_analysis() {
                 return
                 ;;
             *)
-                echo "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
+                echo -e "${LIGHT_RED}Invalid option! Please select between 1 and 3.${NC}"
                 sleep 1.0
                 ;;
             esac
