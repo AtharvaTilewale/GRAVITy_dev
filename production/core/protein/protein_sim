@@ -472,7 +472,7 @@ generate_protein_topology() {
             # echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
             pdb_fixer >/dev/null 2>&1 &
             pid_fixer=$!  # Store PID of the background task
-            auto_task_spinner $pid_fixer "Step 2 of 7: Fixing PDB file"
+            auto_task_spinner $pid_fixer "             Fixing PDB file"
 
             # Check if pdbfixer was successful
             wait $pid_fixer
@@ -486,7 +486,7 @@ generate_protein_topology() {
             # echo -e "${CYAN}Retrying topology generation with fixed PDB...${NC}"
             gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
             pid_retry_gmx=$!  # Store PID for retry
-            auto_task_spinner $pid_retry_gmx "Step 2 of 7: Regenerating Protein Topology"
+            auto_task_spinner $pid_retry_gmx "             Regenerating Protein Topology"
 
             # Check if the retry was successful
             wait $pid_retry_gmx
@@ -1068,6 +1068,7 @@ production_md() {
             # echo -e "${LIGHT_YELLOW}No GPU information found. Running simulation on CPU...${NC}"
             run_mode="CPU"
             run_cmd="gmx mdrun -deffnm $project_dir/md -v"
+            run_mode="CPU"
         fi
         gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr
         # Measure and show elapsed time
@@ -1076,6 +1077,7 @@ production_md() {
         eval "$run_cmd >/dev/null 2>&1 &"
         $pid=$!
         wait $pid
+        run_mode="CPU"
         # show_spinner $! "Running MD Simulation on $run_mode"
         #Recentering and Rewrapping Coordinates...
         if [ ! -f "$project_dir/md.xtc" ]; then
@@ -1631,6 +1633,7 @@ EOF
     echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
     echo "Elapsed time: $elapsed seconds"
     echo
+    sleep 1.0
     # local target_file="$project_dir/${pdb_id}.pdb"
 
     # (wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
