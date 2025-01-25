@@ -254,17 +254,66 @@ check_file_exists() {
     return 0
 }
 
+# Download protein structure
+download_protein() {
+echo -e "${YELLOW}Download protein structure using PDB ID${NC}"
+read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+
+# Validate PDB ID format
+if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+    echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+    return 1
+fi
+
+# Prepare target file path
+local target_file="$project_dir/${pdb_id}.pdb"
+
+# Attempt download
+echo -e "${CYAN}Downloading PDB structure for ID: $pdb_id...${NC}"
+(wget -q "https://files.rcsb.org/download/${pdb_id}.pdb" -O "$target_file") &
+show_spinner $! "Downloading protein structure"
+
+# Check download success
+if [[ -s "$target_file" ]]; then
+    echo -e "${LIGHT_GREEN}Protein structure downloaded successfully! File saved at: $target_file${NC}"
+    mv $target_file $project_dir/protein.pdb
+else
+    echo -e "${LIGHT_RED}Error: Failed to download PDB structure. Please verify the PDB ID and your internet connection.${NC}"
+    rm -f "$target_file" # Clean up incomplete file
+    return 1
+fi
+sleep 1.0
+return 0
+}
+
 #Retrieve Complex Molecules
 retrieve_complex(){
     check_file_exists "$project_dir/protein.pdb" || return
     check_file_exists "$project_dir/ligand.pdbqt" || return
-    read -p "Enter the path to your protein file (.pdb): " protein_path
-    if [[ ! -f "$protein_path" ]]; then
-        echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
-        return
-    else
-        cp $protein_path $project_dir/protein.pdb
-    fi
+    echo 
+    echo -e "Would you like to download the protein structure or enter the path?"
+    echo -e "1) Download using PDB ID"
+    echo -e "2) Enter the path to the protein structure"
+    echo -e "3) Back to main menu"
+    read -p "Enter your choice [1-3]: " retrieval_choice
+
+    case $retrieval_choice in
+        1) download_protein ;;
+        2) 
+            read -p "Enter the path to your protein file (.pdb): " protein_path
+            if [[ ! -f "$protein_path" ]]; then
+                echo -e "${LIGHT_RED}Error: $protein_path file does not exist.${NC}"
+                return
+            else
+                cp $protein_path $project_dir/protein.pdb
+            fi
+            ;;
+        3) main_menu ;;
+        *)
+            echo "Invalid option! Please select between 1 and 4."
+            ;;
+    esac
+    
     read -p "Enter the path to your ligand file (.pdbqt): " ligand_path
     if [[ ! -f "$ligand_path" ]]; then
         echo -e "${LIGHT_RED}Error: $ligand_path file does not exist.${NC}"
