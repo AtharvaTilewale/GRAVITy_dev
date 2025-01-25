@@ -83,7 +83,6 @@ auto_task_spinner() {
     fi
 }
 
-
 #Loaders
 #Download loader
 download_loader() {
@@ -460,7 +459,7 @@ generate_protein_topology() {
 
         # Run GROMACS pdb2gmx in the background and track it with a spinner
         gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
-        pid_gmx=$!  # Store PID of the background task
+        pid_gmx=$! # Store PID of the background task
         auto_task_spinner $pid_gmx "Step 2 of 7: Generating Protein Topology"
 
         # Check the exit status of pdb2gmx
@@ -471,7 +470,7 @@ generate_protein_topology() {
             # If pdb2gmx failed, try fixing the PDB with pdbfixer
             # echo -e "${LIGHT_RED}Error: Failed to generate protein topology. Attempting to fix PDB file.${NC}"
             pdb_fixer >/dev/null 2>&1 &
-            pid_fixer=$!  # Store PID of the background task
+            pid_fixer=$! # Store PID of the background task
             auto_task_spinner $pid_fixer "             Fixing PDB file"
 
             # Check if pdbfixer was successful
@@ -485,7 +484,7 @@ generate_protein_topology() {
             # Retry GROMACS pdb2gmx after fixing the PDB
             # echo -e "${CYAN}Retrying topology generation with fixed PDB...${NC}"
             gmx pdb2gmx -f "$project_dir/protein.pdb" -o "$project_dir/protein.gro" -ff "$ff" -water "$wm" -ignh >/dev/null 2>&1 &
-            pid_retry_gmx=$!  # Store PID for retry
+            pid_retry_gmx=$! # Store PID for retry
             auto_task_spinner $pid_retry_gmx "             Regenerating Protein Topology"
 
             # Check if the retry was successful
@@ -564,7 +563,7 @@ define_box_and_solvate() {
             exit 1
         fi
 
-        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1 
+        gmx solvate -cp $project_dir/newbox.gro -cs spc216.gro -p $project_dir/topol.top -o $project_dir/solv.gro >/dev/null 2>&1
         # solvate_loader
         if [ $? -ne 0 ]; then
             echo "Error in gmx solvate. Check solvate.log for details."
@@ -672,12 +671,12 @@ add_ions() {
 
         # Run grompp and debug potential issues
         # echo -e "${LIGHT_GREEN}Running grompp...${NC}"
-        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1 
+        gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" >/dev/null 2>&1
         # ion_tpr_loader
 
         if [ $? -ne 0 ]; then
             # echo -e "${LIGHT_RED}Error: grompp failed. Debugging output below:${NC}"
-            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug >/dev/null 2>&1 
+            gmx grompp -f "$project_dir/ions.mdp" -c "$project_dir/solv.gro" -p "$project_dir/topol.top" -o "$project_dir/ions.tpr" -debug >/dev/null 2>&1
             # ion_tpr_loader
             # echo -e "${LIGHT_RED}Check your input files for potential issues.${NC}"
             exit 1
@@ -685,7 +684,7 @@ add_ions() {
 
         # Run genion to add ions
         # echo -e "${LIGHT_GREEN}Running genion to add ions...${NC}"
-        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1 
+        printf "13\n" | gmx genion -s "$project_dir/ions.tpr" -o "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -pname NA -nname CL -neutral >/dev/null 2>&1
         # ion_add_loader
 
         if [ $? -ne 0 ]; then
@@ -768,7 +767,7 @@ energy_minimization() {
 
         # Prepare the system for energy minimization
         # echo "Preparing input files for energy minimization..."
-        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" >/dev/null 2>&1 
+        gmx grompp -f "$project_dir/minim.mdp" -c "$project_dir/solv_ions.gro" -p "$project_dir/topol.top" -o "$project_dir/em.tpr" >/dev/null 2>&1
         # show_spinner $! "Preparing"
         if [[ $? -ne 0 ]]; then
             # echo -e "${LIGHT_RED}Error: grompp failed. Check grompp.log for details.${NC}"
@@ -778,7 +777,7 @@ energy_minimization() {
 
         # Run energy minimization
         # echo "Running energy minimization..."
-        gmx mdrun -v -deffnm "$project_dir/em" >/dev/null 2>&1 
+        gmx mdrun -v -deffnm "$project_dir/em" >/dev/null 2>&1
         # energy_minimization_loader
         if [[ $? -ne 0 ]]; then
             echo -e "${LIGHT_RED}Error: mdrun failed. Check mdrun.log for details.${NC}"
@@ -1073,7 +1072,7 @@ production_md() {
         gmx grompp -f $project_dir/md.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -o $project_dir/md.tpr
         # Measure and show elapsed time
         # echo -e "${LIGHT_GREEN}Starting MD simulation on $run_mode...${NC}"
-        
+
         eval "$run_cmd >/dev/null 2>&1 &"
         $pid=$!
         wait $pid
@@ -1212,7 +1211,6 @@ production_md() {
         wait
         manual_run
     fi
-    
 
     #Finding Radius of Gyration...
     # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
@@ -1619,14 +1617,35 @@ EOF
     simulation_time_ns=$md_time_ns
     simulation_steps=$md_steps
 
-    download_protein >/dev/null 2>&1 & auto_task_spinner $! "Step 1 of 7: Downloading protein structure"
+    # Step 1: Download protein
+    download_protein >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 1 of 7: Downloading protein structure"
+
+    # Step 2: Generate protein topology
     generate_protein_topology
-    define_box_and_solvate >/dev/null 2>&1 & auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
-    add_ions >/dev/null 2>&1 & auto_task_spinner $! "Step 4 0f 7: Add ions to system"
-    energy_minimization >/dev/null 2>&1 & auto_task_spinner $! "Step 5 0f 7: Minimize energy"
-    equilibrium >/dev/null 2>&1 & auto_task_spinner $! "Step 6 0f 7: Equilibrate system"
+
+    # Step 3: Define box and solvate the system
+    define_box_and_solvate >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
+
+    # Step 4: Add ions to system
+    add_ions >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 4 0f 7: Add ions to system"
+
+    # Step 5: Energy minimization
+    energy_minimization >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 5 0f 7: Minimize energy"
+
+    # Step 6: Equilibrate system
+    equilibrium >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 6 0f 7: Equilibrate system"
+
+    # Step 7: Run MD Simulation
     start_time=$(date +%s)
-    production_md >/dev/null 2>&1 & auto_task_spinner $! "Step 7 0f 7: Run MD Simulation"
+    production_md >/dev/null 2>&1 &
+    auto_task_spinner $! "Step 7 0f 7: Run MD Simulation"
+
+    # Calculate total time taken for the simulation
     end_time=$(date +%s)
     elapsed=$((end_time - start_time))
     echo
