@@ -5,6 +5,8 @@
 # Change working directory
 project_dir=$(head -n 1 "/etc/GRAVITy/current_dir.txt")
 cd $project_dir
+mkdir $project_dir/frames
+frames_dir=$project_dir/frames
 # Source the color script
 source /etc/GRAVITy/colors
 echo start >$project_dir/run_parameters.conf
@@ -14,6 +16,16 @@ param_file=$project_dir/run_parameters.conf
 auto_check() {
     param_auto_file=$(head -n 1 "$param_file")
     if [[ "$param_auto_file" == "run_type=auto" ]]; then
+        source $project_dir/run_parameters.conf
+        echo true
+    else
+        echo false
+    fi
+}
+
+test_check() {
+    test_file=$(head -n 1 "$param_file")
+    if [[ "$test_file" == "run_type=test" ]]; then
         source $project_dir/run_parameters.conf
         echo true
     else
@@ -1212,6 +1224,26 @@ production_md() {
         manual_run
     fi
 
+    simulation_time=$md_time_ps
+
+    # Define the interval (100 ps)
+    interval=100
+
+    # Initialize the start time
+    start_time=0
+
+    # Loop through the time steps and extract frames
+    while [ $start_time -le $simulation_time ]; do
+        # Here you can call the command to extract the frame, e.g.:
+        printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${start_time}.pdb -b $start_time -e $start_time
+        ((start_time+=interval))
+    done
+
+    # If the last frame isn't exactly a multiple of the interval, add it
+    if [ $(($simulation_time % $interval)) -ne 0 ]; then
+        # Similarly, you can call the command to extract the last frame
+        printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${simulation_time}.pdb -b $simulation_time -e $simulation_time
+    fi
     #Finding Radius of Gyration...
     # if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
     #     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1268,6 +1300,23 @@ production_md() {
     wait
 }
 
+avg_sqdev(){
+    local xvg_file="$1" 
+    awk '
+    BEGIN {sum=0; sumsq=0; count=0;}
+    /^[^@#]/ && NF >= 2 {sum+=$2; sumsq+=$2*$2; count++;}
+    END {
+        if (count > 0) {
+            avg = sum / count;
+            stddev = sqrt((sumsq / count) - (avg * avg));
+            printf "\nAverage RMSF: %.4f nm\n", avg;
+            printf "Standard Deviation of RMSF: %.4f nm\n\n", stddev;
+        } else {
+            print "No valid data found in RMSF file.";
+        }
+    }' "$xvg_file"
+}
+
 # Function to run analysis
 run_analysis() {
     echo
@@ -1283,38 +1332,48 @@ run_analysis() {
         echo "6) Back to Main Menu"
         echo -e "${YELLOW}---------------------------${NC}"
         echo
-        read -p "Enter your choice [1-7]: " analysis_choice
+        read -p "Enter your choice [1-6]: " analysis_choice
 
         case $analysis_choice in
         1)
             echo
             echo "Analyzing RMSD values..."
             echo
+            xvg_file="$project_dir/rmsd.xvg"
             if [ ! -f "$project_dir/rmsd.xvg" ]; then
-                echo -e ${LIGHT_RED} "rmsd.xvg does not exist.${NC}"
-                exit 1
-            fi
-            xmgrace $project_dir/rmsd.xvg
-            ;;
-        2)
-            echo
-            echo "Analyzing RMSF..."
-            echo
-            if [ ! -f "$project_dir/rmsf.xvg" ]; then
                 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
                     exit 1
                 fi
                 check_file_exists "$project_dir/rmsd.xvg" || return
                 printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
+                xmgrace $project_dir/rmsd.xvg
+            fi
+            xmgrace "$xvg_file"
+            avg_sqdev "$xvg_file"
+            ;;
+        2)
+            echo
+            echo "Analyzing RMSF..."
+            echo
+            xvg_file="$project_dir/rmsf.xvg"
+            if [ ! -f "$project_dir/rmsf.xvg" ]; then
+                if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
+                    echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
+                    exit 1
+                fi
+                check_file_exists "$project_dir/rmsf.xvg" || return
+                printf "3\n" | gmx rmsf -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
                 xmgrace $project_dir/rmsf.xvg
             fi
-            xmgrace $project_dir/rmsf.xvg
+            xmgrace "$xvg_file"
+            avg_sqdev "$xvg_file"
             ;;
         3)
             echo
             echo "Analyzing Radius of Gyration..."
             echo
+            xvg_file="$project_dir/gyrate.xvg"
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
                 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1324,7 +1383,8 @@ run_analysis() {
                 printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
                 xmgrace $project_dir/gyrate.xvg
             fi
-            xmgrace $project_dir/gyrate.xvg
+            xmgrace "$xvg_file"
+            avg_sqdev "$xvg_file"
             ;;
         4)
             echo
@@ -1341,6 +1401,7 @@ run_analysis() {
                 echo
                 echo "Analyzing No. of H bonds..."
                 echo
+                xvg_file="$project_dir/hbnum.xvg"
                 if [ ! -f "$project_dir/hbnum.xvg" ]; then
                     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1350,12 +1411,14 @@ run_analysis() {
                     printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbnum.xvg
                 fi
-                xmgrace $project_dir/hbnum.xvg
+                xmgrace "$xvg_file"
+                avg_sqdev "$xvg_file"
                 ;;
             2)
                 echo
                 echo "Analyzing Average distance between H bonds..."
                 echo
+                xvg_file="$project_dir/hbdist.xvg"
                 if [ ! -f "$project_dir/hbdist.xvg" ]; then
                     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1365,7 +1428,8 @@ run_analysis() {
                     printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbdist.xvg
                 fi
-                xmgrace $project_dir/hbdist.xvg
+                xmgrace "$xvg_file"
+                avg_sqdev "$xvg_file"
                 ;;
             3)
                 echo
@@ -1393,6 +1457,7 @@ run_analysis() {
                 echo
                 echo "Temperature..."
                 echo
+                xvg_file="$project_dir/temp.xvg"
                 if [ ! -f "$project_dir/temp.xvg" ]; then
                     if [ ! -f "$project_dir/nvt.edr" ]; then
                         echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
@@ -1402,12 +1467,14 @@ run_analysis() {
                     printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/temp.xvg
                 fi
-                xmgrace $project_dir/temp.xvg
+                xmgrace "$xvg_file"
+                avg_sqdev "$xvg_file"
                 ;;
             2)
                 echo
                 echo "Pressure..."
                 echo
+                xvg_file="$project_dir/pressure.xvg"
                 if [ ! -f "$project_dir/pressure.xvg" ]; then
                     if [ ! -f "$project_dir/npt.edr" ]; then
                         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
@@ -1417,7 +1484,8 @@ run_analysis() {
                     printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/pressure.xvg
                 fi
-                xmgrace $project_dir/pressure.xvg
+                xmgrace "$xvg_file"
+                avg_sqdev "$xvg_file"
                 ;;
             3)
                 echo
@@ -1490,6 +1558,70 @@ run_analysis() {
 # }
 
 automatic_run() {
+    if [[ $(test_check) == true ]]; then
+        sed -i '1s/.*/run_type=auto/' run_parameters.conf
+        local param_file="run_parameters.conf"
+        #Download Protein - Enter PDB ID
+        read -p "Enter PDB ID (e.g., 1HNY): " pdb_id
+        echo -e "${NC}"
+        # Validate PDB ID format
+        if [[ ! "$pdb_id" =~ ^[0-9A-Za-z]{4}$ ]]; then
+            echo -e "${LIGHT_RED}Error: Invalid PDB ID format. Please enter a valid 4-character PDB ID.${NC}"
+            return 1
+        fi
+        cat >"$param_file" <<EOF
+run_type=auto
+pdb_id=$pdb_id
+force_field=charmm36
+water_model=spc216
+box_type=cubic
+solvate_model=spc216
+EOF
+
+        pdb_id=$pdb_id
+        force_field=charmm36
+        water_model=spc216
+        box_type=cubic
+        solvate_model=spc216
+
+        # Step 1: Download protein
+        download_protein >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 1 of 7: Downloading protein structure"
+
+        # Step 2: Generate protein topology
+        generate_protein_topology
+
+        # Step 3: Define box and solvate the system
+        define_box_and_solvate >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 3 0f 7: Define Box and Solvate the System"
+
+        # Step 4: Add ions to system
+        add_ions >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 4 0f 7: Add ions to system"
+
+        # Step 5: Energy minimization
+        energy_minimization >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 5 0f 7: Minimize energy"
+
+        # Step 6: Equilibrate system
+        equilibrium >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 6 0f 7: Equilibrate system"
+
+        # Step 7: Run MD Simulation
+        start_time=$(date +%s)
+        production_md >/dev/null 2>&1 &
+        auto_task_spinner $! "Step 7 0f 7: Run MD Simulation"
+
+        # Calculate total time taken for the simulation
+        end_time=$(date +%s)
+        elapsed=$((end_time - start_time))
+        echo
+        echo -e "${LIGHT_CYAN}Simulation completed on $run_mode.${NC}"
+        echo "Elapsed time: $elapsed seconds"
+        echo
+        sleep 1.0
+    fi
+
     sed -i '1s/.*/run_type=auto/' run_parameters.conf
     echo -e "${LIGHT_CYAN}Automatic Run Selected${NC}"
     echo
@@ -1796,6 +1928,7 @@ test_run() {
     sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/npt.mdp
     sed -i "s/^nsteps.*/nsteps = 500/" $project_dir/nvt.mdp
     sed -i "s/^nsteps.*/nsteps = 5000/" $project_dir/md.mdp
+    sed -i '1s/.*/run_type=test/' run_parameters.conf
     automatic_run
 }
 
@@ -1910,7 +2043,7 @@ banner() {
     echo -e "${LIGHT_RED} \\______  /|____|_  /\\____|__  /\\___/   |___| |____|  ${RESET}/ ____| "
     echo -e "${LIGHT_RED}        \\/        \\/         \\/                       ${RESET}\\/      "
     echo
-    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}apid ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
+    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}un ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
     echo
 }
 
