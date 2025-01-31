@@ -1426,7 +1426,7 @@ banner() {
     echo -e "${LIGHT_RED} \\______  /|____|_  /\\____|__  /\\___/   |___| |____|  ${RESET}/ ____| "
     echo -e "${LIGHT_RED}        \\/        \\/         \\/                       ${RESET}\\/      "
     echo
-    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}apid ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
+    echo -e "${WHITE}  [${LIGHT_RED}G${NC}ROMACS ${LIGHT_RED}R${NC}un ${LIGHT_RED}A${NC}nalysis & ${LIGHT_RED}V${NC}isualization ${LIGHT_RED}I${NC}nterface ${LIGHT_RED}T${NC}ool -y]${NC}"
     echo
 }
 
