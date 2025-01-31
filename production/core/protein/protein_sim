@@ -1419,7 +1419,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
-                    printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
+                    printf "1\n11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace "$xvg_file"
@@ -1437,7 +1437,7 @@ run_analysis() {
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbdist.xvg" || return
-                    printf "1 11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
+                    printf "1\n11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                     xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace "$xvg_file"
