@@ -1309,8 +1309,8 @@ avg_stddev(){
         if (count > 0) {
             avg = sum / count;
             stddev = sqrt((sumsq / count) - (avg * avg));
-            printf "\nAverage RMSF: %.4f nm\n", avg;
-            printf "Standard Deviation of RMSF: %.4f nm\n\n", stddev;
+            printf "\nAverage: %.4f nm\n", avg;
+            printf "Standard Deviation: %.4f nm\n\n", stddev;
         } else {
             print "No valid data found in RMSF file.";
         }
