@@ -1216,6 +1216,30 @@ production_md() {
     return
 }
 
+avg_stddev(){
+    local xvg_file="$1" 
+    local unit="$2"
+    # Define local colors using tput
+    local YELLOW=$(tput setaf 3)  # Set yellow color
+    local CYAN=$(tput setaf 6)    # Set cyan color
+    local NC=$(tput sgr0)         # Reset color to default
+
+    # Process the file with AWK
+    awk -v YELLOW="$YELLOW" -v CYAN="$CYAN" -v NC="$NC" -v unit="$unit" '
+    BEGIN {sum=0; sumsq=0; count=0;}
+    /^[^@#]/ && NF >= 2 {sum+=$2; sumsq+=$2*$2; count++;}
+    END {
+        if (count > 0) {
+            avg = sum / count;
+            stddev = sqrt((sumsq / count) - (avg * avg));
+            printf YELLOW "\nAverage: " CYAN "%.4f %s" NC "\n", avg, unit;
+            printf YELLOW "Standard Deviation: " CYAN "%.4f %s" NC "\n\n", stddev, unit;
+        } else {
+            print "No valid data found in RMSF file.";
+        }
+    }' "$xvg_file"
+}
+
 # Function to run analysis
 run_analysis() {
     echo
@@ -1238,6 +1262,8 @@ run_analysis() {
             echo
             echo "Analyzing RMSD values..."
             echo
+            xvg_file="$project_dir/rmsd.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/rmsd.xvg" ]; then
                 if [ ! -f "$project_dir/md_center.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
@@ -1245,29 +1271,33 @@ run_analysis() {
                 fi
                 check_file_exists "$project_dir/rmsd.xvg" || return
                 printf "4 4\n" | gmx rms -s $project_dir/em.tpr -f $project_dir/md_center.xtc -n $project_dir/index.ndx -tu ns -o $project_dir/rmsd.xvg >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/rmsd.xvg
             fi
             xmgrace $project_dir/rmsd.xvg
+            avg_stddev "$xvg_file" "$unit"
             ;;
         2)
             echo
             echo "Analyzing RMSF..."
             echo
+            xvg_file="$project_dir/rmsf.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/rmsf.xvg" ]; then
                 if [ ! -f "$project_dir/md_center.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                     exit 1
                 fi
                 check_file_exists "$project_dir/rmsf.xvg" || return
-                printf "1\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/rmsf.xvg
+                printf "3\n" | gmx rmsf -f $project_dir/md_center.xtc -s $project_dir/md.tpr -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
             fi
             xmgrace $project_dir/rmsf.xvg
+            avg_stddev "$xvg_file" "$unit"
             ;;
         3)
             echo
             echo "Analyzing Radius of Gyration..."
             echo
+            xvg_file="$project_dir/gyrate.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
                 if [ ! -f "$project_dir/md_center.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
@@ -1275,9 +1305,9 @@ run_analysis() {
                 fi
                 check_file_exists "$project_dir/gyrate.xvg" || return
                 printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_center.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace $project_dir/gyrate.xvg
+            avg_stddev "$xvg_file" "$unit"
             ;;
         4)
             echo
@@ -1294,31 +1324,35 @@ run_analysis() {
                 echo
                 echo "Analyzing No. of H bonds..."
                 echo
+                xvg_file="$project_dir/hbnum.xvg"
+                unit=""
                 if [ ! -f "$project_dir/hbnum.xvg" ]; then
                     if [ ! -f "$project_dir/md_center.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
-                    printf "1 11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/hbnum.xvg
+                    printf "1\n11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                 fi
                 xmgrace $project_dir/hbnum.xvg
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             2)
                 echo
                 echo "Analyzing Average distance between H bonds..."
                 echo
+                xvg_file="$project_dir/hbdist.xvg"
+                unit=""
                 if [ ! -f "$project_dir/hbdist.xvg" ]; then
                     if [ ! -f "$project_dir/md_center.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_center.xtc does not exist.${NC}"
                         exit 1
                     fi
                     check_file_exists "$project_dir/hbdist.xvg" || return
-                    printf "1 11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/hbdist.xvg
+                    printf "1\n11\n" | gmx hbond -f $project_dir/md_center.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
                 fi
                 xmgrace $project_dir/hbdist.xvg
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             3)
                 echo
@@ -1347,6 +1381,8 @@ run_analysis() {
                 echo
                 echo "Temperature..."
                 echo
+                xvg_file="$project_dir/temp.xvg"
+                unit="K"
                 if [ ! -f "$project_dir/temp.xvg" ]; then
                     if [ ! -f "$project_dir/nvt.edr" ]; then
                         echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
@@ -1354,14 +1390,16 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/temp.xvg" || return
                     printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/temp.xvg
                 fi
                 xmgrace $project_dir/temp.xvg
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             2)
                 echo
                 echo "Pressure..."
                 echo
+                xvg_file="$project_dir/pressure.xvg"
+                unit="nm"
                 if [ ! -f "$project_dir/pressure.xvg" ]; then
                     if [ ! -f "$project_dir/npt.edr" ]; then
                         echo -e ${LIGHT_RED} "npt.edr does not exist.${NC}"
@@ -1369,14 +1407,16 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/pressure.xvg" || return
                     printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/pressure.xvg
                 fi
                 xmgrace $project_dir/pressure.xvg
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             3)
                 echo
                 echo "Interaction Energies..."
                 echo
+                xvg_file="$project_dir/interaction_energy.xvg"
+                unit="kJ/mol"
                 if [ ! -f "$project_dir/interaction_energy.xvg" ]; then
                     if [ ! -f "$project_dir/ie.mdp" ]; then
                         echo -e ${LIGHT_RED} "ie.mdp does not exist.${NC}"
@@ -1386,9 +1426,9 @@ run_analysis() {
                     gmx grompp -f $project_dir/ie.mdp -c $project_dir/npt.gro -t $project_dir/npt.cpt -p $project_dir/topol.top -n $project_dir/index.ndx -o $project_dir/ie.tpr >/dev/null 2>&1 || exit 1
                     gmx mdrun -deffnm $project_dir/ie -rerun $project_dir/md_center.xtc -nb cpu >/dev/null 2>&1 || exit 1
                     printf "21 22 0" | gmx energy -f $project_dir/ie.edr -o $project_dir/interaction_energy.xvg >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/interaction_energy.xvg
                 fi
                 xmgrace $project_dir/interaction_energy.xvg
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             4)
                 echo

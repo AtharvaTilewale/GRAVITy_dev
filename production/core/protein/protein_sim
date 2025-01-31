@@ -1355,7 +1355,6 @@ run_analysis() {
                 fi
                 check_file_exists "$project_dir/rmsd.xvg" || return
                 printf "4 4\n" | gmx rms -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsd.xvg -tu ns >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/rmsd.xvg
             fi
             xmgrace "$xvg_file"
             avg_stddev "$xvg_file" "$unit"
@@ -1373,7 +1372,6 @@ run_analysis() {
                 fi
                 check_file_exists "$project_dir/rmsf.xvg" || return
                 printf "3\n" | gmx rmsf -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/rmsf.xvg >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/rmsf.xvg
             fi
             xmgrace "$xvg_file"
             avg_stddev "$xvg_file" "$unit"
@@ -1391,7 +1389,6 @@ run_analysis() {
                 fi
                 check_file_exists "$project_dir/gyrate.xvg" || return
                 printf "1\n" | gmx gyrate -s $project_dir/md.tpr -f $project_dir/md_noPBC.xtc -o $project_dir/gyrate.xvg >/dev/null 2>&1 || exit 1
-                xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace "$xvg_file"
             avg_stddev "$xvg_file" "$unit"
@@ -1420,7 +1417,6 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/hbnum.xvg" || return
                     printf "1\n11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace "$xvg_file"
                 avg_stddev "$xvg_file" "$unit"
@@ -1438,7 +1434,6 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/hbdist.xvg" || return
                     printf "1\n11\n" | gmx hbond -f $project_dir/md_noPBC.xtc -s $project_dir/md.tpr -num -dist >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace "$xvg_file"
                 avg_stddev "$xvg_file" "$unit"
@@ -1478,7 +1473,6 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/temp.xvg" || return
                     printf "17\n" | gmx energy -f $project_dir/nvt.edr -o $project_dir/temp.xvg >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/temp.xvg
                 fi
                 xmgrace "$xvg_file"
                 avg_stddev "$xvg_file" "$unit"
@@ -1496,7 +1490,6 @@ run_analysis() {
                     fi
                     check_file_exists "$project_dir/pressure.xvg" || return
                     printf "19\n" | gmx energy -f $project_dir/npt.edr -o $project_dir/pressure.xvg >/dev/null 2>&1 || exit 1
-                    xmgrace $project_dir/pressure.xvg
                 fi
                 xmgrace "$xvg_file"
                 avg_stddev "$xvg_file" "$unit"
