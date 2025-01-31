@@ -1302,15 +1302,22 @@ production_md() {
 
 avg_stddev(){
     local xvg_file="$1" 
-    awk '
+    local unit="$2"
+    # Define local colors using tput
+    local YELLOW=$(tput setaf 3)  # Set yellow color
+    local CYAN=$(tput setaf 6)    # Set cyan color
+    local NC=$(tput sgr0)         # Reset color to default
+
+    # Process the file with AWK
+    awk -v YELLOW="$YELLOW" -v CYAN="$CYAN" -v NC="$NC" -v unit="$unit" '
     BEGIN {sum=0; sumsq=0; count=0;}
     /^[^@#]/ && NF >= 2 {sum+=$2; sumsq+=$2*$2; count++;}
     END {
         if (count > 0) {
             avg = sum / count;
             stddev = sqrt((sumsq / count) - (avg * avg));
-            printf "${YELLOW}\nAverage: ${CYAN}%.4f nm${NC}\n", avg;
-            printf "${YELLOW}Standard Deviation: ${CYAN}%.4f nm${NC}\n\n", stddev;
+            printf YELLOW "\nAverage: " CYAN "%.4f %s" NC "\n", avg, unit;
+            printf YELLOW "Standard Deviation: " CYAN "%.4f %s" NC "\n\n", stddev, unit;
         } else {
             print "No valid data found in RMSF file.";
         }
@@ -1340,6 +1347,7 @@ run_analysis() {
             echo "Analyzing RMSD values..."
             echo
             xvg_file="$project_dir/rmsd.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/rmsd.xvg" ]; then
                 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1350,13 +1358,14 @@ run_analysis() {
                 xmgrace $project_dir/rmsd.xvg
             fi
             xmgrace "$xvg_file"
-            avg_stddev "$xvg_file"
+            avg_stddev "$xvg_file" "$unit"
             ;;
         2)
             echo
             echo "Analyzing RMSF..."
             echo
             xvg_file="$project_dir/rmsf.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/rmsf.xvg" ]; then
                 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1367,13 +1376,14 @@ run_analysis() {
                 xmgrace $project_dir/rmsf.xvg
             fi
             xmgrace "$xvg_file"
-            avg_stddev "$xvg_file"
+            avg_stddev "$xvg_file" "$unit"
             ;;
         3)
             echo
             echo "Analyzing Radius of Gyration..."
             echo
             xvg_file="$project_dir/gyrate.xvg"
+            unit="nm"
             if [ ! -f "$project_dir/gyrate.xvg" ]; then
                 if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                     echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1384,7 +1394,7 @@ run_analysis() {
                 xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace "$xvg_file"
-            avg_stddev "$xvg_file"
+            avg_stddev "$xvg_file" "$unit"
             ;;
         4)
             echo
@@ -1402,6 +1412,7 @@ run_analysis() {
                 echo "Analyzing No. of H bonds..."
                 echo
                 xvg_file="$project_dir/hbnum.xvg"
+                unit=""
                 if [ ! -f "$project_dir/hbnum.xvg" ]; then
                     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1412,13 +1423,14 @@ run_analysis() {
                     xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_stddev "$xvg_file"
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             2)
                 echo
                 echo "Analyzing Average distance between H bonds..."
                 echo
                 xvg_file="$project_dir/hbdist.xvg"
+                unit=""
                 if [ ! -f "$project_dir/hbdist.xvg" ]; then
                     if [ ! -f "$project_dir/md_noPBC.xtc" ]; then
                         echo -e ${LIGHT_RED} "md_noPBC.xtc does not exist.${NC}"
@@ -1429,7 +1441,7 @@ run_analysis() {
                     xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_stddev "$xvg_file"
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             3)
                 echo
@@ -1458,6 +1470,7 @@ run_analysis() {
                 echo "Temperature..."
                 echo
                 xvg_file="$project_dir/temp.xvg"
+                unit="K"
                 if [ ! -f "$project_dir/temp.xvg" ]; then
                     if [ ! -f "$project_dir/nvt.edr" ]; then
                         echo -e ${LIGHT_RED} "nvt.edr does not exist.${NC}"
@@ -1468,12 +1481,13 @@ run_analysis() {
                     xmgrace $project_dir/temp.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_stddev "$xvg_file"
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             2)
                 echo
                 echo "Pressure..."
                 echo
+                unit="bar"
                 xvg_file="$project_dir/pressure.xvg"
                 if [ ! -f "$project_dir/pressure.xvg" ]; then
                     if [ ! -f "$project_dir/npt.edr" ]; then
@@ -1485,7 +1499,7 @@ run_analysis() {
                     xmgrace $project_dir/pressure.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_stddev "$xvg_file"
+                avg_stddev "$xvg_file" "$unit"
                 ;;
             3)
                 echo
