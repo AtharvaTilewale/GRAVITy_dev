@@ -1300,7 +1300,7 @@ production_md() {
     wait
 }
 
-avg_sqdev(){
+avg_stddev(){
     local xvg_file="$1" 
     awk '
     BEGIN {sum=0; sumsq=0; count=0;}
@@ -1350,7 +1350,7 @@ run_analysis() {
                 xmgrace $project_dir/rmsd.xvg
             fi
             xmgrace "$xvg_file"
-            avg_sqdev "$xvg_file"
+            avg_stddev "$xvg_file"
             ;;
         2)
             echo
@@ -1367,7 +1367,7 @@ run_analysis() {
                 xmgrace $project_dir/rmsf.xvg
             fi
             xmgrace "$xvg_file"
-            avg_sqdev "$xvg_file"
+            avg_stddev "$xvg_file"
             ;;
         3)
             echo
@@ -1384,7 +1384,7 @@ run_analysis() {
                 xmgrace $project_dir/gyrate.xvg
             fi
             xmgrace "$xvg_file"
-            avg_sqdev "$xvg_file"
+            avg_stddev "$xvg_file"
             ;;
         4)
             echo
@@ -1412,7 +1412,7 @@ run_analysis() {
                     xmgrace $project_dir/hbnum.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_sqdev "$xvg_file"
+                avg_stddev "$xvg_file"
                 ;;
             2)
                 echo
@@ -1429,7 +1429,7 @@ run_analysis() {
                     xmgrace $project_dir/hbdist.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_sqdev "$xvg_file"
+                avg_stddev "$xvg_file"
                 ;;
             3)
                 echo
@@ -1468,7 +1468,7 @@ run_analysis() {
                     xmgrace $project_dir/temp.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_sqdev "$xvg_file"
+                avg_stddev "$xvg_file"
                 ;;
             2)
                 echo
@@ -1485,7 +1485,7 @@ run_analysis() {
                     xmgrace $project_dir/pressure.xvg
                 fi
                 xmgrace "$xvg_file"
-                avg_sqdev "$xvg_file"
+                avg_stddev "$xvg_file"
                 ;;
             3)
                 echo
