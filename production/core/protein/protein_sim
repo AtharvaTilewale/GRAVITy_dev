@@ -1056,6 +1056,93 @@ update_simulation_steps() {
 #     }
 # }
 
+result_analyze(){
+    #Recentering and Rewrapping Coordinates...
+    if [ ! -f "md.xtc" ]; then
+        exit 1
+    fi
+    printf "1 0\n" | gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center || exit 1
+
+    #Finding RMSD...
+    if [ ! -f "md_noPBC.xtc" ]; then
+        exit 1
+    fi
+    printf "4 4\n" | gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd.xvg -tu ns || exit 1
+
+    #Extract frames
+    $sim_time=($md_nsteps*0.002)
+    # Ensure sim_time is set
+    if [ -z "$sim_time" ]; then
+        echo "Error: sim_time is not set."
+        exit 1
+    else
+        # Convert sim_time from ns to ps and ensure it's an integer
+        simulation_time=$(echo "$sim_time * 1000" | bc | awk '{printf "%.0f", $1}')
+
+        if [ -z "$sim_frames" ]; then
+            if [ "$simulation_time" -ge 100 ]; then
+                # Determine interval based on sim_time
+                if [ "$simulation_time" -gt 100000 ]; then
+                    interval=50000  # 50 ns
+                elif [ "$simulation_time" -gt 10000 ]; then
+                    interval=5000   # 5 ns
+                elif [ "$simulation_time" -gt 1000 ]; then
+                    interval=500    # 500 ps
+                else
+                    interval=100    # 100 ps
+                fi
+
+                # Ensure frames directory exists
+                frames_dir="frames"
+                mkdir -p "$frames_dir"
+
+                # Initialize the start time
+                start_time=0
+
+                # Loop through the time steps and extract frames
+                while [ $start_time -le $simulation_time ]; do
+                    # Here you can call the command to extract the frame, e.g.:
+                    printf "17\n" | gmx trjconv -s md.tpr -f md_center.xtc -o $frames_dir/frame_${start_time}.pdb -b $start_time -e $start_time
+                    ((start_time+=interval))
+                done
+
+                # If the last frame isn't exactly a multiple of the interval, add it
+                if [ $(($simulation_time % $interval)) -ne 0 ]; then
+                    # Similarly, you can call the command to extract the last frame
+                    printf "17\n" | gmx trjconv -s md.tpr -f md_center.xtc -o $frames_dir/frame_${simulation_time}.pdb -b $simulation_time -e $simulation_time
+                fi
+            else
+                sleep 1.0
+            fi
+        else
+            # Custom frame extraction based on user-defined frame count
+            interval=$(echo "$simulation_time / $sim_frames" | bc)
+            if [ "$interval" -lt 1 ]; then
+                interval=1
+            fi
+            # Ensure frames directory exists
+            frames_dir="frames"
+            mkdir -p "$frames_dir"
+
+            # Initialize the start time
+            start_time=0
+
+            # Loop through the time steps and extract frames
+            while [ $start_time -le $simulation_time ]; do
+                # Here you can call the command to extract the frame, e.g.:
+                printf "17\n" | gmx trjconv -s md.tpr -f md_center.xtc -o $frames_dir/frame_${start_time}.pdb -b $start_time -e $start_time
+                ((start_time+=interval))
+            done
+
+            # If the last frame isn't exactly a multiple of the interval, add it
+            if [ $(($simulation_time % $interval)) -ne 0 ]; then
+                # Similarly, you can call the command to extract the last frame
+                printf "17\n" | gmx trjconv -s md.tpr -f md_center.xtc -o $frames_dir/frame_${simulation_time}.pdb -b $simulation_time -e $simulation_time
+            fi
+        fi
+    fi
+}
+
 # Function to run production MD
 production_md() {
     if [[ $(auto_check) == true ]]; then
@@ -1204,92 +1291,6 @@ production_md() {
         fi
     fi
     wait
-}
-
-result_analyze(){
-    #Recentering and Rewrapping Coordinates...
-    if [ ! -f "md.xtc" ]; then
-        exit 1
-    fi
-    printf "1 0\n" | gmx trjconv -s md.tpr -f md.xtc -o md_noPBC.xtc -pbc mol -center || exit 1
-
-    #Finding RMSD...
-    if [ ! -f "md_noPBC.xtc" ]; then
-        exit 1
-    fi
-    printf "4 4\n" | gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd.xvg -tu ns || exit 1
-
-    #Extract frames
-    # Ensure sim_time is set
-    if [ -z "$sim_time" ]; then
-        echo "Error: sim_time is not set."
-        exit 1
-    fi
-
-    # Convert sim_time from ns to ps and ensure it's an integer
-    simulation_time=$(echo "$sim_time * 1000" | bc | awk '{printf "%.0f", $1}')
-
-    if [ -z "$sim_frames" ]; then
-        if [ "$simulation_time" -ge 100 ]; then
-            # Determine interval based on sim_time
-            if [ "$simulation_time" -gt 100000 ]; then
-                interval=50000  # 50 ns
-            elif [ "$simulation_time" -gt 10000 ]; then
-                interval=5000   # 5 ns
-            elif [ "$simulation_time" -gt 1000 ]; then
-                interval=500    # 500 ps
-            else
-                interval=100    # 100 ps
-            fi
-
-            # Ensure frames directory exists
-            frames_dir="frames"
-            mkdir -p "$frames_dir"
-
-            # Initialize the start time
-            start_time=0
-
-            # Loop through the time steps and extract frames
-            while [ $start_time -le $simulation_time ]; do
-                # Here you can call the command to extract the frame, e.g.:
-                printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${start_time}.pdb -b $start_time -e $start_time
-                ((start_time+=interval))
-            done
-
-            # If the last frame isn't exactly a multiple of the interval, add it
-            if [ $(($simulation_time % $interval)) -ne 0 ]; then
-                # Similarly, you can call the command to extract the last frame
-                printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${simulation_time}.pdb -b $simulation_time -e $simulation_time
-            fi
-        else
-            sleep 1.0
-        fi
-    else
-        # Custom frame extraction based on user-defined frame count
-        interval=$(echo "$simulation_time / $sim_frames" | bc)
-        if [ "$interval" -lt 1 ]; then
-            interval=1
-        fi
-        # Ensure frames directory exists
-        frames_dir="frames"
-        mkdir -p "$frames_dir"
-
-        # Initialize the start time
-        start_time=0
-
-        # Loop through the time steps and extract frames
-        while [ $start_time -le $simulation_time ]; do
-            # Here you can call the command to extract the frame, e.g.:
-            printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${start_time}.pdb -b $start_time -e $start_time
-            ((start_time+=interval))
-        done
-
-        # If the last frame isn't exactly a multiple of the interval, add it
-        if [ $(($simulation_time % $interval)) -ne 0 ]; then
-            # Similarly, you can call the command to extract the last frame
-            printf "1\n" | gmx trjconv -s md.tpr -f md.xtc -o $frames_dir/frame_${simulation_time}.pdb -b $simulation_time -e $simulation_time
-        fi
-    fi
 }
 
 #Finding Radius of Gyration...
