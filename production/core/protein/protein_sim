@@ -1290,6 +1290,9 @@ production_md() {
             sleep 2.0
         fi
     fi
+    result_analyze >/dev/null 2>&1 &
+    show_spinner $! "Analyzing results and extracting frames"
+    echo
     wait
 }
 
