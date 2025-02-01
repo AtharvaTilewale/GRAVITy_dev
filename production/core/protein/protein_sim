@@ -1070,7 +1070,7 @@ result_analyze(){
     printf "4 4\n" | gmx rms -s md.tpr -f md_noPBC.xtc -o rmsd.xvg -tu ns || exit 1
 
     #Extract frames
-    $sim_time=($md_nsteps*0.002)
+    sim_time=($md_nsteps*0.002)
     # Ensure sim_time is set
     if [ -z "$sim_time" ]; then
         echo "Error: sim_time is not set."
